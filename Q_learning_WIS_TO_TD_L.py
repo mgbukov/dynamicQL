@@ -235,7 +235,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 			# calculate greedy action(s) wrt behavior policy
 			if not greedy:
-				A_star =  avail_actions[np.argmax(Q)] # best_actions[t_step] # 
+				A_star = avail_actions[np.argmax(Q)] # best_actions[t_step] # 
 			else:
 				A_star = avail_actions[np.argmax(Q)]
 			#print Q
@@ -334,7 +334,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 			############################
 
-			rho = 0.6
+			#rho = 1.0
 
 			# calculate usage and alpha vectors
 			u[theta_inds] *= (1.0-eta)
@@ -349,15 +349,6 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 				alpha = 1.0/(N_tilings*u[theta_inds])
 				alpha[u[theta_inds]<1E-12] = 1.0
 
-
-			#alpha = eta/N_tilings*np.ones(alpha.shape)
-				
-			#print 'alpha, rho*alpha_feat rho, cutoff', np.around(max(alpha),5), np.around(rho*max(alpha),5), np.around(rho,5), np.around(1.0/N_tilings,5)
-			#print '_____'
-
-			### @ things to do
-
-			# 1. TO-TD(L) does not coonverge: delta_TO causes trouble
 			
 			#"""
 			if max(alpha)*rho > 1.0/N_tilings:
@@ -365,8 +356,6 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 				print "alpha exiting.. at ep {} and step {} with rho={}".format(j,t_step,rho)
 				exit()
 			#"""
-			# Q learning update rule
-			delta = R - Q[avail_indA]
 
 			#"""
 			if any(Q>3.0):
@@ -382,19 +371,19 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 				print 'exiting at episode {}'.format(j)
 				exit()
 			
-			
-			e[theta_inds,t_step,indA] += rho*trace_fn(e[theta_inds,t_step,indA],alpha)*alpha  - gamma*lmbda*rho*alpha*E #- rho*alpha*np.sum(e[theta_inds,t_step,indA],axis=0)
-			
-
+			# Q learning update rule
+			delta = R - Q[avail_indA]
 			delta_TO = Q[avail_indA] - np.sum(theta[theta_inds,t_step,indA],axis=0)
+
+			# update traces
+			e[theta_inds,t_step,indA] = rho*alpha*(trace_fn(e[theta_inds,t_step,indA],alpha) - gamma*lmbda*rho*E) 
+	
 			# theta <-- theta + \alpha*[theta(t-1)\phi(S) - theta(t)\phi(S)]
 			theta[theta_inds,t_step,indA] += rho*alpha*delta_TO
 			
-			#print 'TIME GRAD', delta_TO
 			# check if S_prime is terminal or went out of grid
 			if t_step == max_t_steps-1 or terminate: 
 				# update theta
-				#print 'delta last step', delta
 				theta += delta*e
 				# set terminate variable to False
 				terminate = False
@@ -418,15 +407,11 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			delta += gamma*max(Q_prime)
 			theta += delta*e
 			
-			
+			E = np.sum(e[theta_inds,t_step,indA],axis=0)
+			e *= gamma*lmbda*rho
 			
 			################################
 
-			#print 'traces before', np.round( np.sum(  e[ RL.find_feature_inds(hx_i,tilings,N_tiles) ,0 ,: ],axis=0), 3)
-			E = np.sum(e[theta_inds,t_step,indA],axis=0)
-			e *= gamma*lmbda*rho
-
-			
 
 			"""
 			print "state, action", S[0], actions[indA], S_prime[0]
