@@ -101,6 +101,12 @@ p_vals=[0.0,0.2,0.8]
 
 print(Fidelity(psi_i,H_fid,[t_vals[0],t_vals[-1]],basis=basis,psi_f=psi_f,all_obs=False)[-1])
 
+#### ----------- QUESTIONS ------------ #######:
+# - why is the shape 78 ?
+# - why is the fidelity so high ?
+# ---> is the fidelity correctly computed ?
+
+####### ----------------------------
 print(psi_i.shape)
 print(abs(psi_i.conj().dot(psi_f))**2)
 exit()
