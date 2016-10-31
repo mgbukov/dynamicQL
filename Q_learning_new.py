@@ -136,10 +136,10 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 	
 	# re-set parameters to calculate greedy polocy
-    if greedy:
-        RL_params['eps']=0.0
-	        RL_params['lmbda']=0.0
-	        RL_params['alpha_0']=0.0
+	if greedy:
+		RL_params['eps']=0.0
+		RL_params['lmbda']=0.0
+		RL_params['alpha_0']=0.0
 
 	######################################################################
 
