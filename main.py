@@ -8,11 +8,11 @@ import numpy as np
 
 
 # define model params
-L = 10 # system size
+L = 2 # system size
 J = 1.0/0.809 # zz interaction
 hz = 0.2 #0.9045/0.809 #1.0 # hz field
 
-hx_i = 0.001#-1.0 # initial hx coupling
+hx_i = 0.0# -1.0 # initial hx coupling
 hx_f = 2.0 #+1.0 # final hx coupling
 
 #"""
@@ -44,7 +44,7 @@ print "initial and final energies are:", E_i, E_f
 ##### RL params #####
 var0_min, var0_max = hx_i-1.0, hx_f+1.0
 
-N_tilings = 20
+N_tilings = 40
 N_lintiles = 20
 N_vars = 1
 
@@ -62,6 +62,7 @@ dVars = [dvar0]
 state_i = np.array([hx_i])
 
 N_episodes = 30
+N_episodes = 10001
 # discount rate
 gamma = 1.0
 # learning rate
@@ -69,7 +70,7 @@ alpha_0 = 0.9#/N_tilings
 # usage eta
 eta = 0.6#/N_tilings
 # TD(lambda) parameter
-lmbda = 1.0
+lmbda = 0.5
 # traces: use 'acc', 'dutch' or 'repl'
 traces = 'repl'
 # exploration epsilon
