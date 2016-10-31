@@ -322,7 +322,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 				A_star = avail_actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )]
 			#print Q
 			#print A_star, avail_actions[np.argmax(Q)], np.argmax(Q)
-			if random.uniform(0,1) <= 1.0 - eps:
+			if random.uniform(0.0,1.0) <= 1.0 - eps:
 				A = A_star
 			else:
 				A = random.choice(list(set(avail_actions) - set([A_star]) )) #random.choice(avail_actions)
