@@ -12,7 +12,7 @@ pos_actions=[0.05]
 def all_actions():
 	neg_actions=[]
 	[neg_actions.append(-i) for i in pos_actions]
-	return pos_actions + [0.0] # + neg_actions
+	return pos_actions + [0.0] + neg_actions
 
 actions = all_actions()
 

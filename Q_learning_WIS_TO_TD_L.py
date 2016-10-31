@@ -265,7 +265,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	a_inds = [i for i in range(len(avail_actions))]
 	for j in xrange(N_episodes):
 		# set traces to zero
-		#e *= 0.0
+		e *= 0.0
 		# set initial usage vector
 		u = u0.copy()
 		# set initial aux v vector
@@ -286,6 +286,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		theta_inds = RL.find_feature_inds(S,tilings,N_tiles)
 		Q = np.sum(theta[theta_inds,0,:],axis=0)
 		E=0.0
+		Q_old=[0.0 for i in actions]
 		# preallocate physical quantties
 		psi = psi_i.copy() # #	quantum state at time
 
@@ -303,7 +304,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		#eps = 0.1/np.sqrt(j+1)
 		#eps = 0.1/np.log(j+2)
 		#"""
-		if j > 20:
+		N_explore=100
+		if j > N_explore:
 			eps=0.0
 		else:
 			eps=0.1
@@ -331,8 +333,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 			
 			# reset traces and calculate probability under beh policy
-			if A != A_star and Q[indA]!=Q[avail_actions.index(A_star)]:
-				#print 'traces reset'
+			if abs(A - A_star) > np.finfo(A).eps:
+				print 'traces reset'
 				e *= 0.0
 				beh_policy = eps/len(a_inds)
 			else:
@@ -340,18 +342,20 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 			# calculate probability of taking A under target policy
 			if A not in [avail_actions[a] for a in np.argwhere(Q==np.amax(Q))]:
-				tgt_policy = eps/len(a_inds)
+				tgt_policy = 0.1/len(a_inds) #eps/len(a_inds)
 			else:
-				tgt_policy = eps/len(a_inds) + 1.0-eps
+				tgt_policy = 0.1/len(a_inds) + 1.0-0.1 #eps/len(a_inds) + 1.0-eps
 
 			# calculate importance sampling ratio
-			rho = tgt_policy/beh_policy
-			#rho = min(1.0,tgt_policy/beh_policy)
+			#rho = tgt_policy/beh_policy
+			rho = min(1.0,tgt_policy/beh_policy)
 			#rho=1.0
-			'''
+			#'''
 			if rho > 1.0:
-				rho = 0.0 
-			'''
+				#rho = 0.0 
+				print 'rho > 1'
+				#user_input = raw_input("continue? (y or n) ")
+			#'''
 			# take action A, observe state S_prime and reward R
 			################################################################################
 			######################    INTERACT WITH ENVIRONMENT    #########################
@@ -459,12 +463,13 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			
 			# Q learning update rule
 			delta = R - Q[avail_indA]
-			#delta_TO = Q[avail_indA] - np.sum(theta[theta_inds,t_step,indA],axis=0)
-		
+			delta_TO = Q_old[avail_indA] - np.sum(theta[theta_inds,t_step,indA],axis=0)
+			#print 'DELTA', delta_TO
 
 			#user_input = raw_input("save data? (y or n) ")
 			
 			# update traces
+			#e[theta_inds,t_step,indA] = rho*alpha*trace_fn(e[theta_inds,t_step,indA],alpha)
 			e[theta_inds,t_step,indA] = rho*alpha*(trace_fn(e[theta_inds,t_step,indA],alpha) - gamma*lmbda*rho*E) 
 	
 			# theta <-- theta + \alpha*[theta(t-1)\phi(S) - theta(t)\phi(S)]
@@ -490,18 +495,23 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			Q = [theta[theta_inds,t_step,k].sum() for k in a_inds]
 			"""
 			# TO
-			#Q_prime = np.sum(theta[theta_inds,t_step,:],axis=0)
+			Q_old = np.sum(theta[theta_inds,t_step,:],axis=0)
 			# non-TO
 			Q_prime = np.sum(theta[theta_inds,t_step+1,:],axis=0)
 
 			"""
-			if t_step in [4,13]:
-				print 'Q', Q
-				print 'Q_prime', Q_prime
-				print 'A_star, A:', A_star, A
+			if t_step in [6,11] and not greedy:
 				print 'time/states', t_step, S, S_prime
+				print 'A_star, A:', A_star, A
+				print 'Q', Q
+				print 'Q_prime', Q_prime				
 				print 'delta',delta
 				print 'final_delta', delta + gamma*max(Q_prime)
+				print 'traces Spime', np.round( np.sum(  e[ RL.find_feature_inds(S_prime,tilings,N_tiles) ,t_step ,: ],axis=0), 3)
+				print 'traces S', np.round( np.sum(  e[ RL.find_feature_inds(S,tilings,N_tiles) ,t_step ,: ],axis=0), 3)
+				print 'rho, max_alpha', rho, max(alpha)
+				print 'sum traces', np.round( np.sum(e), 3)
+			
 			"""
 			# update theta and e
 
@@ -509,7 +519,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			#delta=min(0.5,delta)
 			theta += delta*e
 			
-			#E = np.sum(e[theta_inds,t_step,indA],axis=0)
+			E = np.sum(e[theta_inds,t_step,indA],axis=0)
 			e *= gamma*lmbda*rho
 			
 			################################
@@ -549,7 +559,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		#print '++++++++'
 		#exit()
 
-		if j > 150:
+		if j > 2*N_explore:
 			exit()
 
 		print '_____________', j
@@ -600,7 +610,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 		#'''
 		# plot protocols and learning rate
-		if (j%1000==0 and j!=0) or (np.round(fidelity,5) == 1.0):
+		if (j%500==0 and j!=0) or (np.round(fidelity,5) == 1.0):
 
 			# fig file name params
 			save = False #True
