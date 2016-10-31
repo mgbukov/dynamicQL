@@ -1,4 +1,6 @@
-from Q_learning_WIS_TO_TD_L import Q_learning
+from Q_learning_new import Q_learning as Q_unconverged
+from Q_learning_WIS_TO_TD_L import Q_learning as Q_converged
+
 import Hamiltonian
 
 import numpy as np
@@ -59,7 +61,7 @@ dVars = [dvar0]
 # define RL  hyper params
 state_i = np.array([hx_i])
 
-N_episodes = 2000
+N_episodes = 30
 # discount rate
 gamma = 1.0
 # learning rate
@@ -88,8 +90,17 @@ physics_params = {'L':L,'max_t_steps':max_t_steps,'delta_t':delta_t,'J':J,'hz':h
 
 
 # initiate learning
-Q_learning(RL_params,physics_params)
+ba,bf,th,til=Q_unconverged(RL_params,physics_params)
+print(RL_params)
+print("done part 1, starting part 2")
+Q_converged(RL_params,physics_params,theta=th,tilings=til)
+print("done part 2")
 
+print(th)
+print(th.shape)
+
+print(ba)
+print(bf)
 
 
 

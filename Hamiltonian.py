@@ -1,5 +1,5 @@
-from qspin.operators import hamiltonian
-from qspin.basis import spin_basis_1d
+from quspin.operators import hamiltonian
+from quspin.basis import spin_basis_1d
 
 import numpy as np
 
