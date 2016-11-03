@@ -1,234 +1,180 @@
 import numpy as np
-
-#print("erhere")
-
-
+import pickle
 import Hamiltonian
-import numpy as np
+from quspin.operators import exp_op
 import time
-#from builtins import False
-#import deepcopy
-
-
-def Fidelity(psi_i,H_fid,t_vals,basis=None,psi_f=None,all_obs=False):
-    """ This function calculates the physical quantities given a time-dep Hamiltonian H_fid.
-        If psi_f is not given, then it returns the fidelity in the instantaneous eigenstate, otherwise
-        --- the fidelity in the final state. """
-    # get sysstem size
-    L = basis.L 
-    # evolve state
-    psi_t = H_fid.evolve(psi_i,t_vals[0],t_vals,iterate=True,atol=1E-12,rtol=1E-12)
-
-    # fidelity
-    fid = []
-    if all_obs:
-        # entanglement entropy density
-        Sent=[]
-        subsys = [j for j in range(L/2)]
-        # energy
-        E=[]
-        # energy fluctuations
-        dE=[]
-
-    for i, psi in enumerate(psi_t):
-
-        if psi_f is not None:
-            # calculate w.r.t. final state
-            psi_target = psi_f
-        else:
-            # calculate w.r.t. instantaneous state
-            _,psi_inst = H_fid.eigsh(time=t_vals[i],k=1,sigma=-100.0)
-            psi_target = psi_inst.squeeze()
-
-        fid.append( abs(psi.conj().dot(psi_target))**2 )
-
-        if all_obs:
-            E.append( H_fid.matrix_ele(psi,psi,time=t_vals[i]).real/L )
-
-            dE.append( np.sqrt( (H_fid*H_fid(time=t_vals[i])).matrix_ele(psi,psi,time=t_vals[i]).real/L**2 - E[i]**2)  )
-            #print  H_fid2.matrix_ele(psi,psi,time=t_vals[i]).real/L**2 - E[i]**2
-
-            Sent.append( ent_entropy(psi,basis,chain_subsys=subsys)['Sent'] )
-
-    if not all_obs:
-        return fid
-    else:
-        return fid , E, dE, Sent
-
-L=2
-
-# define model params
-if L==1:
-    J = 0.0
-else:
-    J = 1.0 # zz interaction
-hz = 0.5 #0.9045/0.809 #1.0 # hz field
-
-hx_i = 0.0#-1.0 # initial hx coupling
-hx_f = 1.0 #+1.0 # final hx coupling
-
-# define ED Hamiltonian H(t)
-m=0.0
-b=hx_i
-lin_fun = lambda t: m*t + b
-
-#def lin_fun(t):
-#    print p_vals
-#    return np.interp(t, t_vals, p_vals)
-# define Hamiltonian
-
-H, basis = Hamiltonian.Hamiltonian(L,fun=lin_fun,**{'J':J,'hz':hz})
-# defien Hamiltonian for interpolated fidelity
-#global t_vals,p_vals
-#protocol_fun = lambda t: np.interp(t, t_vals, p_vals)
-
-#print(H.todense())
-# calculate initial state
-# calculate initial state
-b = hx_i
-E_i, psi_i = H.eigsh(time=0,k=2,which='BE',maxiter=1E10,return_eigenvectors=True)
-E_i = E_i[0]
-psi_i = psi_i[:,0]
-
-
-# calculate final state
-b = hx_f
-E_f, psi_f = H.eigsh(time=0,k=2,which='BE',maxiter=1E10,return_eigenvectors=True)
-E_f = E_f[0]
-psi_f = psi_f[:,0]
-
-t_vals, p_vals = [0.0,1.0,2.0], [0.0,0.2,0.4]
-protocol_fun = lambda t: np.interp(t, t_vals, p_vals)
-H_fid,_ = Hamiltonian.Hamiltonian(L,fun=protocol_fun,**{'J':J,'hz':hz})
-
-
-#===============================================================================
-# print(Fidelity(psi_i,H_fid,[t_vals[0],t_vals[-1]],basis=basis,psi_f=psi_f,all_obs=False)[-1])
-# 
-# p_vals=[0.0,0.2,0.8]
-# 
-# print(Fidelity(psi_i,H_fid,[t_vals[0],t_vals[-1]],basis=basis,psi_f=psi_f,all_obs=False)[-1])
-# 
-# #### ----------- QUESTIONS ------------ #######:
-# # - why is the shape 78 ?
-# # - why is the fidelity so high ?
-# # ---> is the fidelity correctly computed ?
-# 
-# ####### ----------------------------
-# print(H.Ns)
-# print(abs(psi_i.conj().dot(psi_f))**2)
-# print(psi_i)
-# exit()
-#===============================================================================
-
-
-def random_trajectory(action_set,hi,episode_length):
-    '''
-    
-    Returns the action protocol and the corresponding trajectory
-    
-    '''
-    
-    action_protocol=np.random.choice(action_set,episode_length)
-    return action_protocol,np.insert(hi+np.cumsum(action_protocol),0,hi)
-
-def propose_new_trajectory(current_action_protocol,action_set,hi,episode_length):
-    new_action_protocol=np.copy(current_action_protocol)
-    rand_pos=np.random.randint(episode_length)
-    new_action_protocol[rand_pos]=np.random.choice(action_set)
-    
-    return new_action_protocol,np.insert(hi+np.cumsum(new_action_protocol),0,hi)
-
-
-#===============================================================================
-# action_set=[-0.2,0.,0.2]
-# hi=-1.
-# episode_length=6
-# 
-# ap,traj=random_trajectory([-0.2,0.,0.2],-1.,6)
-# print("Initial action protocol",ap)
-# print("Initial trajectory",traj)
-# 
-# ap_new,traj_new=propose_new_trajectory(ap,action_set,hi,episode_length)
-# 
-# print("New action protocol",ap_new)
-# print("New trajectory",traj_new)
-#===============================================================================
-def simulate_anneal(Ti,dT,episode_length,action_set):
-    T=Ti
-    N=1000
-    hi=-1.
-     
-    action_protocol,p_vals=random_trajectory(action_set,hi,episode_length)
-    t_vals=range(episode_length+1)
-    best_fid=0.0
-    best_protocol=[]
-#    print(action_protocol)
-#    print(p_vals)
-#    print(t_vals)
-    #exit()
-     
-    #current_state=
-     
-    while T>0.:
-        print("temp:",T)
-        beta=1./T
-        ti=time.time()
+import math
         
-        for i in range(20):
-            print(time.time()-ti)
-            ti=time.time()
-            
-            #ti=time.time()
-            action_protocol_new,p_vals_new=propose_new_trajectory(action_protocol,action_set,hi,episode_length)
-            #print(time.time()-ti)
-            #ti=time.time()
-            
-            current_fid=Fidelity(psi_i,H_fid,[t_vals[0],t_vals[-1]],basis=basis,psi_f=psi_f,all_obs=False)[-1]
-            
-            #print(time.time()-ti)
-            #print(current_fid) 
-            #print(p_vals)
-            
-            old_p_vals=p_vals[:]
-            p_vals=p_vals_new[:]
-            
-            new_fidelity=Fidelity(psi_i,H_fid,[t_vals[0],t_vals[-1]],basis=basis,psi_f=psi_f,all_obs=False)[-1]
-            
-            if new_fidelity > best_fid:
-                best_fid=new_fidelity
-                best_protocol=p_vals
-
-
-            dF=-(new_fidelity-current_fid)
-            if dF<0:                 
-                donothing=0         #current_protocol=new_protocol
-            elif np.random.uniform() < np.exp(-beta*dF):
-                donothing=0         #current_protocol=new_protocol
-            else:
-                donothing=1
-                p_vals=old_p_vals[:]
+#global hx_discrete
+        
+def main():
     
+    global action_set,hx_discrete
+    
+    L = 10 # system size
+    J = 1.0/0.809 # zz interaction
+    hz = 0.2 #0.9045/0.809 #1.0 # hz field
+    hx_i = -1.0# -1.0 # initial hx coupling
+    hx_f = 1.0 #+1.0 # final hx coupling
+    N_time_step=40
+    delta_t=0.05
+    N_restart=100
+    
+    param={'J':J,'hz':hz,'hx':hx_i}
+    
+    # dynamical part at every time step (initiaze to zero everywhere) 
+    hx_discrete=[0]*N_time_step
+    
+    # full system hamiltonian
+    H,_ = Hamiltonian.Hamiltonian(L,fct=hx_vs_t,**param)
+    
+    # calculate initial and final states
+    hx_discrete[0]=hx_i # just a trick to get initial state
+    E_i, psi_i = H.eigsh(time=0,k=1,which='SA')
+    hx_discrete[0]=hx_f # just a trick to get final state
+    E_f, psi_target = H.eigsh(time=0,k=1,which='SA')
+    hx_discrete[0]=0
+    
+    action_set=[-0.2,0.,0.2]
+    
+    param_SA={'Ti':1,'dT':0.01,'sweep_size':40,
+              'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
+              'delta_t':delta_t,'psi_target':psi_target,
+              'hx_i':hx_i}
+    
+   # old,hx_discrete=random_trajectory(hx_i,N_time_step)
+   # best_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+    
+    #===========================================================================
+    # for i in range(1000):
+    #     print(i,best_fid)
+    #     old,hx_discrete=propose_new_trajectory(old,hx_i,N_time_step)
+    #     new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+    #     if new_fid>best_fid:
+    #         best_fid=new_fid
+    #         print(hx_discrete)
+    # 
+    # exit()
+    # 
+    #===========================================================================
+    
+    best_result=[0,0,0]
+    all_results=[]
+    for it in range(N_restart):
+        print("Iteration:",it)
+        result=simulate_anneal(param_SA)
+        all_results.append(result)
+        print("Best fidelity during iteration: %s"%result[0])
+        print("Corresponding trajectory:",result[2])
+        
+        if result[0] > best_result[0]:
+            best_result=result
+    
+    
+    print("Best of all:",best_result)
+    # Saving results:
+    pkl_file=open('data/allresults.pkl','wb')
+    pickle.dump(all_results,pkl_file)
+    
+    
+def Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
+    """
+    Calculates final fidelity by evolving psi_i over a N_time_step 
+    Returns the overlap between the target state psi_target and the evolved state
+    
+    """    
+    psi_evolve=psi_i.copy()
+    for t in range(N_time_step):
+        psi_evolve = exp_op(H(time=t),a=-1j*delta_t).dot(psi_evolve)
+    
+    return abs(np.sum(np.conj(psi_evolve)*psi_target))**2
+    
+def hx_vs_t(time): return hx_discrete[int(time)]
+
+def random_trajectory(hx_i,N_time_step):
+    '''
+    Returns the action protocol and the corresponding trajectory
+    '''
+    
+    action_protocol=np.random.choice(action_set,N_time_step)
+    return action_protocol,hx_i+np.cumsum(action_protocol)
+
+def propose_new_trajectory(old_action_protocol,hx_i,N_time_step):
+    '''
+    Given the old_action_protocol, makes a random change and returns the new action protocol
+    '''
+    new_action_protocol=np.copy(old_action_protocol)
+    rand_pos=np.random.randint(N_time_step)
+    #print(rand_pos)
+    new_action_protocol[rand_pos]=np.random.choice(action_set)
+    #print(N_tim)
+    return new_action_protocol,hx_i+np.cumsum(new_action_protocol)
+
+def simulate_anneal(params):
+    
+    global hx_discrete
+    
+    # Simulated annealing parameters
+    T=params['Ti']
+    dT=params['dT']
+    sweep_size=params['sweep_size']
+    beta=1./T
+
+    
+    # Fidelity calculation parameters
+    psi_i=params['psi_i']
+    H=params['H']
+    N_time_step=params['N_time_step']
+    delta_t=params['delta_t']
+    psi_target=params['psi_target']
+    hx_i=params['hx_i']
+    
+    # Initializing variables
+    action_protocol,hx_discrete=random_trajectory(hx_i,N_time_step)
+    
+    best_action_protocol=action_protocol
+    best_hx_discrete=hx_discrete
+    best_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+
+    old_hx_discrete=best_hx_discrete
+    old_action_protocol=best_action_protocol
+    old_fid=best_fid
+    
+    while T>0.:
+        print("Current temperature=%s"%T,"Best fidelity=%s"%best_fid)
+        #print("Current temperature=%s"%(1./beta),"Best fidelity=%s"%best_fid)
+        beta=1./T            
+        for _ in range(sweep_size):
+            
+            
+            new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,hx_i,N_time_step)
+            hx_discrete=new_hx_discrete
+            new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+            #print(new_fid)
+            
+            if new_fid > best_fid:
+                # Record best encountered !
+                best_fid=new_fid
+                best_action_protocol=new_action_protocol
+                best_hx_discrete=new_hx_discrete
+            
+            dF=(new_fid-old_fid)
+            
+            if dF>0:
+                old_hx_discrete=new_hx_discrete
+                old_action_protocol=new_action_protocol
+                old_fid=new_fid            
+            elif np.random.uniform() < np.exp(beta*dF):
+                old_hx_discrete=new_hx_discrete
+                old_action_protocol=new_action_protocol
+                old_fid=new_fid
+            #else:
+            #    print("move rejected!",np.exp(beta*dF)) 
+        
         T-=dT
-     
-    return best_fid,best_protocol
-         
-action_set=[-0.2,0.0,0.2]
- 
+      
+    return best_fid,best_action_protocol,best_hx_discrete
 
-best_fid,best_protocol=simulate_anneal(10,0.1,10,action_set)
-print("Best protocol: ",best_protocol)
-prtin("Fidelty:",best_fid)
-
-
-#===============================================================================
-# 
-# 
-# print(np.random.choice(action_set))
-# exit()
-# simulate_anneal(100,0.1,20,action_set)
-#===============================================================================
- 
- 
- 
- 
+# Run main program !
+if __name__ == "__main__":
+    main()
