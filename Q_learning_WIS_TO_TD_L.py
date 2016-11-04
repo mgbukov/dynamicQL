@@ -151,6 +151,185 @@ def Fidelity(psi_i,H_fid,t_vals,delta_t,basis=None,psi_f=None,all_obs=False,Vf=N
 		return fid , E, dE, Sent, Sd
 
 	
+def Replay(N_replay,RL_params,physics_params,theta,tilings,actions,R):
+
+	####################################################################
+	# display full strings
+	np.set_printoptions(threshold='nan')
+	######################################################################
+	#######################   read off params 	 #########################
+	######################################################################
+	
+	# read off RL_params
+	RL_keys = ['N_episodes','gamma','alpha_0','eta','lmbda','eps','traces','dims','N_tiles','state_i','Vars','dVars','mu']
+	from numpy import array
+	for key,value in RL_params.iteritems():
+		#print key, repr(value)
+		if key not in RL_keys:
+			raise TypeError("Key '{}' not allowed for use in dictionary!".format(key))
+		# turn key to variable and assign its value
+		exec("{} = {}".format(key,repr(value)) ) in locals()
+
+	# read off physics params
+	physics_keys = ['L','max_t_steps','delta_t','J','hz','hx_i',
+				    'hx_f','psi_i','psi_f','E_i','E_f']
+	for key,value in physics_params.iteritems():
+		#print key, repr(value)
+		if key not in physics_keys:
+			raise TypeError("Key '{}' not allowed for use in dictionary!".format(key))
+		# turn key to variable and assign its value
+		exec( "{} = {}".format(key,repr(value)) ) in locals()
+
+	N_tilings, N_lintiles, N_vars = dims
+	N_tiles = N_lintiles**N_vars
+	N_actions = RL.actions_length()
+
+	lmbda=1.0
+
+
+	rho=1.0
+
+	u0 = 1.0/alpha_0*np.ones((N_tiles*N_tilings,), dtype=np.float64)
+	v0 = np.zeros(u0.shape, dtype=np.float64)
+
+	avail_actions = RL.all_actions()
+
+	e = np.zeros(theta.shape, dtype=np.float64)
+	# set trace function
+	trace_fn = eval('RL.E_traces_'+traces)
+
+	for j in xrange(N_replay):
+
+		S = state_i.copy()
+
+		# set traces to zero
+		e *= 0.0
+		# set initial usage vector
+		u = u0.copy()
+		# set initial aux v vector
+		v = v0.copy()
+
+		theta_inds = RL.find_feature_inds(S,tilings,N_tiles)
+		Q = np.sum(theta[theta_inds,0,:],axis=0)
+		E=0.0
+		Q_old=[0.0 for i in avail_actions]
+
+		
+		for t_step in xrange(len(actions)):
+
+			A = actions[t_step]
+			indA = avail_actions.index(A)
+
+			S[0]+=A
+
+			u[theta_inds] *= (1.0-eta)
+			u += (rho-1.0)*gamma*lmbda*v
+			u[theta_inds] += rho - (rho-1.0)*gamma*lmbda*eta*v[theta_inds]
+			# update aux v vector
+			v *= gamma*lmbda*rho
+			v[theta_inds] *= 1.0-eta
+			v[theta_inds] += rho
+
+			with np.errstate(divide='ignore'):
+				alpha = 1.0/(N_tilings*u[theta_inds])
+				alpha[u[theta_inds]<1E-12] = 1.0
+
+			# Q learning update rule 
+			delta = 0.0 - Q[indA]
+
+			if t_step > 0:
+				delta_TO = Q_old[indA] - np.sum(theta[theta_inds,t_step-1,indA],axis=0)
+			else:
+				delta_TO=0.0
+
+			e[theta_inds,t_step,indA] = rho*alpha*(trace_fn(e[theta_inds,t_step,indA],alpha) - gamma*lmbda*rho*E) 
+	
+			# theta <-- theta + \alpha*[theta(t-1)\phi(S) - theta(t)\phi(S)]
+			theta[theta_inds,t_step,indA] += rho*alpha*delta_TO
+			
+			# check if S_prime is terminal or went out of grid
+			if t_step == max_t_steps-1: 
+				# update theta
+				theta += (R+delta)*e
+				break
+
+
+			theta_inds = RL.find_feature_inds(S,tilings,N_tiles)
+
+			# TO
+			Q_old = np.sum(theta[theta_inds,t_step,:],axis=0)
+			# non-TO
+			Q_prime = np.sum(theta[theta_inds,t_step+1,:],axis=0)
+
+			"""
+			print 'glr', gamma*lmbda*rho
+			print "state, action", S[0], A
+			print 'final delta', delta+gamma*max(Q_prime), delta_TO
+			print 'Q and Q_prime', Q, Q_prime
+			print 'fucking elmt', np.round( np.sum(  theta[ RL.find_feature_inds(hx_i,tilings,N_tiles) ,0 ,: ],axis=0), 3)
+			print 'traces', np.round( np.sum(  e[ RL.find_feature_inds(hx_i,tilings,N_tiles) ,0 ,: ],axis=0), 3), gamma*lmbda*rho
+			"""
+
+			# update theta and e
+
+			delta += gamma*max(Q_prime)
+			theta += delta*e
+			
+			#user_input = raw_input("save data? (y or n) ")
+			#print t_step, np.round( np.sum(  theta[ RL.find_feature_inds(S,tilings,N_tiles),t_step,: ],axis=0), 3)
+		
+
+			E = np.sum(e[theta_inds,t_step,indA],axis=0)
+			e *= gamma*lmbda*rho
+
+			Q=Q_prime
+
+		print '____REPLAY_____', j
+		s = hx_i
+		t_step=0
+		print "reward is", R 
+		for a in actions:
+			theta_inds = RL.find_feature_inds(s,tilings,N_tiles)
+			"""
+			print 'state', s
+			print 'traces'
+			print np.sum( e[theta_inds,t_step,:], axis=0)
+			print '++++++'
+			print 'thetas'
+			"""
+			print np.round( np.sum(theta[theta_inds,t_step,:],axis=0), 3), s
+			t_step+=1
+			s+=a
+		print '__end__REPLAY_____'
+		
+	#exit()
+	#user_input = raw_input("continue? (y or n) ")	
+	return theta
+
+def Learn_Policy(state_i,theta,tilings,dims,actions,R):
+
+	N_tilings, N_lintiles, N_vars = dims
+	N_tiles = N_lintiles**N_vars
+
+	avail_actions = RL.all_actions()
+	s = state_i.copy()
+
+	for t_step, A in enumerate(actions):
+
+		indA = avail_actions.index(A)
+		s+=A
+		theta_inds = RL.find_feature_inds(s,tilings,N_tiles)
+
+		if max(theta.ravel())>R/N_tilings:
+			print 'max attained elsewhere'
+
+		theta[theta_inds,t_step,indA] = R/N_tilings
+
+
+
+	return theta
+
+
 
 def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
@@ -184,24 +363,19 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		exec( "{} = {}".format(key,repr(value)) ) in locals()
 
 	
-	# re-set parameters to calculate greedy polocy
-	RL_params['eps']=0.0
-	RL_params['lmbda']=0.0
-	#RL_params['alpha_0']=0.0
+	
 
 	######################################################################
 
-        print alpha_0
-        print RL_params['alpha_0']
 	# get dimensions
 	N_tilings, N_lintiles, N_vars = dims
 	N_tiles = N_lintiles**N_vars
 	N_actions = RL.actions_length()
-    
-        if theta is None:
-            theta=np.zeros((N_tiles*N_tilings,max_t_steps,N_actions), dtype=np.float64)
-        if tilings is None:
-            tilings = RL.gen_tilings(Vars,dVars,N_tilings)
+
+	if theta is None:
+		theta=np.zeros((N_tiles*N_tilings,max_t_steps,N_actions), dtype=np.float64)
+	if tilings is None:
+		tilings = RL.gen_tilings(Vars,dVars,N_tilings)
     
 	#===========================================================================
 	# if not greedy:
@@ -209,8 +383,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	# 	theta = np.zeros((N_tiles*N_tilings,max_t_steps,N_actions), dtype=np.float64)
 	# 	# calculate tilings
 	# 	tilings = RL.gen_tilings(Vars,dVars,N_tilings)
- #        
- #===========================================================================
+	#        
+	#===========================================================================
 		
 	# eta limits
 	hx_limits = [Vars[0][0],Vars[0][-1]]
@@ -313,7 +487,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		#eps = 0.1/np.sqrt(j+1)
 		#eps = 0.1/np.log(j+2)
 		#"""
-		N_explore=100
+		N_explore=1000
 		if j > N_explore:
 			eps=0.0
 		else:
@@ -325,8 +499,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 			# calculate greedy action(s) wrt behavior policy
 			if not greedy:
-				A_star = best_actions[t_step] 
-				#A_star = avail_actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )] 
+				#A_star = best_actions[t_step] 
+				A_star = avail_actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )] 
 			else:
 				A_star = avail_actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )]
 			#print Q
@@ -357,14 +531,15 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 			# calculate importance sampling ratio
 			#rho = tgt_policy/beh_policy
-			rho = min(1.0,tgt_policy/beh_policy)
-			#rho=1.0
-			#'''
+			#print 'RHO', rho
+			#rho = min(1.0,tgt_policy/beh_policy)
+			rho=1.0
+			'''
 			if rho > 1.0:
 				#rho = 0.0 
 				print 'rho > 1'
 				#user_input = raw_input("continue? (y or n) ")
-			#'''
+			'''
 			# take action A, observe state S_prime and reward R
 			################################################################################
 			######################    INTERACT WITH ENVIRONMENT    #########################
@@ -472,7 +647,12 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			
 			# Q learning update rule
 			delta = R - Q[avail_indA]
-			delta_TO = Q_old[avail_indA] - np.sum(theta[theta_inds,t_step,indA],axis=0)
+			#"""
+			if t_step > 0:
+				delta_TO = Q_old[indA] - np.sum(theta[theta_inds,t_step-1,indA],axis=0)
+			else:
+				delta_TO=0.0
+			#"""
 			#print 'DELTA', delta_TO
 
 			#user_input = raw_input("save data? (y or n) ")
@@ -482,7 +662,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			e[theta_inds,t_step,indA] = rho*alpha*(trace_fn(e[theta_inds,t_step,indA],alpha) - gamma*lmbda*rho*E) 
 	
 			# theta <-- theta + \alpha*[theta(t-1)\phi(S) - theta(t)\phi(S)]
-			#theta[theta_inds,t_step,indA] += rho*alpha*delta_TO
+			theta[theta_inds,t_step,indA] += rho*alpha*delta_TO
 			
 			# check if S_prime is terminal or went out of grid
 			if t_step == max_t_steps-1 or terminate: 
@@ -525,8 +705,9 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			# update theta and e
 
 			delta += gamma*max(Q_prime)
-			#delta=min(0.5,delta)
 			theta += delta*e
+
+			
 			
 			E = np.sum(e[theta_inds,t_step,indA],axis=0)
 			e *= gamma*lmbda*rho
@@ -537,7 +718,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			#"""
 			#print 'glr', gamma*lmbda*rho
 			#print "state, action", S[0], actions[indA], S_prime[0]
-			#print 'final delta', delta #, delta_TO
+			#print 'final deltas', delta, delta_TO
 			#print 'Q and Q_prime', Q, Q_prime
 			#print 'fucking elmt', np.round( np.sum(  theta[ RL.find_feature_inds(hx_i,tilings,N_tiles) ,0 ,: ],axis=0), 3)
 			#print 'traces', np.round( np.sum(  e[ RL.find_feature_inds(hx_i,tilings,N_tiles) ,0 ,: ],axis=0), 3), gamma*lmbda*rho
@@ -568,8 +749,10 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		#print '++++++++'
 		#exit()
 
+		#"""
 		if j > 2*N_explore:
 			exit()
+		#"""
 
 		print '_____________', j
 		s = hx_i
@@ -601,8 +784,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	
 	
 		# if greedy policy completes a full episode and if greedy fidelity is worse than inst one
-		if len(actions_taken)==max_t_steps and fidelity>best_fidelity and R >= 0:
-			#print fidelity, best_fidelity
+		if len(actions_taken)==max_t_steps and fidelity-best_fidelity>1E-12 and R >= 0:
+			print fidelity, best_fidelity
 			# update list of best actions
 			best_actions = actions_taken[:]
 			# calculate best protocol and fidelity
@@ -610,7 +793,12 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			t_vals, p_vals = t_best, protocol_best
 			#best_fidelity = Fidelity(psi_i,H_fid,[t_vals[0],t_vals[-1]],basis=basis,psi_f=psi_f,all_obs=False)[-1]
 			best_fidelity = Fidelity(psi_i,H_fid,t_vals,delta_t,basis=basis,psi_f=psi_f,all_obs=False)[-1]
-		
+			
+			#user_input = raw_input("continue? (y or n) ")
+
+			theta = Replay(100,RL_params,physics_params,theta,tilings,best_actions,R)
+			#theta = Learn_Policy(state_i,theta,tilings,dims,actions,R)
+	
 		'''	
 		if j%20 == 0:
 			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(j+1,np.round(fidelity,3),S_prime[0])
@@ -620,6 +808,10 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		#'''
 		# plot protocols and learning rate
 		if (j%500==0 and j!=0) or (np.round(fidelity,5) == 1.0):
+
+			RL_params['eps']=0.0
+			RL_params['lmbda']=0.0
+			RL_params['alpha_0']=0.0
 
 			# fig file name params
 			save = False #True
@@ -691,6 +883,11 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 						dataname  =  "best_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s.txt"   %args
 						np.savetxt(dataname,Data.T)
 
+		
+
+			RL_params['eps']=eps
+			RL_params['lmbda']=lmbda
+			RL_params['alpha_0']=alpha_0		
 		#'''
 
 	
@@ -703,7 +900,7 @@ def best_protocol(best_actions,hx_i,delta_t):
 	s = hx_i
 	protocol=[hx_i]
 	t = [0.0]
-	for a in best_actions:
+	for _i,a in enumerate(best_actions):
 		s+=a
 		t.append(t[-1]+delta_t)
 		protocol.append(s)

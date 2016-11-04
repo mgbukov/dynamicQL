@@ -1,14 +1,15 @@
 from Q_learning_WIS_TO_TD_L import Q_learning
-
 import Hamiltonian
-
 import numpy as np
 
 
 
 # define model params
 L = 2 # system size
-J = 1.0/0.809 # zz interaction
+if L==1:
+	J=0.0
+else:
+	J = 1.0/0.809 # zz interaction
 hz = 0.2 #0.9045/0.809 #1.0 # hz field
 
 hx_i = 0.0# -1.0 # initial hx coupling
@@ -24,16 +25,22 @@ H_params = {'J':J,'hz':hz}
 H,_ = Hamiltonian.Hamiltonian(L,fun=lin_fun,**H_params)
 
 # calculate initial state
-E_i, psi_i = H.eigsh(time=0,k=1,sigma=-100.0)
-E_i = E_i.squeeze()
-psi_i = psi_i.squeeze()
+if L==1:
+	E_i, psi_i = H.eigh()
+else:
+	E_i, psi_i = H.eigsh(time=0,k=2,which='BE',maxiter=1E10,return_eigenvectors=True)
+E_i = E_i[0]
+psi_i = psi_i[:,0]
 # calculate final state
 b = hx_f
-E_f, psi_f = H.eigsh(time=0,k=1,sigma=-100.0)
-E_f = E_f.squeeze()
-psi_f = psi_f.squeeze()
+if L==1:
+	E_f, psi_f = H.eigh()
+else:
+	E_f, psi_f = H.eigsh(time=0,k=2,which='BE',maxiter=1E10,return_eigenvectors=True)
+E_f = E_f[0]
+psi_f = psi_f[:,0]
 
-max_t_steps = 20 #40 
+max_t_steps = 40 #40 
 delta_t = 0.05 #0.05
 
 print "number of states is:", H.Ns
@@ -91,9 +98,4 @@ physics_params = {'L':L,'max_t_steps':max_t_steps,'delta_t':delta_t,'J':J,'hz':h
 
 # initiate learning
 Q_learning(RL_params,physics_params)
-
-
-
-
-
 
