@@ -1,24 +1,24 @@
 import numpy as np
 import pickle
-import Hamiltonian
+import Hamiltonian_alex as Hamiltonian
 from quspin.operators import exp_op
 import time
 import math
-        
-#global hx_discrete
-        
+from scipy.sparse.linalg import expm_multiply as expm
+
+np.random.seed(0)                
 def main():
     
     global action_set,hx_discrete
     
-    L = 10 # system size
+    L = 1 # system size
     J = 1.0/0.809 # zz interaction
-    hz = 0.2 #0.9045/0.809 #1.0 # hz field
-    hx_i = -1.0# -1.0 # initial hx coupling
-    hx_f = 1.0 #+1.0 # final hx coupling
+    hz = 0.5 #0.9045/0.809 #1.0 # hz field
+    hx_i = 0.# -1.0 # initial hx coupling
+    hx_f = 2.0 #+1.0 # final hx coupling
     N_time_step=40
     delta_t=0.05
-    N_restart=100
+    N_restart=10
     
     param={'J':J,'hz':hz,'hx':hx_i}
     
@@ -27,6 +27,7 @@ def main():
     
     # full system hamiltonian
     H,_ = Hamiltonian.Hamiltonian(L,fct=hx_vs_t,**param)
+   # print(H)
     
     # calculate initial and final states
     hx_discrete[0]=hx_i # just a trick to get initial state
@@ -35,28 +36,14 @@ def main():
     E_f, psi_target = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=0
     
-    action_set=[-0.2,0.,0.2]
+    action_set=[0.0,0.02,0.05,0.08,0.1,0.2,0.4,0.8,-0.02,-0.05,-0.08,-0.1,-0.2,-0.4,-0.8]
+    #action_set=[-0.2,0.,0.2]
+    
     
     param_SA={'Ti':1,'dT':0.01,'sweep_size':40,
               'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
               'delta_t':delta_t,'psi_target':psi_target,
               'hx_i':hx_i}
-    
-   # old,hx_discrete=random_trajectory(hx_i,N_time_step)
-   # best_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
-    
-    #===========================================================================
-    # for i in range(1000):
-    #     print(i,best_fid)
-    #     old,hx_discrete=propose_new_trajectory(old,hx_i,N_time_step)
-    #     new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
-    #     if new_fid>best_fid:
-    #         best_fid=new_fid
-    #         print(hx_discrete)
-    # 
-    # exit()
-    # 
-    #===========================================================================
     
     best_result=[0,0,0]
     all_results=[]
@@ -72,9 +59,13 @@ def main():
     
     
     print("Best of all:",best_result)
-    # Saving results:
-    pkl_file=open('data/allresults.pkl','wb')
+    print("All results:",all_results)
+    
+    
+    #Saving results:
+    pkl_file=open('data/allresultsL1.pkl','wb')
     pickle.dump(all_results,pkl_file)
+    pkl_file.close()
     
     
 def Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
@@ -87,8 +78,17 @@ def Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
     for t in range(N_time_step):
         psi_evolve = exp_op(H(time=t),a=-1j*delta_t).dot(psi_evolve)
     
+    #print(psi_evolve)
     return abs(np.sum(np.conj(psi_evolve)*psi_target))**2
-    
+
+def Fidelity_fast(psi_i,H,N_time_step,delta_t,psi_target):
+    # Useful for small systems size)
+    psi_evolve=psi_i.copy()
+    for t in range(N_time_step):
+       psi_evolve=expm(-1j*delta_t*(H(time=t).todense()),psi_evolve)
+    return abs(np.dot(np.transpose(np.conj(psi_evolve)),psi_target)[0,0])**2
+
+   
 def hx_vs_t(time): return hx_discrete[int(time)]
 
 def random_trajectory(hx_i,N_time_step):
@@ -143,13 +143,13 @@ def simulate_anneal(params):
     while T>0.:
         print("Current temperature=%s"%T,"Best fidelity=%s"%best_fid)
         #print("Current temperature=%s"%(1./beta),"Best fidelity=%s"%best_fid)
-        beta=1./T            
+        beta=1./T
         for _ in range(sweep_size):
-            
-            
             new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,hx_i,N_time_step)
             hx_discrete=new_hx_discrete
+            start=time.time()
             new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+            #print(time.time()-start)
             #print(new_fid)
             
             if new_fid > best_fid:
@@ -169,8 +169,9 @@ def simulate_anneal(params):
                 old_action_protocol=new_action_protocol
                 old_fid=new_fid
             #else:
-            #    print("move rejected!",np.exp(beta*dF)) 
+            #    print("move rejected!",np.exp(beta*dF))
         
+
         T-=dT
       
     return best_fid,best_action_protocol,best_hx_discrete
