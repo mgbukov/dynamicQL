@@ -40,7 +40,7 @@ def plot_protocols(y_val_list,z_val_list,x_val_list=None,title=None):
             #c=[fidelity]*N_time_step
             #x=np.array(range(N_time_step))
             #y=np.array(list(protocol))
-            points=plt.step(range(N_time_step),list(protocol),c=palette_ALEX[i],label=str(round(fidelity,2)))
+            points=plt.plot(range(N_time_step),list(protocol),c=palette_ALEX[i],label=str(round(fidelity,2)))
             i+=1
         plt.title(title)
         plt.xlabel('Time step')
