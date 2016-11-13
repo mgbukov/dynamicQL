@@ -1,19 +1,20 @@
-from Q_learning_WIS_TO_TD_L import Q_learning
+#from Q_learning_WIS_TO_TD_L import Q_learning
+from Q_learning_replay import Q_learning
 import Hamiltonian
 import numpy as np
 
 
 
 # define model params
-L = 2 # system size
+L = 1 # system size
 if L==1:
-	J=0.0
+	J=0.0 # required by PBC
 else:
-	J = 1.0/0.809 # zz interaction
-hz = 0.2 #0.9045/0.809 #1.0 # hz field
+	J=1.0#/0.809 # zz interaction
+hz = 0.5 #0.5 #0.9045/0.809 #1.0 # hz field
 
-hx_i = 0.0# -1.0 # initial hx coupling
-hx_f = 2.0 #+1.0 # final hx coupling
+hx_i= 0.0 # 0.0 #-1.0 # initial hx coupling
+hx_f= 2.0 #+1.0 # final hx coupling
 
 #"""
 # define dynamic params of H(t)
@@ -40,7 +41,7 @@ else:
 E_f = E_f[0]
 psi_f = psi_f[:,0]
 
-max_t_steps = 40 #40 
+max_t_steps = 60 #40 
 delta_t = 0.05 #0.05
 
 print "number of states is:", H.Ns

@@ -39,54 +39,6 @@ def truncate(f, n):
     		f_trunc.append( '.'.join([i,(d + '0'*n)[:n]]))
     return f_trunc
 
-"""
-def Fidelity(psi_i,H_fid,t_vals,basis=None,psi_f=None,all_obs=False):
-	''' This function calculates the physical quantities given a time-dep Hamiltonian H_fid.
-		If psi_f is not given, then it returns the fidelity in the instantaneous eigenstate, otherwise
-		--- the fidelity in the final state. 
-	'''
-	# get sysstem size
-	L = basis.L
-	# evolve state
-	psi_t = H_fid.evolve(psi_i,t_vals[0],t_vals,iterate=True,atol=1E-12,rtol=1E-12)
-
-	# fidelity
-	fid = []
-	if all_obs:
-		# entanglement entropy density
-		Sent=[]
-		subsys = [j for j in range(L/2)]
-		# energy
-		E=[]
-		# energy fluctuations
-		dE=[]
-
-	for i, psi in enumerate(psi_t):
-
-		if psi_f is not None:
-			# calculate w.r.t. final state
-			psi_target = psi_f
-		else:
-			# calculate w.r.t. instantaneous state
-			_,psi_inst = H_fid.eigsh(time=t_vals[i],k=1,sigma=-100.0)
-			psi_target = psi_inst.squeeze()
-
-		fid.append( abs(psi.conj().dot(psi_target))**2 )
-
-		if all_obs:
-			E.append( H_fid.matrix_ele(psi,psi,time=t_vals[i]).real/L )
-
-			dE.append( np.sqrt( (H_fid*H_fid(time=t_vals[i])).matrix_ele(psi,psi,time=t_vals[i]).real/L**2 - E[i]**2)  )
-			#print  H_fid2.matrix_ele(psi,psi,time=t_vals[i]).real/L**2 - E[i]**2
-
-			Sent.append( ent_entropy(psi,basis,chain_subsys=subsys)['Sent'] )
-
-	if not all_obs:
-		return fid
-	else:
-		return fid , E, dE, Sent
-"""
-
 def Fidelity(psi_i,H_fid,t_vals,delta_t,basis=None,psi_f=None,all_obs=False,Vf=None):
 	""" This function calculates the physical quantities given a time-dep Hamiltonian H_fid.
 		If psi_f is not given, then it returns the fidelity in the instantaneous eigenstate, otherwise
@@ -318,15 +270,32 @@ def Learn_Policy(state_i,theta,tilings,dims,actions,R):
 	for t_step, A in enumerate(actions):
 
 		indA = avail_actions.index(A)
-		s+=A
+		
 		theta_inds = RL.find_feature_inds(s,tilings,N_tiles)
 
-		if max(theta.ravel())>R/N_tilings:
+		if max(theta[theta_inds,t_step,:].ravel())>R/N_tilings:
 			print 'max attained elsewhere'
 
 		theta[theta_inds,t_step,indA] = R/N_tilings
+		s+=A
 
+	print '____REPLAY_____'
+	s = state_i.copy()
+	print "reward is", R 
+	for t_step, a in enumerate(actions):
+		theta_inds = RL.find_feature_inds(s,tilings,N_tiles)
+		"""
+		print 'state', s
+		print 'traces'
+		print np.sum( e[theta_inds,t_step,:], axis=0)
+		print '++++++'
+		print 'thetas'
+		"""
+		print np.round( np.sum(theta[theta_inds,t_step,:],axis=0), 3), np.around(s,3)
+		s+=a
+	print '__end__REPLAY_____'
 
+	#exit()
 
 	return theta
 
@@ -443,6 +412,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	best_fidelity = 0.0
 	best_actions=[random.choice(actions) for j in range(max_t_steps)]
 
+	# calculate importance sampling ratio
+	rho=1.0
 		
 	# loop over episodes
 	avail_actions = actions
@@ -498,15 +469,10 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		for t_step in xrange(max_t_steps): #
 			
 
-			# calculate greedy action(s) wrt behavior policy
-			if not greedy:
-				A_star = best_actions[t_step] 
-				#A_star = avail_actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )] 
-			else:
-				A_star = avail_actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )]
-			#print Q
-			#print A_star, avail_actions[np.argmax(Q)], np.argmax(Q)
-			if random.uniform(0.0,1.0) <= 1.0 - eps:
+			# calculate greedy action(s) wrt Q policy
+			A_star = avail_actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )]
+			
+			if random.uniform(0.0,1.0) <= 1.0 - eps or greedy:
 				A = A_star
 			else:
 				A = random.choice(list(set(avail_actions) - set([A_star]) )) #random.choice(avail_actions)
@@ -520,27 +486,9 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			if abs(A - A_star) > np.finfo(A).eps:
 				print 'traces reset'
 				e *= 0.0
-				beh_policy = eps/len(a_inds)
-			else:
-				beh_policy = eps/len(a_inds) + 1.0-eps
+				
+			
 
-			# calculate probability of taking A under target policy
-			if A not in [avail_actions[a] for a in np.argwhere(Q==np.amax(Q))]:
-				tgt_policy = 0.1/len(a_inds) #eps/len(a_inds)
-			else:
-				tgt_policy = 0.1/len(a_inds) + 1.0-0.1 #eps/len(a_inds) + 1.0-eps
-
-			# calculate importance sampling ratio
-			#rho = tgt_policy/beh_policy
-			#print 'RHO', rho
-			rho = min(1.0,tgt_policy/beh_policy)
-			#rho=1.0
-			'''
-			if rho > 1.0:
-				#rho = 0.0 
-				print 'rho > 1'
-				#user_input = raw_input("continue? (y or n) ")
-			'''
 			# take action A, observe state S_prime and reward R
 			################################################################################
 			######################    INTERACT WITH ENVIRONMENT    #########################
@@ -579,8 +527,13 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 				'''
 				### enable these lines if instantaneous fidelity is needed
 				# sparse
-				_,psi_inst = _sla.eigsh(H,time=t_inst[-1]+delta_t,k=1,sigma=-100)[1] 
-				psi_inst = psi_inst.squeeze()
+				#_,psi_inst = _sla.eigsh(H,time=t_inst[-1]+delta_t,k=1,sigma=-100)[1] 
+				#psi_inst = psi_inst.squeeze()
+				if L==1:
+					_, psi_inst = H.eigh(time=t_inst[-1]+delta_t)
+				else:
+					_, psi_inst = H.eigsh(time=t_inst[-1]+delta_t,k=2,which='BE',maxiter=1E10,return_eigenvectors=True)
+				psi_inst = psi_inst[:,0]
 				# calculate instantaneous fidelity
 				inst_fidelity += abs( psi.conj().dot(psi_inst) )**2
 				# give inst reward
@@ -654,9 +607,6 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			else:
 				delta_TO=0.0
 			#"""
-			#print 'DELTA', delta_TO
-
-			#user_input = raw_input("save data? (y or n) ")
 			
 			# update traces
 			#e[theta_inds,t_step,indA] = rho*alpha*trace_fn(e[theta_inds,t_step,indA],alpha)
@@ -793,23 +743,23 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			#user_input = raw_input("continue? (y or n) ")
 
 			#theta = Replay(50,RL_params,physics_params,theta,tilings,best_actions,R)
-			#theta = Learn_Policy(state_i,theta,tilings,dims,actions,R)
+			theta = Learn_Policy(state_i,theta,tilings,dims,best_actions,R)
 	
 
 
 		#"""
-		if j >= 2*N_explore: #6:
+		if j >= 2*N_explore: #6: 
 			exit()
 		#"""
 
 
 
 
-		'''	
+		#'''	
 		if j%20 == 0:
 			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(j+1,np.round(fidelity,3),S_prime[0])
 			print 'best encountered fidelity is {}.'.format(np.round(best_fidelity,3))
-		'''
+		#'''
 
 		#'''
 		# plot protocols and learning rate
@@ -911,7 +861,6 @@ def best_protocol(best_actions,hx_i,delta_t):
 		t.append(t[-1]+delta_t)
 		protocol.append(s)
 	return protocol, t
-
 
 def plot_Q(x,y,Q_plot,save_name,save_params,save=False):
 	""" This function plots the Q function """

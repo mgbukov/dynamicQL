@@ -6,13 +6,14 @@ random.seed()
 
 # define actions
 #pos_actions = [0.01,.05,0.1,0.15,0.2,0.5,1.0,1.5]
-pos_actions=[0.02,0.05,0.08,0.1,0.2,0.4,0.8]
+#pos_actions=list(0.2*np.asarray([0.02,0.05,0.08,0.1,0.2,0.4,0.8]))
+pos_actions=[0.02,0.05,0.08,0.1,0.2,0.5,1.0]
 #pos_actions=[0.05,0.2]
 #pos_actions=[0.05]
 def all_actions():
 	neg_actions=[]
 	[neg_actions.append(-i) for i in pos_actions]
-	return pos_actions + [0.0] + neg_actions
+	return sorted(pos_actions + [0.0] + neg_actions)
 
 actions = all_actions()
 
