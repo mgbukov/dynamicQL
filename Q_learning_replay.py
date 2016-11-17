@@ -2,6 +2,7 @@ import numpy as np
 import scipy.linalg as _la
 import scipy.sparse.linalg as _sla
 import numpy.random as random
+from copy import deepcopy
 
 import Reinforcement_Learning as RL
 import Hamiltonian
@@ -272,36 +273,42 @@ def Learn_Policy(state_i,theta,tilings,dims,actions,R):
 
 	avail_actions = RL.all_actions()
 	s = state_i.copy()
+	ind_dh=avail_actions.index(0.0)
 
 	for t_step, A in enumerate(actions):
 		# calculate state-action indices
 		indA = avail_actions.index(A)
 		theta_inds = RL.find_feature_inds(s,tilings,N_tiles)
 			
-
 		#'''
 		# check if max learnt
-		if max(theta[theta_inds,t_step,:].ravel())>R/N_tilings and R>0:
+		if max(theta[theta_inds,t_step,ind_dh,:].ravel())>R/N_tilings and R>0:
 			# Q function
-			Q = np.sum(theta[theta_inds,t_step,:],axis=0)
+			Q = np.sum(theta[theta_inds,t_step,ind_dh,:],axis=0)
 			indA_max=np.argmax(Q)
 			# rescale theta
 			#print '1.', theta[theta_inds,t_step,indA_max].sum(), R
+			#print Q
 			if max(Q) > 1E-13:
-				theta[theta_inds,t_step,:]*=R/Q[indA_max]
+				theta[theta_inds,t_step,ind_dh,:]*=R/Q[indA_max]
 			#print '2.', theta[theta_inds,t_step,indA_max].sum(), R
 			#print abs(max(np.sum(theta[theta_inds,t_step,:],axis=0)) - R )>1E-12
 			#print max(theta[theta_inds,t_step,:].ravel()), R/N_tilings
 			
 
 		# calculate theta function
-		theta[theta_inds,t_step,indA] = R/N_tilings + 1E-1/N_tilings
+		theta[theta_inds,t_step,ind_dh,indA] = R/N_tilings + 1E-1/N_tilings
 		"""
-		if abs(max(np.sum(theta[theta_inds,t_step,:],axis=0)) - (R+1E-1) )>1E-12  and R>0:
+		if abs(max(np.sum(theta[theta_inds,t_step,ind_dh,:],axis=0)) - (R+1E-1) )>1E-12  and R>0:
 			print 'BUGG'
 			exit()
 		"""
+
+		Q = np.sum(theta[theta_inds,t_step,ind_dh,:],axis=0)
+		indA_max=np.argmax(Q)
+
 		s+=A
+		ind_dh=deepcopy(indA)
 
 	return theta
 
@@ -349,7 +356,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	N_actions = RL.actions_length()
 
 	if theta is None:
-		theta=np.zeros((N_tiles*N_tilings,max_t_steps,N_actions), dtype=np.float64)
+		theta=np.zeros((N_tiles*N_tilings,max_t_steps,N_actions,N_actions), dtype=np.float64)
 	if tilings is None:
 		tilings = RL.gen_tilings(Vars,dVars,N_tilings)
    	
@@ -358,19 +365,13 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 	# pre-allocate traces variable
 	e = np.zeros(theta.shape, dtype=np.float64)
-	#e = np.zeros((N_tiles*N_tilings,N_actions), dtype=np.float64)
 	
-	
-
 	if not greedy:
 		# pre-allocate usage vector
-		u0 = 1.0/alpha_0*np.ones((N_tiles*N_tilings,), dtype=np.float64)
-		#u0 = 1.0/alpha_0*np.ones(theta.shape, dtype=np.float64)
+		u0 = 1.0/alpha_0*np.ones((N_tiles*N_tilings,N_actions), dtype=np.float64)
 	else:
-		u0 = np.inf*np.ones((N_tiles*N_tilings,), dtype=np.float64)
-		#u0 = np.inf*np.ones(theta.shape, dtype=np.float64)
-	v0 = np.zeros(u0.shape, dtype=np.float64)
-
+		u0 = np.inf*np.ones((N_tiles*N_tilings,N_actions), dtype=np.float64)
+	
 	# set terminate episode variable for wandering off the eta grid
 	terminate = False
 	# define all actions
@@ -410,19 +411,15 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	best_actions=[random.choice(actions) for j in range(max_t_steps)]
 
 	# calculate importance sampling ratio
-	rho=1.0
 	R_best=None
 		
 	# loop over episodes
-	avail_actions = actions
-	a_inds = [i for i in range(len(avail_actions))]
+	a_inds = [i for i in range(len(actions))]
 	for j in xrange(N_episodes):
 		# set traces to zero
-		#e *= 0.0
+		e *= 0.0
 		# set initial usage vector
 		u = u0.copy()
-		# set initial aux v vector
-		v = v0.copy()
 
 		# set initial state of episode
 		S = state_i.copy()
@@ -437,9 +434,11 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		
 		# get set of features present in S
 		theta_inds = RL.find_feature_inds(S,tilings,N_tiles)
-		Q = np.sum(theta[theta_inds,0,:],axis=0)
+		ind_dh=actions.index(0.0)
+		Q = np.sum(theta[theta_inds,0,ind_dh,:],axis=0)
 		E=0.0
 		Q_old=[0.0 for i in actions]
+		ind_dh_old=deepcopy(ind_dh)
 		# preallocate physical quantties
 		psi = psi_i.copy() # #	quantum state at time
 
@@ -467,16 +466,16 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			
 
 			# calculate greedy action(s) wrt Q policy
-			A_star = avail_actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )]
+			A_star = actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )]
 			
 			if random.uniform(0.0,1.0) <= 1.0 - eps or greedy:
 				A = A_star
 			else:
-				A = random.choice(list(set(avail_actions) - set([A_star]) )) #random.choice(avail_actions)
+				A = random.choice(list(set(actions) - set([A_star]) )) 
 			
 			# find the index of A
-			avail_indA = avail_actions.index(A)
-			indA = a_inds[avail_indA]
+			#avail_indA = avail_actions.index(A)
+			indA = actions.index(A) #a_inds[avail_indA]
 			
 			# reset traces and calculate probability under beh policy
 			if abs(A - A_star) > np.finfo(A).eps:
@@ -496,6 +495,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			S_prime = S.copy()
 			# calculate new field value 			
 			S_prime[0] += A
+			#S_prime[1] = A # assign velocity
 
 			### assign rewards
 			R = 0.0
@@ -547,7 +547,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			################################################################################
 			################################################################################
 			################################################################################
-			
+			#print S, S_prime, A
+
 			# update episodic return
 			Return_j += R
 
@@ -561,30 +562,24 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			############################
 
 			# calculate usage and alpha vectors
-			u[theta_inds] *= (1.0-eta)
-			u += (rho-1.0)*gamma*lmbda*v
-			u[theta_inds] += rho - (rho-1.0)*gamma*lmbda*eta*v[theta_inds]
-			# update aux v vector
-			v *= gamma*lmbda*rho
-			v[theta_inds] *= 1.0-eta
-			v[theta_inds] += rho
-
+			u[theta_inds,ind_dh] *= (1.0-eta)
+			u[theta_inds,ind_dh] += 1.0
 			with np.errstate(divide='ignore'):
-				alpha = 1.0/(N_tilings*u[theta_inds])
-				alpha[u[theta_inds]<1E-12] = 1.0
+				alpha = 1.0/(N_tilings*u[theta_inds,ind_dh])
+				alpha[u[theta_inds,ind_dh]<1E-12] = 1.0
 			
 			# Q learning update rule
-			delta = R - Q[avail_indA]
+			delta = R - Q[indA]
 			if t_step > 0:
-				delta_TO = Q_old[indA] - np.sum(theta[theta_inds,t_step-1,indA],axis=0)
+				delta_TO = Q_old[indA] - np.sum(theta[theta_inds,t_step-1,ind_dh_old,indA],axis=0)
 			else:
 				delta_TO=0.0
 			
 			# update traces
-			e[theta_inds,t_step,indA] = rho*alpha*(trace_fn(e[theta_inds,t_step,indA],alpha) - gamma*lmbda*rho*E) 
+			e[theta_inds,t_step,ind_dh,indA] = alpha*(trace_fn(e[theta_inds,t_step,ind_dh,indA],alpha) - gamma*lmbda*E) 
 	
 			# theta <-- theta + \alpha*[theta(t-1)\phi(S) - theta(t)\phi(S)]
-			theta[theta_inds,t_step,indA] += rho*alpha*delta_TO
+			theta[theta_inds,t_step,ind_dh,indA] += alpha*delta_TO
 			
 			# check if S_prime is terminal or went out of grid
 			if t_step == max_t_steps-1 or terminate: 
@@ -599,22 +594,24 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			# get set of features present in S_prime
 			theta_inds = RL.find_feature_inds(S_prime,tilings,N_tiles)
 			# TO
-			Q_old = np.sum(theta[theta_inds,t_step,:],axis=0)
+			Q_old = np.sum(theta[theta_inds,t_step,ind_dh,:],axis=0)
 			# non-TO
-			Q_prime = np.sum(theta[theta_inds,t_step+1,:],axis=0)
+			Q_prime = np.sum(theta[theta_inds,t_step+1,indA,:],axis=0)
 
 			# update theta and e
 			delta += gamma*max(Q_prime)
 			theta += delta*e
 
-			E = np.sum(e[theta_inds,t_step,indA],axis=0)
-			e *= gamma*lmbda*rho
+			E = np.sum(e[theta_inds,t_step,ind_dh,indA],axis=0)
+			e *= gamma*lmbda
 			
 			################################
 
 			# S <- S_prime
 			S = S_prime[:]
 			Q = Q_prime[:]
+			ind_dh_old = deepcopy(ind_dh)
+			ind_dh = deepcopy(indA)
 
 	
 		if greedy:
@@ -625,7 +622,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		Return[j] = Return_j
 		FidelitY[j] = fidelity
 	
-	
+		print R, S_prime, actions[ind_dh]
+
 		# if greedy policy completes a full episode and if greedy fidelity is worse than inst one
 		if len(actions_taken)==max_t_steps and fidelity-best_fidelity>1E-12 and R >= 0:
 			print fidelity, best_fidelity
@@ -642,7 +640,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			theta = Learn_Policy(state_i,theta,tilings,dims,best_actions,R_best)
 	
 		# replay best encountered every 100 episodes
-		if j%40==0 and j!=0 and R_best is not None:
+		if j%5==0 and j!=0 and R_best is not None:
 			#theta = Replay(50,RL_params,physics_params,theta,tilings,best_actions,R_best)
 			theta = Learn_Policy(state_i,theta,tilings,dims,best_actions,R_best)
 		#elif j <= 1E3:
@@ -681,7 +679,6 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			Q_args = (RL_params,physics_params)
 			Q_kwargs = {'theta':theta,'tilings':tilings}
 			protocol_greedy, t_greedy = Q_learning(*Q_args,greedy=True,**Q_kwargs)
-
 					
 			# calculate inst fidelities of interpolated protocols
 			t_vals, p_vals = t_inst, protocol_inst

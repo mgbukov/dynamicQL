@@ -7,7 +7,7 @@ random.seed()
 # define actions
 #pos_actions = [0.01,.05,0.1,0.15,0.2,0.5,1.0,1.5]
 #pos_actions=list(0.2*np.asarray([0.02,0.05,0.08,0.1,0.2,0.4,0.8]))
-pos_actions=[0.02,0.05,0.08,0.1,0.2,0.5,1.0]
+pos_actions=[0.01,0.02,0.05,0.1,0.2,0.5,1.0]
 #pos_actions=[0.05,0.2]
 #pos_actions=[0.05]
 def all_actions():
@@ -39,6 +39,7 @@ def gen_tilings(Vars,dVars,N_tilings):
 	#var2 = Vars[2]
 
 	#tiling = np.array( [[i,j,k] for i in var0 for j in var1 for k in var2] )
+	#tiling = np.array( [[i,j] for i in var0 for j in var1] )
 	tiling = np.array( [[i] for i in var0] )
 
 	#tilings = (tiling + np.random.uniform(0,dVars,len(Vars)) for j in xrange(N_tilings))

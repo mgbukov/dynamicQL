@@ -1,6 +1,7 @@
 #from Q_learning_WIS_TO_TD_L import Q_learning
 from Q_learning_replay import Q_learning
 import Hamiltonian
+import Reinforcement_Learning as RL
 import numpy as np
 
 
@@ -11,10 +12,10 @@ if L==1:
 	J=0.0 # required by PBC
 else:
 	J=1.0#/0.809 # zz interaction
-hz = 0.5 #0.5 #0.9045/0.809 #1.0 # hz field
+hz = 1.0 #0.5 #0.5 #0.9045/0.809 #1.0 # hz field
 
-hx_i= 0.0 # 0.0 #-1.0 # initial hx coupling
-hx_f= 2.0 #+1.0 # final hx coupling
+hx_i= -1.0 # 0.0 #-1.0 # initial hx coupling
+hx_f= +1.0 #+1.0 # final hx coupling
 
 #"""
 # define dynamic params of H(t)
@@ -41,7 +42,7 @@ else:
 E_f = E_f[0]
 psi_f = psi_f[:,0]
 
-max_t_steps = 60 #40 
+max_t_steps = 40 #40 
 delta_t = 0.05 #0.05
 
 print "number of states is:", H.Ns
@@ -49,7 +50,9 @@ print "initial and final energies are:", E_i, E_f
 
 
 ##### RL params #####
+actions=RL.all_actions()
 var0_min, var0_max = hx_i-1.0, hx_f+1.0
+var1_min, var1_max = min(actions), max(actions)
 
 N_tilings = 40
 N_lintiles = 20
@@ -58,14 +61,20 @@ N_vars = 1
 dims = [N_tilings, N_lintiles, N_vars]
 
 var0 = list( np.linspace(var0_min, var0_max,N_lintiles) ) 
+#var1 = list( np.linspace(var1_min, var1_max,N_lintiles) ) 
 
 dvar0 = var0[1]-var0[0]
+#dvar1 = var1[1]-var1[0]
+
+#Vars = [var0,var1]
+#dVars = [dvar0,dvar1]
 
 Vars = [var0]
 dVars = [dvar0]
 
 ########
 # define RL  hyper params
+#state_i = np.array([hx_i,0.0])
 state_i = np.array([hx_i])
 
 N_episodes = 30
