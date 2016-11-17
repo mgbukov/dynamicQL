@@ -44,20 +44,22 @@ def main():
 
 def plot_protocols(y_val_list,z_val_list,x_val_list=None,title=None):
     '''
-    Shows the plot for the followed protocols. Fidelity is shown in the legend.    
-    '''
+        Shows the plot for the followed protocols. Fidelity is shown in the legend.
+        Make constraints -> hx with [-3,1]
     
-    
+    ''' 
     plt.rc('text', usetex=True)
     plt.rc('font', **{'family':'serif'})
-    
     
     if x_val_list is None:
         i=0
         for protocol,fidelity in zip(y_val_list,z_val_list):
             N_time_step=len(protocol)
+            x=np.linspace(0,2,N_time_step)
+            y=list(protocol)
+            
             # Change plot to step if u want true protocol 
-            points=plt.plot(range(N_time_step),list(protocol),c=palette_ALEX[i],label=str(round(fidelity,2)))
+            points=plt.plot(x,y,c=palette_ALEX[i],label=str(round(fidelity,2)))
             i+=1
             
         plt.title(title)

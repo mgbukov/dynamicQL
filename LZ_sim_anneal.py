@@ -4,9 +4,9 @@ import Hamiltonian_alex as Hamiltonian
 from quspin.operators import exp_op
 import time
 import math
+import sys # for running in batch from terminal
 from scipy.sparse.linalg import expm_multiply as expm
-
-np.random.seed(0)                
+                
 def main():
     
     global action_set,hx_discrete
@@ -14,12 +14,28 @@ def main():
     L = 1 # system size
     J = 1.0/0.809 # zz interaction
     hz = 0.5 #0.9045/0.809 #1.0 # hz field
-    hx_i = 0.# -1.0 # initial hx coupling
-    hx_f = 2.0 #+1.0 # final hx coupling
-    N_time_step=40
+    hx_i = -1.0# -1.0 # initial hx coupling
+    hx_f = 1.0 #+1.0 # final hx coupling
+    N_quench=20
     delta_t=0.05
-    N_restart=10
+    N_restart=2
     
+    action_set1=[-1.0,0.,1.0]
+    action_set2=[0.0,-0.02,0.02,0.05,-0.05,0.08,-0.08,0.1,-0.1,-0.2,0.2,-0.4,0.4,-0.8,0.8]
+    action_set3=[0.,0.02,0.05,0.08,0.1,0.2,0.4,0.8]
+    action_set4=[-10.,0.,10.]
+    
+    if len(sys.argv)>1:
+        # argv order : Number of time step, action set number, filename for output
+        N_time_step=int(sys.argv[1])
+        action_set_no=sys.argv[2]
+        action_set=eval('action_set'+action_set_no)
+        outfile_name=sys.argv[3]
+    else:
+        N_time_step=40
+        outfile_name='BB_action_set_1'
+        action_set=action_set1
+
     param={'J':J,'hz':hz,'hx':hx_i}
     
     # dynamical part at every time step (initiaze to zero everywhere) 
@@ -36,34 +52,31 @@ def main():
     E_f, psi_target = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=0
     
-    action_set=[0.0,0.02,0.05,0.08,0.1,0.2,0.4,0.8,-0.02,-0.05,-0.08,-0.1,-0.2,-0.4,-0.8]
-    #action_set=[-0.2,0.,0.2]
+    print("Current action set:",action_set)
     
     
-    param_SA={'Ti':1,'dT':0.01,'sweep_size':40,
-              'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
-              'delta_t':delta_t,'psi_target':psi_target,
-              'hx_i':hx_i}
+    param_SA={'Ti':1,'sweep_size':40,
+                'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
+                'delta_t':delta_t,'psi_target':psi_target,
+                'hx_i':hx_i,'N_quench':N_quench}
     
-    best_result=[0,0,0]
     all_results=[]
     for it in range(N_restart):
-        print("Iteration:",it)
+       # print("Iteration:",it)
         result=simulate_anneal(param_SA)
         all_results.append(result)
-        print("Best fidelity during iteration: %s"%result[0])
-        print("Corresponding trajectory:",result[2])
+        #print("Best fidelity during iteration: %s"%result[0])
+        #print("Corresponding trajectory:",result[2])
         
-        if result[0] > best_result[0]:
-            best_result=result
+        #if result[0] > best_result[0]:
+        #    best_result=result
     
-    
-    print("Best of all:",best_result)
-    print("All results:",all_results)
+    #print("Best of all:",best_result)
+    #print("All results:",all_results)
     
     
     #Saving results:
-    pkl_file=open('data/allresultsL1.pkl','wb')
+    pkl_file=open('data/%s.pkl'%outfile_name,'wb')
     pickle.dump(all_results,pkl_file)
     pkl_file.close()
     
@@ -116,7 +129,10 @@ def simulate_anneal(params):
     
     # Simulated annealing parameters
     T=params['Ti']
-    dT=params['dT']
+    Ti=T
+    N_quench=params['N_quench']
+    step=0.0
+    #dT=params['dT']
     sweep_size=params['sweep_size']
     beta=1./T
 
@@ -140,8 +156,9 @@ def simulate_anneal(params):
     old_action_protocol=best_action_protocol
     old_fid=best_fid
     
-    while T>0.:
-        print("Current temperature=%s"%T,"Best fidelity=%s"%best_fid)
+    while T>1E-6:
+        print(T,best_fid)
+        #print("Current temperature=%s"%T,"Best fidelity=%s"%best_fid)
         #print("Current temperature=%s"%(1./beta),"Best fidelity=%s"%best_fid)
         beta=1./T
         for _ in range(sweep_size):
@@ -171,8 +188,8 @@ def simulate_anneal(params):
             #else:
             #    print("move rejected!",np.exp(beta*dF))
         
-
-        T-=dT
+        step+=1.0
+        T=Ti*(1.0-step/N_quench)
       
     return best_fid,best_action_protocol,best_hx_discrete
 
