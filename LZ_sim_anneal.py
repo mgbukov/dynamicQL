@@ -16,9 +16,9 @@ def main():
     hz = 0.5 #0.9045/0.809 #1.0 # hz field
     hx_i = -1.0# -1.0 # initial hx coupling
     hx_f = 1.0 #+1.0 # final hx coupling
-    N_quench=20
+    N_quench=100
     delta_t=0.05
-    N_restart=2
+    N_restart=50
     
     action_set1=[-1.0,0.,1.0]
     action_set2=[0.0,-0.02,0.02,0.05,-0.05,0.08,-0.08,0.1,-0.1,-0.2,0.2,-0.4,0.4,-0.8,0.8]
@@ -157,7 +157,7 @@ def simulate_anneal(params):
     old_fid=best_fid
     
     while T>1E-6:
-        print(T,best_fid)
+        #print(T,best_fid)
         #print("Current temperature=%s"%T,"Best fidelity=%s"%best_fid)
         #print("Current temperature=%s"%(1./beta),"Best fidelity=%s"%best_fid)
         beta=1./T
