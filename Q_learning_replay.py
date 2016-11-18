@@ -282,7 +282,6 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		
 		# generate episode
 		for t_step in xrange(max_t_steps): #
-			
 
 			# calculate greedy action(s) wrt Q policy
 			A_star = actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )]
@@ -324,13 +323,15 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			###########################
 			######  Environment  ######
 			###########################
-
+			
 			if not terminate:
 
 				# update dynamic arguments in place: ramp = m*t+b
 
 				b = S_prime[0]
 				psi = exp_op(H(time=t_step*delta_t),a=-1j*delta_t).dot(psi)
+
+				
 
 				# assign reward
 				if t_step == max_t_steps-1:
@@ -406,7 +407,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			S = S_prime[:]
 			Q = Q_prime[:]
 
-	
+		
+
 		if greedy:
 			return protocol_inst, t_inst  
 
@@ -415,7 +417,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		Return[j] = Return_j
 		FidelitY[j] = fidelity
 	
-	
+
 		# if greedy policy completes a full episode and if greedy fidelity is worse than inst one
 		if len(actions_taken)==max_t_steps and fidelity-best_fidelity>1E-12 and R >= 0:
 			# update list of best actions
@@ -442,7 +444,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 		#'''
 		# plot protocols and learning rate
-		if (j%500==0 and j!=0) or (np.round(fidelity,5) == 1.0):
+		if (j%1000==0 and j!=0) or (np.round(fidelity,5) == 1.0):
 
 			RL_params['eps']=0.0
 			RL_params['lmbda']=0.0
@@ -470,6 +472,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			
 			t_vals, p_vals = t_best, protocol_best
 			F_best, E_best, dE_best, Sent_best, Sd_best = Fidelity(psi_i,H_fid,t_vals,delta_t,basis=basis,psi_f=psi_f,all_obs=True,Vf=Vf)
+
+			print F_best[-1], type(F_best[-1])
 
 			# prepare plot data
 			times = [t_inst,t_greedy,t_best]
@@ -628,7 +632,7 @@ def plot_protocols(times,protocols,quantities,save_name,save_params,save=False):
 		params += tuple( np.around( [quantities[j][-1]], 3) )
 		titlestr += titles[j]
 
-		plt.step(times[j],protocols[j],str_c[j],linewidth=1,label=str_p[j])
+		plt.step(times[j],protocols[j],str_c[j],marker='.',linewidth=1,label=str_p[j])
 		plt.plot(times[j],quantities[j],str_c[j]+'--',linewidth=1,label=str_f[j])
 
 		t_max.append(times[j][-1])

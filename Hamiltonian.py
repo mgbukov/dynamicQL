@@ -11,8 +11,8 @@ def Hamiltonian(L,J,hz,fun=None,fun_args=[],basis=None):
 		basis = spin_basis_1d(L=L,kblock=0,pblock=1,pauli=False)
 			
 	zz_int =[[J,i,(i+1)%L] for i in range(L)]
-	x_field=[[-1.0,i] for i in range(L)]
-	z_field=[[-hz,i] for i in range(L)]
+	x_field=[[1.0,i] for i in range(L)]
+	z_field=[[hz,i] for i in range(L)]
 
 	static = [["zz",zz_int],["z",z_field]]
 	dynamic = [["x",x_field,fun,fun_args]]

@@ -40,7 +40,7 @@ else:
 E_f = E_f[0]
 psi_f = psi_f[:,0]
 
-max_t_steps = 41 #41 
+max_t_steps = 20 #41 
 delta_t = 0.05 #0.05
 
 print "number of states is:", H.Ns
@@ -84,7 +84,7 @@ eps = 0.1
 np.set_printoptions(threshold='nan')
 
 RL_params ={'N_episodes':N_episodes,'gamma':gamma,'alpha_0':alpha_0,'eta':eta,'lmbda':lmbda,'eps':eps,
-			'traces':traces,'dims':dims,'state_i':state_i,'Vars':Vars,'dVars':dVars,'mu':mu}
+			'traces':traces,'dims':dims,'state_i':state_i,'Vars':Vars,'dVars':dVars}
 
 physics_params = {'L':L,'max_t_steps':max_t_steps,'delta_t':delta_t,'J':J,'hz':hz,'hx_i':hx_i,
 				  'hx_f':hx_f,'psi_i':psi_i,'psi_f':psi_f,'E_i':E_i,"E_f":E_f}
