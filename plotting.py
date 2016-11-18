@@ -28,16 +28,19 @@ palette_ALEX = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fd
 def main():
     '''
     Example run
-    '''
+    ''' 
     
     # Import pkl file
-    file=open('data/allresultsL1.pkl','rb')
+    
+    file=open('data/a1_t45.pkl','rb')
     data=pickle.load(file,encoding='latin1') # encoding must be specified if the file was saved with pickle python 2.
     
-    fid=[d[0] for d in data]
-    protocol=[d[2] for d in data]
+    fid=[d[0] for d in data[:10]]
     
-    plot_protocols(protocol,fid,title='$h_z=0.5,L=1,a\in\\{0.0,\pm0.02,\pm0.05,\pm0.08,\pm0.1,\pm0.2,\pm0.4,\pm0.8\\}$')
+    print(np.array([d[0] for d in data]))
+    protocol=[d[2] for d in data[:10]]
+    exit()
+    plot_protocols(protocol,fid,title='$t=45,h_z=0.5,L=1,a\in\\{0,\pm1\\}$')
 
 
 
@@ -55,11 +58,11 @@ def plot_protocols(y_val_list,z_val_list,x_val_list=None,title=None):
         i=0
         for protocol,fidelity in zip(y_val_list,z_val_list):
             N_time_step=len(protocol)
-            x=np.linspace(0,2,N_time_step)
+            x=np.linspace(0,N_time_step*0.05,N_time_step)
             y=list(protocol)
             
             # Change plot to step if u want true protocol 
-            points=plt.plot(x,y,c=palette_ALEX[i],label=str(round(fidelity,2)))
+            points=plt.plot(x,y,label=str(round(fidelity,2)))
             i+=1
             
         plt.title(title)
