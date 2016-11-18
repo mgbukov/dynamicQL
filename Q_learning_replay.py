@@ -47,7 +47,7 @@ def Fidelity(psi_i,H_fid,t_vals,delta_t,basis=None,psi_f=None,all_obs=False,Vf=N
 	# get sysstem size
 	L = basis.L
 	# evolve state
-	psi_t = H_fid.evolve(psi_i,t_vals[0],t_vals,iterate=True,atol=1E-12,rtol=1E-12)
+	#psi_t = H_fid.evolve(psi_i,t_vals[0],t_vals,iterate=True,atol=1E-12,rtol=1E-12)
 
 
 	# fidelity
@@ -63,10 +63,10 @@ def Fidelity(psi_i,H_fid,t_vals,delta_t,basis=None,psi_f=None,all_obs=False,Vf=N
 		Sd=[]
 
 	psi=psi_i.copy()
-	#for i, t_i in enumerate(t_vals):
-	for i, psi in enumerate(psi_t):
+	for i, t_i in enumerate(t_vals):
+	#for i, psi in enumerate(psi_t):
 
-		#psi = exp_op(H_fid(time=t_i),a=-1j*delta_t).dot(psi)
+		psi = exp_op(H_fid(time=t_i),a=-1j*delta_t).dot(psi)
 
 		if psi_f is not None:
 			# calculate w.r.t. final state
@@ -379,20 +379,21 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	#### physical quantities
 
 	# define ED Hamiltonian H(t)
-	m=0.0
+	#m=0.0
 	b=hx_i
-	lin_fun = lambda t: m*t + b
+	lin_fun = lambda t: b #+ m*t
 	# define Hamiltonian
 	H, basis = Hamiltonian.Hamiltonian(L,fun=lin_fun,**{'J':J,'hz':hz})
 	# defien Hamiltonian for interpolated fidelity
 	t_vals, p_vals = [0.0,0.0], [0.0,0.0]
+	"""
 	protocol_fun = lambda t: np.interp(t, t_vals, p_vals)
 	H_fid,_ = Hamiltonian.Hamiltonian(L,fun=protocol_fun,basis=basis,**{'J':J,'hz':hz})
 	"""
 	def step_protocol(t):
 		return p_vals[np.argmin( abs(np.asarray(t_vals)-t) )]
 	H_fid,_ = Hamiltonian.Hamiltonian(L,fun=step_protocol,basis=basis,**{'J':J,'hz':hz})
-	"""
+	#"""
 	# calculate final basis
 	_,Vf = H.eigh(time=0.0)
 	b=hx_i
@@ -426,14 +427,6 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 		# set initial state of episode
 		S = state_i.copy()
-
-		
-		"""
-		# get set of available actions and their indices
-		#avail_actions, a_inds = RL.avail_actions(S,max_t_steps,hx_f,ind=True)
-		# get theta(t-1)phi(S), i.e. store Q values as a list of length a_inds	 
-		#Q = [theta[theta_inds,0,k].sum() for k in a_inds]
-		"""
 		
 		# get set of features present in S
 		theta_inds = RL.find_feature_inds(S,tilings,N_tiles)
@@ -445,8 +438,8 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 		inst_fidelity = 0.0
 		fidelity = float('nan')
-		protocol_inst = [hx_i]
-		t_inst = [0.0]
+		protocol_inst = []#[hx_i]
+		t_inst = []#[0.0]
 		
 		# calculate sum of all rewards
 		Return_j = 0.0
@@ -513,13 +506,13 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 				# update dynamic arguments in place: ramp = m*t+b
 
-				#b = S_prime[0]
-				#psi = exp_op(H(time=t_step*delta_t),a=-1j*delta_t).dot(psi)
-
+				b = S_prime[0]
+				psi = exp_op(H(time=t_step*delta_t),a=-1j*delta_t).dot(psi)
+				"""
 				m = (S_prime[0]-S[0])/delta_t
 				b = S[0] - m*t_inst[-1]
 				psi = H.evolve(psi,t_inst[-1],t_inst[-1]+delta_t,atol=1E-9,rtol=1E-9)
-
+				"""
 				
 				'''
 				### enable these lines if instantaneous fidelity is needed
@@ -553,7 +546,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 			# update protocol and time
 			protocol_inst.append(S_prime[0])
-			t_inst.append((t_step+1)*delta_t)
+			t_inst.append(t_step*delta_t)
 		
 			# record action taken
 			actions_taken.append(A)
@@ -642,7 +635,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			theta = Learn_Policy(state_i,theta,tilings,dims,best_actions,R_best)
 	
 		# replay best encountered every 100 episodes
-		if j%40==0 and j!=0 and R_best is not None:
+		if (j%40==0 and j!=0) and (R_best is not None) and eps>0.0:
 			#theta = Replay(50,RL_params,physics_params,theta,tilings,best_actions,R_best)
 			theta = Learn_Policy(state_i,theta,tilings,dims,best_actions,R_best)
 		#elif j <= 1E3:
@@ -653,8 +646,9 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			exit()
 		"""
 
-
-
+		#print 'protocol', len(protocol_inst), np.around(protocol_inst,2)
+		#print 'time', len(t_inst), np.around(t_inst,2)
+		#exit()
 
 		#'''	
 		if j%20 == 0:
@@ -703,7 +697,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			s_ds = [Sd_inst,Sd_greedy,Sd_best]
 
 
-			Data = np.zeros((7,max_t_steps+1))
+			Data = np.zeros((7,max_t_steps))
 			Data[0,:] = t_best
 			Data[1,:] = protocol_best
 			Data[2,:] = F_best
@@ -716,7 +710,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			user_input = raw_input("continue? (y or n) ") 
 			if user_input=='y':
 				# plot rewards
-				plot_rewards(N_episodes,Return_ave,Return,FidelitY,'rewards',save_params,save)
+				#plot_rewards(N_episodes,Return_ave,Return,FidelitY,'rewards',save_params,save)
 				# plot protocols
 				plot_protocols(times,protocols,fidelities,'fidelity',save_params,save)
 				#plot_protocols(times,protocols,energies,'energy',save_params,save)
@@ -730,7 +724,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 				#etas = np.linspace(-1.0,1.0,101)
 				Q_plot = RL.Q_greedy(etas,theta,tilings,N_tiles,max_t_steps).T
 				
-				plot_Q(etas,t_best[:-1],-Q_plot,'Q_fn',save_params,save)
+				plot_Q(etas,t_best,-Q_plot,'Q_fn',save_params,save)
 				"""
 
 				if save:
@@ -755,11 +749,11 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 def best_protocol(best_actions,hx_i,delta_t):
 	""" This function builds the best encounteres protocol from best_actions """
 	s = hx_i
-	protocol=[hx_i]
-	t = [0.0]
+	protocol=[]#[hx_i]
+	t = [delta_t*_i for _i in range(len(best_actions))] #[0.0]
 	for _i,a in enumerate(best_actions):
 		s+=a
-		t.append(t[-1]+delta_t)
+		#t.append(t[-1]+delta_t)
 		protocol.append(s)
 	return protocol, t
 
@@ -850,7 +844,7 @@ def plot_protocols(times,protocols,quantities,save_name,save_params,save=False):
 		params += tuple( np.around( [quantities[j][-1]], 3) )
 		titlestr += titles[j]
 
-		plt.plot(times[j],protocols[j],str_c[j],linewidth=1,marker='.',label=str_p[j])
+		plt.step(times[j],protocols[j],str_c[j],linewidth=1,label=str_p[j])
 		plt.plot(times[j],quantities[j],str_c[j]+'--',linewidth=1,label=str_f[j])
 
 		t_max.append(times[j][-1])

@@ -7,7 +7,8 @@ random.seed()
 # define actions
 #pos_actions = [0.01,.05,0.1,0.15,0.2,0.5,1.0,1.5]
 #pos_actions=list(0.2*np.asarray([0.02,0.05,0.08,0.1,0.2,0.4,0.8]))
-pos_actions=[0.02,0.05,0.08,0.1,0.2,0.5,1.0]
+pos_actions=[0.01,0.02,0.05,0.1,0.2,0.5,1.0]
+#pos_actions=[2.0]
 #pos_actions=[0.05,0.2]
 #pos_actions=[0.05]
 def all_actions():
@@ -87,7 +88,7 @@ def Q_greedy(Vars,theta,tilings,N_tiles,max_t_steps):
 		
 		theta_inds = find_feature_inds(S,tilings,N_tiles)
 
-		A = np.max( np.mean(theta[theta_inds,:,:],axis=0), axis=1)
+		A = np.max( np.sum(theta[theta_inds,:,:],axis=0), axis=1)
 
 		Q[i_s,:] = A
 
