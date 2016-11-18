@@ -5,12 +5,8 @@ import random
 random.seed()
 
 # define actions
-#pos_actions = [0.01,.05,0.1,0.15,0.2,0.5,1.0,1.5]
-#pos_actions=list(0.2*np.asarray([0.02,0.05,0.08,0.1,0.2,0.4,0.8]))
+#pos_actions=list(0.2*np.asarray([0.01,0.02,0.05,0.1,0.2,0.5,1.0]))
 pos_actions=[0.01,0.02,0.05,0.1,0.2,0.5,1.0]
-#pos_actions=[2.0]
-#pos_actions=[0.05,0.2]
-#pos_actions=[0.05]
 def all_actions():
 	neg_actions=[]
 	[neg_actions.append(-i) for i in pos_actions]
@@ -42,7 +38,6 @@ def gen_tilings(Vars,dVars,N_tilings):
 	#tiling = np.array( [[i,j,k] for i in var0 for j in var1 for k in var2] )
 	tiling = np.array( [[i] for i in var0] )
 
-	#tilings = (tiling + np.random.uniform(0,dVars,len(Vars)) for j in xrange(N_tilings))
 	tilings = [tiling + np.random.uniform(0,dVars,len(Vars)) for j in xrange(N_tilings)]
 
 	return tilings
@@ -68,7 +63,6 @@ def find_feature_inds(S,tilings,N_tiles):
 def E_traces_acc(E,alpha=None):
 	return E + 1.0
 def E_traces_dutch(E,alpha):
-	#E = np.einsum('ij,i->ij',E,1.0 - alpha)
 	E *= 1.0 - alpha
 	return E + 1.0
 def E_traces_repl(E,alpha=None):
@@ -77,9 +71,7 @@ def E_traces_repl(E,alpha=None):
 def Q_greedy(Vars,theta,tilings,N_tiles,max_t_steps):
 	var0 = Vars
 
-	#Q = np.zeros((len(var0),len(var1)),dtype=np.float64)
 	Q = np.zeros((len(var0),max_t_steps),dtype=np.float64)
-	#print 'Q', Q.shape
 	grid_states = [np.array([i]) for i in var0]
 
 	for S in grid_states:

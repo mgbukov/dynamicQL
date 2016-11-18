@@ -18,9 +18,8 @@ hx_f= 1.0 #+1.0 # final hx coupling
 
 #"""
 # define dynamic params of H(t)
-m=0.0
 b=hx_i
-lin_fun = lambda t: m*t + b
+lin_fun = lambda t: b #+ m*t
 # define Hamiltonian
 H_params = {'J':J,'hz':hz}
 H,_ = Hamiltonian.Hamiltonian(L,fun=lin_fun,**H_params)
@@ -41,7 +40,7 @@ else:
 E_f = E_f[0]
 psi_f = psi_f[:,0]
 
-max_t_steps = 31 #40 
+max_t_steps = 41 #41 
 delta_t = 0.05 #0.05
 
 print "number of states is:", H.Ns
@@ -58,7 +57,6 @@ N_vars = 1
 dims = [N_tilings, N_lintiles, N_vars]
 
 var0 = list( np.linspace(var0_min, var0_max,N_lintiles) ) 
-
 dvar0 = var0[1]-var0[0]
 
 Vars = [var0]
@@ -68,23 +66,19 @@ dVars = [dvar0]
 # define RL  hyper params
 state_i = np.array([hx_i])
 
-N_episodes = 30
 N_episodes = 10001
 # discount rate
 gamma = 1.0
 # learning rate
-alpha_0 = 0.9#/N_tilings
+alpha_0 = 0.9
 # usage eta
-eta = 0.6#/N_tilings
+eta = 0.6
 # TD(lambda) parameter
 lmbda = 0.5
 # traces: use 'acc', 'dutch' or 'repl'
 traces = 'repl'
 # exploration epsilon
 eps = 0.1
-# reward mixing parameter mu: R = (1-mu)*inst_fidelity/max_t_steps + abs( psi.conj().dot(psi_f) )**2
-mu = 1.0
-
 
 # display full strings
 np.set_printoptions(threshold='nan')
