@@ -90,7 +90,6 @@ def main():
                 'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
                 'delta_t':delta_t,'psi_target':psi_target,
                 'hx_i':hx_i,'N_quench':N_quench}
-    
 
     
     all_results=[]
@@ -98,6 +97,9 @@ def main():
        # print("Iteration:",it)
         result=simulate_anneal(param_SA)
         all_results.append(result)
+        pkl_file=open('data/%s.pkl'%outfile_name,'wb')
+        pickle.dump(all_results,pkl_file)
+        pkl_file.close()
         #print(result[0])
         #print(result[1])
         #print(result[2])
@@ -113,8 +115,8 @@ def main():
     
     
     #Saving results:
-    pkl_file=open('data/%s.pkl'%outfile_name,'wb')
-    pickle.dump(all_results,pkl_file)
+#pkl_file=open('data/%s.pkl'%outfile_name,'wb')
+#pickle.dump(all_results,pkl_file)
     pkl_file.close()
     
     
