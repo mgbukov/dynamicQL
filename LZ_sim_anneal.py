@@ -10,19 +10,21 @@ from scipy.sparse.linalg import expm_multiply as expm
                 
 def main():
     
-    global action_set,hx_discrete,max_step
+    global action_set,hx_discrete,max_step,hx_max
     
     L = 1 # system size
     J = 1.0/0.809 # zz interaction
-    hz = 0.5 #0.9045/0.809 #1.0 # hz field
+    hz = 1.0 #0.9045/0.809 #1.0 # hz field
     hx_i = -1.0# -1.0 # initial hx coupling
     hx_f = 1.0 #+1.0 # final hx coupling
-    N_quench=100
+    N_quench=40
     delta_t=0.05
     N_restart=50
+    hx_max=1
     
     action_set1=[-2.0,0.,2.0]
-    action_set2=[0.0,-0.01,0.01,0.02,-0.02,0.04,-0.04,-0.08,0.08,-0.16,0.16,-0.32,0.32,-0.64,0.64,-1.28,1.28]
+    action_set2=np.array([0.01,0.02,0.05,0.1,0.2,0.5,1.0,2.0],dtype=np.float32)
+    action_set2=list(np.concatenate((action_set2,-1.0*action_set2,[0])))
     action_set3=[0.,0.02,0.05,0.08,0.1,0.2,0.4,0.8]
     action_set4=[-10.,0.,10.]
     
@@ -55,6 +57,13 @@ def main():
     hx_discrete[0]=0
     
     print("Current action set:",action_set)
+    #hx_discrete=[-1.05, -0.050000000000000044, 0.95, 1.95, 1.95, 1.9, 1.9, 1.9, 1.9, 0.8999999999999999, -0.10000000000000009, -1.1, -1.3, -1.4000000000000001, -1.3800000000000001, -1.4800000000000002, -1.9800000000000002, -1.9900000000000002, -2.0, -2.0]
+    #N_time_step=len(hx_discrete)
+    #hx_discrete=hx_discrete[:-1]
+    #print(len(hx_discrete))
+    #print(Fidelity(psi_i,H,N_time_step,delta_t,psi_target))
+    #print(N_time_step)
+    #exit()
     #===========================================================================
     # 
     # hx_discrete=[ 1.,1.,1.,1.,1.,-1.,-1.,-1.,-1.,-1.]
@@ -77,7 +86,7 @@ def main():
     # #test=np.loadtxt("data/text.dat",delimiter="\t")
     #===========================================================================
     
-    param_SA={'Ti':0.04,'sweep_size':40,
+    param_SA={'Ti':0.04,'sweep_size':N_time_step*len(action_set),
                 'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
                 'delta_t':delta_t,'psi_target':psi_target,
                 'hx_i':hx_i,'N_quench':N_quench}
@@ -89,9 +98,10 @@ def main():
        # print("Iteration:",it)
         result=simulate_anneal(param_SA)
         all_results.append(result)
-        print(result[0])
-        print(result[1])
-        print(result[2])
+        #print(result[0])
+        #print(result[1])
+        #print(result[2])
+        #np.savetxt("test.txt",result[1])
         #print("Best fidelity during iteration: %s"%result[0])
         #print("Corresponding trajectory:",result[2])
         
@@ -158,32 +168,43 @@ def propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step)
     rand_pos=np.random.randint(N_time_step)
     aset=np.array(action_set)
     count=0
-    while True:
-        count+=1
-        a=np.random.choice(action_set)
-        if abs(a) > 1e-6:
-            r=new_hx_discrete[rand_pos]+a
-            if rand_pos != 0 and rand_pos != N_time_step-1:
-                dhpre=np.min(np.abs(aset-abs(r-new_hx_discrete[rand_pos-1])))
-                dhpost=np.min(np.abs(aset-abs(r-new_hx_discrete[rand_pos+1])))
-                
-                if abs(r) < 2.0001 and dhpre < 0.00001 and dhpost < 0.00001:
+    option=0
+    # w/o RL constraints
+    if option == 0: 
+        while True:
+            a=np.random.choice(action_set)
+            if abs(a) > 1e-6:
+                r=new_hx_discrete[rand_pos]+a
+                if abs(r) < hx_max+0.00001:
                     new_hx_discrete[rand_pos]+=a
                     break
-            elif rand_pos == 0:
-                dhpre=np.min(np.abs(aset-abs(r-hx_i)))
-                dhpost=np.min(np.abs(aset-abs(r-new_hx_discrete[rand_pos+1])))
-                if abs(r) < 2.0001 and dhpre < 0.00001 and dhpost < 0.00001:
-                    new_hx_discrete[rand_pos]+=a
-                    break
-            else:
-                dhpre=np.min(np.abs(aset-abs(r-new_hx_discrete[rand_pos-1])))
-                if abs(r) < 2.0001 and dhpre < 0.00001:
-                    new_hx_discrete[rand_pos]+=a
-                    break
-                
-        if count > 10:
-            rand_pos=np.random.randint(N_time_step)
+    else:
+        while True:
+            count+=1
+            a=np.random.choice(action_set)
+            if abs(a) > 1e-6:
+                r=new_hx_discrete[rand_pos]+a
+                if rand_pos != 0 and rand_pos != N_time_step-1:
+                    dhpre=np.min(np.abs(aset-abs(r-new_hx_discrete[rand_pos-1])))
+                    dhpost=np.min(np.abs(aset-abs(r-new_hx_discrete[rand_pos+1])))
+                    
+                    if abs(r) < 2.0001 and dhpre < 0.00001 and dhpost < 0.00001:
+                        new_hx_discrete[rand_pos]+=a
+                        break
+                elif rand_pos == 0:
+                    dhpre=np.min(np.abs(aset-abs(r-hx_i)))
+                    dhpost=np.min(np.abs(aset-abs(r-new_hx_discrete[rand_pos+1])))
+                    if abs(r) < 2.0001 and dhpre < 0.00001 and dhpost < 0.00001:
+                        new_hx_discrete[rand_pos]+=a
+                        break
+                else:
+                    dhpre=np.min(np.abs(aset-abs(r-new_hx_discrete[rand_pos-1])))
+                    if abs(r) < 2.0001 and dhpre < 0.00001:
+                        new_hx_discrete[rand_pos]+=a
+                        break
+                    
+            if count > 10:
+                rand_pos=np.random.randint(N_time_step)
     #new_action_protocol=np.copy(old_action_protocol)
     new_action_protocol=np.diff(new_hx_discrete)
     new_action_protocol=np.concatenate(([new_hx_discrete[0]-(-1.0)],new_action_protocol))
@@ -228,7 +249,7 @@ def simulate_anneal(params):
     
     while T>1E-6:
         #print(T,best_fid)
-        print("Current temperature=%s"%T,"Best fidelity=%s"%best_fid)
+        #print("Current temperature=%s"%T,"Best fidelity=%s"%best_fid)
         #print("Current temperature=%s"%(1./beta),"Best fidelity=%s"%best_fid)
         beta=1./T
         for _ in range(sweep_size):
@@ -258,7 +279,7 @@ def simulate_anneal(params):
         step+=1.0
         T=Ti*(1.0-step/N_quench)
       
-    for _ in range(10*sweep_size): ## Perform greedy sweeps (zero-temperature):
+    for _ in range(5*sweep_size): ## Perform greedy sweeps (zero-temperature):
             new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step)
             hx_discrete=new_hx_discrete
             new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
