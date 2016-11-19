@@ -1,2 +1,2 @@
 # dynamic_QL
-This repository contains a WIS-TO-TD(lambda) Q-learning algorithm for time-dependent states
+This repository contains a variant of TO-TD(lambda) Q-learning algorithm for time-dependent states
