@@ -1,12 +1,13 @@
 import numpy as np
 import functools
+from operator import add
 
 import random
 random.seed()
 
 # define actions
-pos_actions=[0.01,0.02,0.05,0.1,0.2,0.5,1.0,2.0]
-#pos_actions=[2.0]
+#pos_actions=[0.01,0.02,0.05,0.1,0.2,0.5,1.0,2.0]
+pos_actions=[2.0]
 def all_actions():
 	neg_actions=[]
 	[neg_actions.append(-i) for i in pos_actions]
@@ -16,20 +17,14 @@ actions = all_actions()
  
 
 # define tilings
-def gen_tilings(Vars,dVars,N_tilings):
+def gen_tilings(h_field,dh_field,N_tilings):
 	"""
 	v: list of state Vars
 	dv: list of grid step sizes
 	"""
-	var0 = Vars[0] # reads off originial h grid
-	#var1 = Vars[1]
-	#var2 = Vars[2]
+	tiling = np.array(h_field)
 
-	#tiling = np.array( [[i,j,k] for i in var0 for j in var1 for k in var2] )
-	#tiling = np.array( [[i,j] for i in var0 for j in var1] )
-	tiling = np.array( [[i] for i in var0] )
-
-	tilings = [tiling + np.random.uniform(0,dVars,len(Vars)) for j in xrange(N_tilings)]
+	tilings = [tiling + np.random.uniform(0.0,dh_field,1) for j in xrange(N_tilings)]
 
 	return tilings
 
@@ -40,17 +35,20 @@ def find_tile(x,tiling):
 	tiling: array of grid positions
 	x: variable of the same type as the elements of tiling
 	"""
-	return np.argmin(np.linalg.norm(tiling - x, axis=1))
 
-def find_feature_inds(S,tilings,N_tiles):
+	return np.searchsorted(tiling,x)[0] 
+	#return np.argmin(np.linalg.norm(np.array([ [i] for i in tiling]) - x, axis=1)) 
+
+def find_feature_inds(S,tilings,shift_tile_inds):
 
 	# find indices of S in tilings
 	inds = map(functools.partial(find_tile, S), tilings)
+	
 	# add up a shift to get the index position of vector theta
-	return [inds[j] + j*N_tiles for j in xrange(len(inds))]
+	return map(add,inds,shift_tile_inds)
 
 # used for plotting
-def Q_greedy(Vars,theta,tilings,N_tiles,max_t_steps):
+def Q_greedy(Vars,theta,tilings,shift_tile_inds,max_t_steps):
 	var0 = Vars
 
 	Q = np.zeros((len(var0),max_t_steps),dtype=np.float64)
@@ -60,7 +58,7 @@ def Q_greedy(Vars,theta,tilings,N_tiles,max_t_steps):
 
 		i_s = np.argmin(abs(var0-S[0]) )
 		
-		theta_inds = find_feature_inds(S,tilings,N_tiles)
+		theta_inds = find_feature_inds(S,tilings,shift_tile_inds)
 
 		A = np.max( np.sum(theta[theta_inds,:,:],axis=0), axis=1)
 

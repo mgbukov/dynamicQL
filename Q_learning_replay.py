@@ -145,6 +145,7 @@ def Replay(N_replay,RL_params,physics_params,theta,tilings,actions,R):
 	N_tilings, N_lintiles, N_vars = dims
 	N_tiles = N_lintiles**N_vars
 	N_actions = len(avail_actions)
+	shift_tile_inds = [j*N_tiles for j in xrange(N_tilings)]
 
 	lmbda=1.0
 
@@ -163,7 +164,7 @@ def Replay(N_replay,RL_params,physics_params,theta,tilings,actions,R):
 		# set initial usage vector
 		u = u0.copy()
 
-		theta_inds = RL.find_feature_inds(S,tilings,N_tiles)
+		theta_inds = RL.find_feature_inds(S,tilings,shift_tile_inds)
 		Q = np.sum(theta[theta_inds,0,:],axis=0)
 		E=0.0
 		Q_old=[0.0 for i in avail_actions]
@@ -203,7 +204,7 @@ def Replay(N_replay,RL_params,physics_params,theta,tilings,actions,R):
 				break
 
 
-			theta_inds = RL.find_feature_inds(S,tilings,N_tiles)
+			theta_inds = RL.find_feature_inds(S,tilings,shift_tile_inds)
 
 			# TO
 			Q_old = np.sum(theta[theta_inds,t_step,:],axis=0)
@@ -223,18 +224,13 @@ def Replay(N_replay,RL_params,physics_params,theta,tilings,actions,R):
 			E = np.sum(e[theta_inds,t_step,indA],axis=0)
 			e *= lmbda
 
-			ttheta_inds = RL.find_feature_inds([-0.98],tilings,N_tiles)
-			print t_step
-			print 'Qs', theta[ttheta_inds,27,indA].sum(), theta[theta_inds,27,indA].sum()
-			print theta[theta_inds,27,indA]
-			print theta[ttheta_inds,27,indA]
 		"""
 		print '____REPLAY_____', j
 		s = hx_i
 		t_step=0
 		print "reward is", R 
 		for a in actions:
-			theta_inds = RL.find_feature_inds(s,tilings,N_tiles)
+			theta_inds = RL.find_feature_inds(s,tilings,shift_tile_inds)
 			'''
 			print 'state', s
 			print 'traces'
@@ -256,6 +252,7 @@ def Learn_Policy(state_i,theta,tilings,dims,actions,R):
 
 	N_tilings, N_lintiles, N_vars = dims
 	N_tiles = N_lintiles**N_vars
+	shift_tile_inds = [j*N_tiles for j in xrange(N_tilings)]
 
 	avail_actions = RL.all_actions()
 	s = state_i.copy()
@@ -263,7 +260,7 @@ def Learn_Policy(state_i,theta,tilings,dims,actions,R):
 	for t_step, A in enumerate(actions):
 		# calculate state-action indices
 		indA = avail_actions.index(A)
-		theta_inds = RL.find_feature_inds(s,tilings,N_tiles)
+		theta_inds = RL.find_feature_inds(s,tilings,shift_tile_inds)
 			
 
 		#'''
@@ -308,7 +305,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	######################################################################
 	
 	# read off RL_params
-	RL_keys = ['N_episodes','gamma','alpha_0','eta','lmbda','eps','traces','dims','N_tiles','state_i','Vars','dVars','mu']
+	RL_keys = ['N_episodes','alpha_0','eta','lmbda','eps','traces','dims','N_tiles','state_i','h_field','dh_field']
 	from numpy import array
 	for key,value in RL_params.iteritems():
 		#print key, repr(value)
@@ -318,8 +315,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		exec("{} = {}".format(key,repr(value)) ) in locals()
 
 	# read off physics params
-	physics_keys = ['L','max_t_steps','delta_t','J','hz','hx_i',
-				    'hx_f','psi_i','psi_f','E_i','E_f']
+	physics_keys = ['L','max_t_steps','delta_t','J','hz','hx_i','hx_f','psi_i','psi_f','E_i','E_f']
 	for key,value in physics_params.iteritems():
 		#print key, repr(value)
 		if key not in physics_keys:
@@ -336,18 +332,19 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	actions = RL.all_actions()
 
 	# eta limits # max and min field
-	hx_limits = [Vars[0][0],Vars[0][-1]]
+	hx_limits = [h_field[0],h_field[-1]]
 
 	# get dimensions
 	N_tilings, N_lintiles, N_vars = dims
 	N_tiles = N_lintiles**N_vars
 	N_actions = len(actions)
+	shift_tile_inds = [j*N_tiles for j in xrange(N_tilings)]
 
 	if theta is None:
 		theta=np.zeros((N_tiles*N_tilings,max_t_steps,N_actions), dtype=np.float64)
 	
 	if tilings is None:
-		tilings = RL.gen_tilings(Vars,dVars,N_tilings)
+		tilings = RL.gen_tilings(h_field,dh_field,N_tilings)
    	
 	# pre-allocate traces variable
 	e = np.zeros_like(theta) 
@@ -413,7 +410,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		S = state_i.copy()
 		
 		# get set of features present in S
-		theta_inds = RL.find_feature_inds(S,tilings,N_tiles)
+		theta_inds = RL.find_feature_inds(S,tilings,shift_tile_inds)
 		Q = np.sum(theta[theta_inds,0,:],axis=0) # for each action at time t_step=0
 
 		E=0.0 # auxiliary for traces e
@@ -430,6 +427,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 		# taken encountered and taken
 		actions_taken = []
+
 		
 		# generate episode
 		for t_step in xrange(max_t_steps): #
@@ -444,8 +442,9 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			
 			#"""
 			# choose a random action
-			p = np.cumsum( np.exp(eps*Q[avail_inds])/sum(np.exp(eps*Q[avail_inds])) )
-			if greedy:
+			P = np.exp(eps*Q[avail_inds])
+			p = np.cumsum(P/sum(P))
+			if greedy or eps<1E-12:
 				A = A_greedy
 			else:
 				A = avail_actions[np.searchsorted(p,random.uniform(0.0,1.0))]
@@ -547,7 +546,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 			
 			# get set of features present in S_prime
-			theta_inds = RL.find_feature_inds(S_prime,tilings,N_tiles)
+			theta_inds = RL.find_feature_inds(S_prime,tilings,shift_tile_inds)
 			# TO
 			Q_old = np.sum(theta[theta_inds,t_step,:],axis=0)
 			# non-TO
@@ -673,7 +672,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 				# calculate approximate Q function
 				etas = np.linspace(hx_limits[0],hx_limits[1],101)
 				#etas = np.linspace(-1.0,1.0,101)
-				Q_plot = RL.Q_greedy(etas,theta,tilings,N_tiles,max_t_steps).T
+				Q_plot = RL.Q_greedy(etas,theta,tilings,shift_tile_inds,max_t_steps).T
 				
 				plot_Q(etas,t_best,-Q_plot,'Q_fn',save_params,save)
 				"""

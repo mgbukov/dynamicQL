@@ -38,7 +38,7 @@ else:
 E_f = E_f[0]
 psi_f = psi_f[:,0]
 
-max_t_steps = 40 #40 
+max_t_steps = 20 #40 
 delta_t = 0.05 #0.05
 
 print "number of states is:", H.Ns
@@ -46,7 +46,7 @@ print "initial and final energies are:", E_i, E_f
 
 
 ##### RL params #####
-var0_min, var0_max = hx_i, hx_f #hx_i-1.0, hx_f+1.0
+var0_min, var0_max = hx_i-1.0, hx_f+1.0
 
 N_tilings = 40
 N_lintiles = 20
@@ -54,11 +54,9 @@ N_vars = 1
 
 dims = [N_tilings, N_lintiles, N_vars]
 
-var0 = list( np.linspace(var0_min, var0_max,N_lintiles) ) 
-dvar0 = var0[1]-var0[0]
+h_field = list( np.linspace(var0_min, var0_max,N_lintiles) ) 
+dh_field = h_field[1]-h_field[0]
 
-Vars = [var0]
-dVars = [dvar0]
 
 ########
 # define RL  hyper params
@@ -78,7 +76,7 @@ eps = 0.1
 np.set_printoptions(threshold='nan')
 
 RL_params ={'N_episodes':N_episodes,'alpha_0':alpha_0,'eta':eta,'lmbda':lmbda,'eps':eps,
-			'dims':dims,'state_i':state_i,'Vars':Vars,'dVars':dVars}
+			'dims':dims,'state_i':state_i,'h_field':h_field,'dh_field':dh_field}
 
 physics_params = {'L':L,'max_t_steps':max_t_steps,'delta_t':delta_t,'J':J,'hz':hz,'hx_i':hx_i,
 				  'hx_f':hx_f,'psi_i':psi_i,'psi_f':psi_f,'E_i':E_i,"E_f":E_f}
