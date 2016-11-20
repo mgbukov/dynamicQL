@@ -305,7 +305,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	######################################################################
 	
 	# read off RL_params
-	RL_keys = ['N_episodes','alpha_0','eta','lmbda','eps','traces','dims','N_tiles','state_i','h_field','dh_field']
+	RL_keys = ['N_episodes','alpha_0','eta','lmbda','beta_RL','traces','dims','N_tiles','state_i','h_field','dh_field']
 	from numpy import array
 	for key,value in RL_params.iteritems():
 		#print key, repr(value)
@@ -440,23 +440,14 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			#A_greedy = actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )]
 			A_greedy = avail_actions[ random.choice( np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
 			
-			#"""
 			# choose a random action
-			P = np.exp(eps*Q[avail_inds])
+			P = np.exp(beta_RL*Q[avail_inds])
 			p = np.cumsum(P/sum(P))
-			if greedy or eps<1E-12:
+			if greedy or beta_RL>1E12:
 				A = A_greedy
 			else:
 				A = avail_actions[np.searchsorted(p,random.uniform(0.0,1.0))]
 			
-			"""
-			if random.uniform(0.0,1.0) <= eps or greedy:
-				A = A_greedy
-			else:
-				#A = random.choice(list(set(actions) - set([A_greedy]) ))
-				A = random.choice(list(set(avail_actions) - set([A_greedy]) ))
-			#"""
-
 			# find the index of A
 			indA = actions.index(A)
 					
@@ -593,7 +584,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			#theta = Replay(50,RL_params,physics_params,theta,tilings,best_actions,R_best)
 		
 		# replay best encountered every 100 episodes
-		if (j%40==0 and j!=0) and (R_best is not None) and eps>0.0:
+		if (j%40==0 and j!=0) and (R_best is not None) and beta_RL<1E12:
 			print 'learned best encountered'
 			theta = Learn_Policy(state_i,theta,tilings,dims,best_actions,R_best)
 			#theta = Replay(50,RL_params,physics_params,theta,tilings,best_actions,R_best)
@@ -609,7 +600,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		# plot protocols and learning rate
 		if (j%500==0 and j!=0) or (np.round(fidelity,5) == 1.0):
 
-			RL_params['eps']=0.0
+			RL_params['beta_RL']=1E12
 			RL_params['lmbda']=0.0
 			RL_params['alpha_0']=0.0
 
@@ -686,7 +677,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 		
 
-			RL_params['eps']=eps
+			RL_params['beta_RL']=beta_RL
 			RL_params['lmbda']=lmbda
 			RL_params['alpha_0']=alpha_0		
 		#'''

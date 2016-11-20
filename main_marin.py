@@ -6,13 +6,15 @@ import numpy as np
 # define model params
 L = 1 # system size
 if L==1:
-	J=0.0 # required by PBC
+	J = 0.0 # required by PBC
+	hz = 1.0
+	hx_i= -1.0 # initial hx coupling
+	hx_f= +1.0 # final hx coupling
 else:
-	J=1.0 #/0.809 # zz interaction
-hz = 1.0 #0.9045/0.809 #1.0 # hz field
-
-hx_i= -1.0 # initial hx coupling
-hx_f= +1.0 # final hx coupling
+	J = 1.0 #/0.809 # zz interaction
+	hz = 0.5 #0.9045/0.809 #1.0 # hz field
+	hx_i= 0.0 # initial hx coupling
+	hx_f= 2.0 # final hx coupling
 
 #"""
 # define dynamic params of H(t)
@@ -38,7 +40,7 @@ else:
 E_f = E_f[0]
 psi_f = psi_f[:,0]
 
-max_t_steps = 20 #40 
+max_t_steps = 40 #40 
 delta_t = 0.05 #0.05
 
 print "number of states is:", H.Ns
@@ -69,13 +71,13 @@ alpha_0 = 0.9
 eta = 0.6
 # TD(lambda) parameter
 lmbda = 0.5
-# exploration epsilon
-eps = 0.1
+# softmax exploration inverse temperature
+beta_RL = 4.0
 
 # display full strings
 np.set_printoptions(threshold='nan')
 
-RL_params ={'N_episodes':N_episodes,'alpha_0':alpha_0,'eta':eta,'lmbda':lmbda,'eps':eps,
+RL_params ={'N_episodes':N_episodes,'alpha_0':alpha_0,'eta':eta,'lmbda':lmbda,'beta_RL':beta_RL,
 			'dims':dims,'state_i':state_i,'h_field':h_field,'dh_field':dh_field}
 
 physics_params = {'L':L,'max_t_steps':max_t_steps,'delta_t':delta_t,'J':J,'hz':hz,'hx_i':hx_i,
