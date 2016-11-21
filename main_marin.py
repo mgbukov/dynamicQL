@@ -1,4 +1,5 @@
-from Q_learning_replay import Q_learning
+#from Q_learning_replay import Q_learning
+from Q_learning import Q_learning
 import Hamiltonian
 import numpy as np
 
@@ -11,7 +12,7 @@ if L==1:
 	hx_i= -1.0 # initial hx coupling
 	hx_f= +1.0 # final hx coupling
 else:
-	J = 1.0 #/0.809 # zz interaction
+	J = -1.0 #/0.809 # zz interaction
 	hz = 0.5 #0.9045/0.809 #1.0 # hz field
 	hx_i= 0.0 # initial hx coupling
 	hx_f= 2.0 # final hx coupling
@@ -19,7 +20,7 @@ else:
 #"""
 # define dynamic params of H(t)
 b=hx_i
-lin_fun = lambda t: b #+ m*t
+lin_fun = lambda t: b
 # define Hamiltonian
 H_params = {'J':J,'hz':hz}
 H = Hamiltonian.Hamiltonian(L,fun=lin_fun,**H_params)
@@ -40,7 +41,7 @@ else:
 E_f = E_f[0]
 psi_f = psi_f[:,0]
 
-max_t_steps = 20 #40 
+max_t_steps = 100 #40 
 delta_t = 0.05 #0.05
 
 print "number of states is:", H.Ns
