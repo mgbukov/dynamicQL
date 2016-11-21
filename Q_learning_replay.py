@@ -347,18 +347,15 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		tilings = RL.gen_tilings(h_field,dh_field,N_tilings)
    	
 	# pre-allocate traces variable
-	e = np.zeros_like(theta) 
+	e = np.zeros_like(theta)
+	fire_trace = np.ones(N_tilings)
 
 	if not greedy:
 		# pre-allocate usage vector: inverse gradient descent learning rate
 		u0 = 1.0/alpha_0*np.ones((N_tiles*N_tilings,), dtype=np.float64)
 	else:
 		u0 = np.inf*np.ones((N_tiles*N_tilings,), dtype=np.float64)
-	u=np.zeros_like(u0)
-
-	# set terminate episode variable for wandering off the h grid
-	terminate = False
-	
+	u=np.zeros_like(u0)	
 
 	#### physical quantities
 
@@ -386,7 +383,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 	# average reward
 	Return_ave = np.zeros((N_episodes,1),dtype=np.float64)
 	Return = Return_ave.copy()
-	FidelitY = Return_ave.copy()
+	Fidelity_ep = Return_ave.copy()
 
 	# initialise best fidelity
 	best_fidelity = 0.0 # best encountered fidelity
@@ -395,12 +392,11 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 	# calculate importance sampling ratio
 	R = 0.0 # instantaneous fidelity
-	R_best=None # fidelity of best encountered protocol
-
+	
 	psi = np.zeros_like(psi_i)
 		
 	# loop over episodes
-	for j in xrange(N_episodes):
+	for ep in xrange(N_episodes):
 		# set traces to zero
 		e *= 0.0
 		# set initial usage vector
@@ -413,9 +409,6 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		theta_inds = RL.find_feature_inds(S,tilings,shift_tile_inds)
 		Q = np.sum(theta[theta_inds,0,:],axis=0) # for each action at time t_step=0
 
-		E=0.0 # auxiliary for traces e
-		Q_old=[0.0 for i in actions]
-
 		# preallocate physical quantties
 		psi[:] = psi_i[:] # quantum state at time
 
@@ -423,11 +416,10 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 		t_inst = []
 		
 		# calculate fidelity for each fixed episode
-		Return_j = 0.0
+		Return_ep = 0.0
 
 		# taken encountered and taken
 		actions_taken = []
-
 		
 		# generate episode
 		for t_step in xrange(max_t_steps): #
@@ -437,7 +429,6 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			avail_actions = [actions[_j] for _j in avail_inds]
 
 			# calculate greedy action(s) wrt Q policy
-			#A_greedy = actions[random.choice( np.argwhere(Q==np.amax(Q)).ravel() )]
 			A_greedy = avail_actions[ random.choice( np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
 			
 			# choose a random action
@@ -451,7 +442,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			# find the index of A
 			indA = actions.index(A)
 					
-			# reset traces and calculate probability under beh policy
+			# reset traces if A is exploratory
 			if abs(A - A_greedy) > np.finfo(A).eps:
 				e *= 0.0
 
@@ -460,42 +451,33 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			######################    INTERACT WITH ENVIRONMENT    #########################
 			################################################################################
 
-			######################## 
-			####  Landau_Zener  ####
-			########################
-
 			# define new state
 			S_prime = S.copy()
 			# calculate new field value 			
 			S_prime[0] += A
 
-			### assign rewards
+			### assign reward
 			R *= 0.0
-
-			###########################
-			######  Environment  ######
-			###########################
 			
-			if not terminate:
-				# all physics happens here
-				# update dynamic arguments in place: ramp = m*t+b
+			# all physics happens here
+			# update dynamic arguments in place: ramp = m*t+b
 
-				b = S_prime[0]
-				psi = exp_H.dot(psi)
+			b = S_prime[0]
+			psi = exp_H.dot(psi)
 
-				# assign reward
-				if t_step == max_t_steps-1:
-					# calculate final fidelity
-					fidelity = abs( psi.conj().dot(psi_f) )**2
-					# reward
-					R += fidelity
+			# assign reward
+			if t_step == max_t_steps-1:
+				# calculate final fidelity
+				fidelity = abs( psi.conj().dot(psi_f) )**2
+				# reward
+				R += fidelity
 				
 			################################################################################
 			################################################################################
 			################################################################################
 			
 			# update episodic return
-			Return_j += R
+			Return_ep += R
 
 			# update protocol and time
 			protocol_inst.append(S_prime[0])
@@ -511,94 +493,87 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			u[theta_inds]+=1.0
 			alpha = 1.0/(N_tilings*u[theta_inds])
 			
-			# Q learning update rule
+			# Q learning update rule; GD error in time t
 			delta = R - Q[indA] # error in gradient descent
-			# define error in time
-			if t_step > 0:
-				delta_TO = Q_old[indA] - np.sum(theta[theta_inds,t_step-1,indA],axis=0)
-			else:
-				delta_TO=0.0
+			# TO
+			Q_old = theta[theta_inds,t_step,indA].sum()
 			
 			# update traces
-			#e[theta_inds,t_step,indA] = alpha*(trace_fn(e[theta_inds,t_step,indA],alpha) - lmbda*E) 
-			e[theta_inds,t_step,indA] = alpha*(np.ones_like(e[theta_inds,t_step,indA]) - lmbda*E) 
-	
-			# theta <-- theta + \alpha*[theta(t-1)\phi(S) - theta(t)\phi(S)]
-			theta[theta_inds,t_step,indA] += alpha*delta_TO
-			
+			e[theta_inds,t_step,indA] = alpha*fire_trace
+
 			# check if S_prime is terminal or went out of grid
-			if t_step == max_t_steps-1 or terminate: 
+			if t_step == max_t_steps-1: 
 				# update theta
 				theta += delta*e
-				# set terminate variable to False
-				terminate = False
+				# GD error in field h
+				delta_TO = Q_old - theta[theta_inds,t_step,indA].sum()
+				theta[theta_inds,t_step,indA] += alpha*delta_TO
 				# go to next episode
 				break
 
 			
 			# get set of features present in S_prime
-			theta_inds = RL.find_feature_inds(S_prime,tilings,shift_tile_inds)
-			# TO
-			Q_old = np.sum(theta[theta_inds,t_step,:],axis=0)
-			# non-TO
-			Q = np.sum(theta[theta_inds,t_step+1,:],axis=0)
+			theta_inds_prime = RL.find_feature_inds(S_prime,tilings,shift_tile_inds)
+			
+			# t-dependent Watkin's Q learning
+			Q = np.sum(theta[theta_inds_prime,t_step+1,:],axis=0)
 
-			# update theta and e
+			# update theta
 			delta += max(Q)
 			theta += delta*e
 
-			E = np.sum(e[theta_inds,t_step,indA],axis=0)
-			e *= lmbda
-			
-			################################
+			# GD error in field h
+			delta_TO = Q_old - theta[theta_inds,t_step,indA].sum()
+			theta[theta_inds,t_step,indA] += alpha*delta_TO
 
+			# update traces
+			e[theta_inds,t_step,indA] -= alpha*e[theta_inds,t_step,indA].sum()
+			e *= lmbda
+
+			################################
 			# S <- S_prime
 			S[:] = S_prime[:]
-
-		
+			theta_inds[:]=theta_inds_prime[:]
 
 		if greedy:
 			return protocol_inst, t_inst  
 
 		# save average return
-		Return_ave[j] = 1.0/(j+1)*(Return_j + j*Return_ave[j-1])
-		Return[j] = Return_j
-		FidelitY[j] = fidelity
+		Return_ave[ep] = 1.0/(ep+1)*(Return_ep + ep*Return_ave[ep-1])
+		Return[ep] = Return_ep
+		Fidelity_ep[ep] = fidelity
 	
 
 		# if greedy policy completes a full episode and if greedy fidelity is worse than inst one
-		if len(actions_taken)==max_t_steps and fidelity-best_fidelity>1E-12:
+		if fidelity-best_fidelity>1E-12:
 			# update list of best actions
 			best_actions[:] = actions_taken[:]
 			# calculate best protocol and fidelity
 			protocol_best, t_best = best_protocol(best_actions,hx_i,delta_t)
-			t_vals, p_vals = t_best, protocol_best
 			
 			R_best=R
 			best_fidelity=fidelity
-			#best_fidelity = Fidelity(psi_i,H_fid,t_vals,delta_t,psi_f=psi_f,all_obs=False)[-1]
 			
-			#print best_fidelity, R_best
-
 			theta = Learn_Policy(state_i,theta,tilings,dims,best_actions,R_best)
 			#theta = Replay(50,RL_params,physics_params,theta,tilings,best_actions,R_best)
 		
-		# replay best encountered every 100 episodes
-		if (j%40==0 and j!=0) and (R_best is not None) and beta_RL<1E12:
+
+		# force-learn best encountered every 100 episodes
+		if (ep%40==0 and ep!=0) and (R_best is not None) and beta_RL<1E12:
 			print 'learned best encountered'
 			theta = Learn_Policy(state_i,theta,tilings,dims,best_actions,R_best)
 			#theta = Replay(50,RL_params,physics_params,theta,tilings,best_actions,R_best)
 
 
 		#'''	
-		if j%20 == 0:
-			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(j+1,np.round(fidelity,3),S_prime[0])
+		if ep%20 == 0:
+			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep+1,np.round(fidelity,3),S_prime[0])
 			print 'best encountered fidelity is {}.'.format(np.round(best_fidelity,3))
 		#'''
 
 		#'''
 		# plot protocols and learning rate
-		if (j%500==0 and j!=0) or (np.round(fidelity,5) == 1.0):
+		if (ep%500==0 and ep!=0) or (np.round(fidelity,3) == 1.0):
 
 			RL_params['beta_RL']=1E12
 			RL_params['lmbda']=0.0
@@ -651,7 +626,7 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 			user_input = raw_input("continue? (y or n) ") 
 			if user_input=='y':
 				# plot rewards
-				#plot_rewards(N_episodes,Return_ave,Return,FidelitY,'rewards',save_params,save)
+				#plot_rewards(N_episodes,Return_ave,Return,Fidelity_ep,'rewards',save_params,save)
 				# plot protocols
 				plot_protocols(times,protocols,fidelities,'fidelity',save_params,save)
 				#plot_protocols(times,protocols,energies,'energy',save_params,save)
@@ -689,9 +664,9 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None,greedy=False):
 
 def best_protocol(best_actions,hx_i,delta_t):
 	""" This function builds the best encounteres protocol from best_actions """
-	s = hx_i
 	protocol=[]
-	t = [delta_t*_i for _i in range(len(best_actions))] #[0.0]
+	t = [delta_t*_i for _i in range(len(best_actions))]
+	s = hx_i
 	for _i,a in enumerate(best_actions):
 		s+=a
 		protocol.append(s)
@@ -719,14 +694,14 @@ def plot_Q(x,y,Q_plot,save_name,save_params,save=False):
 
 	plt.show()
 
-def plot_rewards(N_episodes,Return_ave,Return,FidelitY,save_name,save_params,save=False):
+def plot_rewards(N_episodes,Return_ave,Return,Fidelity_ep,save_name,save_params,save=False):
 	""" This function plots the rewards vs episodes. """
 
 	str_R = "$\\mathrm{episodic}$"
 	str_Rave = "$\\mathrm{average}$"
 	str_F = "$\\mathrm{fidelity}$"
 	
-	plt.plot(xrange(N_episodes),FidelitY,'g',linewidth=2.0,label=str_F)
+	plt.plot(xrange(N_episodes),Fidelity_ep,'g',linewidth=2.0,label=str_F)
 	plt.plot(xrange(N_episodes),Return,'r-.',linewidth=0.5,label=str_R)
 	plt.plot(xrange(N_episodes),Return_ave,'b',linewidth=2.0,label=str_Rave)
 	

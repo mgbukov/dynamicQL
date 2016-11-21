@@ -40,7 +40,7 @@ else:
 E_f = E_f[0]
 psi_f = psi_f[:,0]
 
-max_t_steps = 40 #40 
+max_t_steps = 20 #40 
 delta_t = 0.05 #0.05
 
 print "number of states is:", H.Ns
