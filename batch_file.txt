@@ -1,11 +1,11 @@
 #!/bin/bash
-python LZ_sim_anneal.py 5 1 a1_t5 &
-python LZ_sim_anneal.py 10 1 a1_t10 &
-python LZ_sim_anneal.py 15 1 a1_t15 &
-python LZ_sim_anneal.py 20 1 a1_t20 &
-python LZ_sim_anneal.py 25 1 a1_t25 &
-python LZ_sim_anneal.py 30 1 a1_t30 &
-python LZ_sim_anneal.py 35 1 a1_t35 &
-python LZ_sim_anneal.py 40 1 a1_t40 &
-python LZ_sim_anneal.py 45 1 a1_t45 &
-python LZ_sim_anneal.py 50 1 a1_t50 &
+python LZ_sim_anneal.py 5 2 a2_t5 &
+python LZ_sim_anneal.py 10 2 a2_t10 &
+python LZ_sim_anneal.py 15 2 a2_t15 &
+python LZ_sim_anneal.py 20 2 a2_t20 &
+python LZ_sim_anneal.py 25 2 a2_t25 &
+python LZ_sim_anneal.py 30 2 a2_t30 &
+python LZ_sim_anneal.py 35 2 a2_t35 &
+python LZ_sim_anneal.py 40 2 a2_t40 &
+python LZ_sim_anneal.py 45 2 a2_t45 &
+python LZ_sim_anneal.py 50 2 a2_t50 &
