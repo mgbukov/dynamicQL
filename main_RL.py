@@ -1,4 +1,4 @@
-from Q_learning_replay import Q_learning
+from Q_learning import Q_learning
 import Hamiltonian
 import numpy as np
 
@@ -51,12 +51,9 @@ print "initial and final energies are:", E_i, E_f
 var0_min, var0_max = hx_i-1.0, hx_f+1.0
 
 N_tilings = 40
-N_lintiles = 20
-N_vars = 1
+N_tiles = 20
 
-dims = [N_tilings, N_lintiles, N_vars]
-
-h_field = list( np.linspace(var0_min, var0_max,N_lintiles) ) 
+h_field = list( np.linspace(var0_min, var0_max,N_tiles) ) 
 dh_field = h_field[1]-h_field[0]
 
 
@@ -64,6 +61,9 @@ dh_field = h_field[1]-h_field[0]
 # define RL  hyper params
 state_i = np.array([hx_i])
 
+# realisation number
+N=0
+# number of episodes
 N_episodes = 10001
 # learning rate
 alpha_0 = 0.9
@@ -77,14 +77,13 @@ beta_RL = 4.0
 # display full strings
 np.set_printoptions(threshold='nan')
 
-RL_params ={'N_episodes':N_episodes,'alpha_0':alpha_0,'eta':eta,'lmbda':lmbda,'beta_RL':beta_RL,
-			'dims':dims,'state_i':state_i,'h_field':h_field,'dh_field':dh_field}
 
-physics_params = {'L':L,'max_t_steps':max_t_steps,'delta_t':delta_t,'J':J,'hz':hz,'hx_i':hx_i,
-				  'hx_f':hx_f,'psi_i':psi_i,'psi_f':psi_f,'E_i':E_i,"E_f":E_f}
+RL_params = (N,N_episodes,alpha_0,eta,lmbda,beta_RL,N_tilings,N_tiles,state_i,h_field,dh_field)
+
+physics_params = (L,max_t_steps,delta_t,J,hz,hx_i,hx_f,psi_i,psi_f)
 
 
 
 # initiate learning
-Q_learning(RL_params,physics_params)
+Q_learning(*(RL_params+physics_params),save=False)
 
