@@ -9,8 +9,7 @@ random.seed()
 pos_actions=[0.01,0.02,0.05,0.1,0.2,0.5,1.0,2.0]
 #pos_actions=[2.0]
 def all_actions():
-	neg_actions=[]
-	[neg_actions.append(-i) for i in pos_actions]
+	neg_actions=[-i for i in pos_actions]
 	return sorted(pos_actions + [0.0] + neg_actions)
 
 
@@ -26,8 +25,7 @@ def find_tile(x,tiling):
 	"""
 	idx = tiling.searchsorted(x)
 	idx = np.clip(idx, 1, len(tiling)-1)
-	left = tiling[idx-1]
-	right = tiling[idx]
+	left, right = tiling[idx-1], tiling[idx]
 	idx -= x - left < right - x
 	
 	return idx[0] 

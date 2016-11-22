@@ -1,61 +1,51 @@
 import numpy as np
-import scipy.linalg as _la
-import scipy.sparse.linalg as _sla
 import numpy.random as random
 
-import Reinforcement_Learning as RL
 import Hamiltonian
-
-from quspin.tools.measurements import ent_entropy
 from quspin.operators import exp_op
-
-import matplotlib.pyplot as plt
-import pylab
-
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-import pylab
 
 import time
 import sys
 import os
-
 import cPickle
 
-random.seed()
+random.seed(0)
 
-# only for printing data
-def truncate(f,n):
-    '''Truncates/pads a float f to n decimal places without rounding'''
-
-    f_trunc=[]
-    for f_j in f:
-    	s = "{}".format(f_j)
-    	if 'e' in s or 'E' in s:
-    		f_trunc.append( '{0:.{1}f'.format(f,n))
-    	else:
-    		i,p,d = s.partition('.')
-    		f_trunc.append( '.'.join([i,(d + '0'*n)[:n]]))
-    return f_trunc
+def best_protocol(best_actions,hx_i,delta_t):
+	""" This function builds the best encounteres protocol from best_actions """
+	protocol=np.zeros_like(best_actions)
+	t = np.array([delta_t*_i for _i in range(len(best_actions))])
+	S = hx_i
+	for _i,A in enumerate(best_actions):
+		S+=A
+		protocol[_i]=S
+	return protocol, t
 
 
-def Learn_Policy(state_i,theta,tilings,dims,actions,R):
+def Learn_Policy(state_i,best_actions,R,theta,tilings,actions):
 
-	N_tilings, N_lintiles, N_vars = dims
-	N_tiles = N_lintiles**N_vars
-	shift_tile_inds = [j*N_tiles for j in xrange(N_tilings)]
+	N_tilings = tilings.shape[0]
+	N_tiles = tilings.shape[1]
+	
+	# preallocate theta_inds
+	theta_inds_zeros=np.zeros((N_tilings,),dtype=int)
 
-	avail_actions = RL.all_actions()
-	s = state_i.copy()
+	S = state_i.copy()
 
-	for t_step, A in enumerate(actions):
+	for t_step, A in enumerate(best_actions):
 		# calculate state-action indices
-		indA = avail_actions.index(A)
-		theta_inds = RL.find_feature_inds(s,tilings,shift_tile_inds)
+		indA = np.searchsorted(actions,A)
+		
+		theta_inds=theta_inds_zeros
+		for _k, tiling in enumerate(tilings): # cython-ise this loop as inline fn!
+			idx = tiling.searchsorted(S)
+			idx = np.clip(idx, 1, len(tiling)-1)
+			left, right = tiling[idx-1], tiling[idx]
+			idx -= S - left < right - S
+			theta_inds[_k]=idx[0]+_k*N_tiles
 			
 		# check if max learnt
 		if max(theta[theta_inds,t_step,:].ravel())>R/N_tilings and R>0:
-			# Q function
 			Q = np.sum(theta[theta_inds,t_step,:],axis=0)
 			indA_max=np.argmax(Q)
 
@@ -65,75 +55,26 @@ def Learn_Policy(state_i,theta,tilings,dims,actions,R):
 		# calculate theta function
 		theta[theta_inds,t_step,indA] = (R+1E-2)/(N_tilings)
 		
-		s+=A
+		S+=A
 
 	return theta
 
 
 
-def Q_learning(RL_params,physics_params,theta=None,tilings=None):
+def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL,N_tilings,N_tiles,state_i,h_field,dh_field,
+			   L,max_t_steps,delta_t,J,hz,hx_i,hx_f,psi_i,psi_f,
+			   theta=None,tilings=None,save=False):
+	"""
+	This function applies modified Watkins' Q-Learning for time-dependent states with
+	force-learn replays.
 
-	####################################################################
-	start_time = time.time()
-	####################################################################
-	# display full strings
-	np.set_printoptions(threshold='nan')
+	1st row: RL arguments
+	2nd row: physics arguments
+	3rd row: optional arguments
+	"""
 	######################################################################
-	#######################   read off params 	 #########################
-	######################################################################
-	
-	# read off RL_params
-	RL_keys = ['N_episodes','alpha_0','eta','lmbda','beta_RL','traces','dims','N_tiles','state_i','h_field','dh_field']
-	from numpy import array
-	for key,value in RL_params.iteritems():
-		#print key, repr(value)
-		if key not in RL_keys:
-			raise TypeError("Key '{}' not allowed for use in dictionary!".format(key))
-		# turn key to variable and assign its value
-		exec("{} = {}".format(key,repr(value)) ) in locals()
 
-	# read off physics params
-	physics_keys = ['L','max_t_steps','delta_t','J','hz','hx_i','hx_f','psi_i','psi_f','E_i','E_f']
-	for key,value in physics_params.iteritems():
-		#print key, repr(value)
-		if key not in physics_keys:
-			raise TypeError("Key '{}' not allowed for use in dictionary!".format(key))
-		# turn key to variable and assign its value
-		exec( "{} = {}".format(key,repr(value)) ) in locals()
-
-	
-	######################################################################
-	# save data
-	save = True
-	N = 0 # realisation #
-
-	# define all actions
-	actions = RL.all_actions()
-
-	# eta limits # max and min field
-	hx_limits = [h_field[0],h_field[-1]]
-
-	# get dimensions
-	N_tilings, N_lintiles, N_vars = dims
-	N_tiles = N_lintiles**N_vars
-	N_actions = len(actions)
-	shift_tile_inds = [j*N_tiles for j in xrange(N_tilings)]
-
-	if theta is None:
-		theta=np.zeros((N_tiles*N_tilings,max_t_steps,N_actions), dtype=np.float64)
-	
-	if tilings is None:
-		tilings = RL.gen_tilings(h_field,dh_field,N_tilings)
-   	
-	# pre-allocate traces variable
-	e = np.zeros_like(theta)
-	fire_trace = np.ones(N_tilings)
-
-	# pre-allocate usage vector: inverse gradient descent learning rate
-	u0 = 1.0/alpha_0*np.ones((N_tiles*N_tilings,), dtype=np.float64)
-	u=np.zeros_like(u0)	
-
-	#### physical quantities
+	##### physical quantities ######
 
 	# define ED Hamiltonian H(t)
 	b=hx_i
@@ -142,6 +83,33 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None):
 	H = Hamiltonian.Hamiltonian(L,fun=lin_fun,**{'J':J,'hz':hz})
 	# define matrix exponential; will be changed every time b is overwritten
 	exp_H=exp_op(H,a=-1j*delta_t)
+	# preallocate physical state
+	psi = np.zeros_like(psi_i)
+
+	##### RL quantities	#####
+
+	# define actions
+	pos_actions=[0.01,0.02,0.05,0.1,0.2,0.5,1.0,2.0]
+	#pos_actions=[2.0]
+	neg_actions=[-i for i in pos_actions]
+	actions = np.sort(neg_actions + [0.0] + pos_actions)
+	del pos_actions,neg_actions
+
+	N_actions = len(actions)
+	
+	if theta is None:
+		theta=np.zeros((N_tiles*N_tilings,max_t_steps,N_actions), dtype=np.float64)
+	
+	if tilings is None:
+		tilings = np.array([h_field + np.random.uniform(0.0,dh_field,1) for j in xrange(N_tilings)])
+		
+	# pre-allocate traces variable
+	e = np.zeros_like(theta)
+	fire_trace = np.ones(N_tilings)
+
+	# pre-allocate usage vector: inverse gradient descent learning rate
+	u0 = 1.0/alpha_0*np.ones((N_tiles*N_tilings,), dtype=np.float64)
+	u=np.zeros_like(u0)	
 	
 	# preallocate quantities
 	Return_ave = np.zeros((N_episodes,),dtype=np.float64)
@@ -150,11 +118,10 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None):
 
 	# initialise best fidelity
 	best_fidelity = 0.0 # best encountered fidelity
-	
-	# calculate importance sampling ratio
-	R = 0.0 # instantaneous fidelity
-	# preallocate physical state
-	psi = np.zeros_like(psi_i)
+	# initialise reward
+	R = 0.0 
+	# preallocate theta_inds
+	theta_inds_zeros=np.zeros((N_tilings,),dtype=int)
 		
 	# loop over episodes
 	for ep in xrange(N_episodes):
@@ -167,36 +134,44 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None):
 		S = state_i.copy()
 		
 		# get set of features present in S
-		theta_inds = RL.find_feature_inds(S,tilings,shift_tile_inds)
+		theta_inds=theta_inds_zeros
+		for _k, tiling in enumerate(tilings): # cython-ise this loop as inline fn!
+			idx = tiling.searchsorted(S)
+			idx = np.clip(idx, 1, len(tiling)-1)
+			left, right = tiling[idx-1], tiling[idx]
+			idx -= S - left < right - S
+			theta_inds[_k]=idx[0]+_k*N_tiles
 		Q = np.sum(theta[theta_inds,0,:],axis=0) # for each action at time t_step=0
 
 		# preallocate physical quantties
 		psi[:] = psi_i[:] # quantum state at time
 		
 		# taken encountered and taken
-		actions_taken = []
+		actions_taken = np.zeros((max_t_steps,),dtype=np.float64)
 		
 		# generate episode
-		for t_step in xrange(max_t_steps): #
+		for t_step in xrange(max_t_steps): 
 
 			# calculate available actions from state S
-			avail_inds = np.argwhere((S[0]+np.array(actions) <= hx_limits[1])*(S[0]+np.array(actions) >= hx_limits[0])).squeeze()
-			avail_actions = [actions[_j] for _j in avail_inds]
+			avail_inds = np.argwhere((S[0]+np.array(actions)<=h_field[-1])*(S[0]+np.array(actions)>=h_field[0])).squeeze()
+			avail_actions = actions[avail_inds]
 
 			# calculate greedy action(s) wrt Q policy
-			A_greedy = avail_actions[ random.choice( np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
+			A_greedy = avail_actions[random.choice(np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
 			
 			# choose a random action
 			P = np.exp(beta_RL*Q[avail_inds])
-			p = np.cumsum(P/sum(P))
-			A = avail_actions[np.searchsorted(p,random.uniform(0.0,1.0))]
+			A = avail_actions[np.searchsorted(np.cumsum(P/np.sum(P)),random.uniform(0.0,1.0))]
 			
 			# find the index of A
-			indA = actions.index(A)
+			indA = np.searchsorted(actions,A)
 					
 			# reset traces if A is exploratory
 			if abs(A - A_greedy) > np.finfo(A).eps:
 				e *= 0.0
+
+			# record action taken
+			actions_taken[t_step]=A
 
 			# take action A, return state S_prime and actual reward R
 			################################################################################
@@ -218,18 +193,13 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None):
 			# assign reward
 			if t_step == max_t_steps-1:
 				# calculate final fidelity
-				fidelity = abs( psi.conj().dot(psi_f) )**2
+				fidelity = abs(psi.conj().dot(psi_f))**2
 				# reward
 				R += fidelity
 				
 			################################################################################
 			################################################################################
 			################################################################################
-			
-			# record action taken
-			actions_taken.append(A)
-
-			############################
 
 			# calculate usage and alpha vectors: alpha_inf = eta
 			u[theta_inds]*=(1.0-eta)
@@ -255,13 +225,19 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None):
 				break
 
 			# get set of features present in S_prime
-			theta_inds_prime = RL.find_feature_inds(S_prime,tilings,shift_tile_inds)
+			theta_inds_prime = theta_inds_zeros
+			for _k, tiling in enumerate(tilings): # cython-ise this loop as inline fn!
+				idx = tiling.searchsorted(S_prime)
+				idx = np.clip(idx, 1, len(tiling)-1)
+				left, right = tiling[idx-1], tiling[idx]
+				idx -= S_prime - left < right - S_prime
+				theta_inds_prime[_k]=idx[0]+_k*N_tiles
 			
 			# t-dependent Watkin's Q learning
 			Q = np.sum(theta[theta_inds_prime,t_step+1,:],axis=0)
 
 			# update theta
-			delta += max(Q)
+			delta += np.max(Q)
 			theta += delta*e
 
 			# GD error in field h
@@ -287,22 +263,25 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None):
 		if fidelity-best_fidelity>1E-12:
 			# update list of best actions
 			best_actions = actions_taken[:]
-			# calculate best protocol and fidelity
-			protocol_best,t_best = best_protocol(best_actions,hx_i,delta_t)
+			# best reward and fidelity
 			R_best=R
 			best_fidelity=fidelity
 			# learn policy
-			theta = Learn_Policy(state_i,theta,tilings,dims,best_actions,R_best)
+			theta = Learn_Policy(state_i,best_actions,R_best,theta,tilings,actions)
 			
 
 		# force-learn best encountered every 100 episodes
 		if (ep%40==0 and ep!=0) and (R_best is not None) and beta_RL<1E12:
-			theta = Learn_Policy(state_i,theta,tilings,dims,best_actions,R_best)
+			theta = Learn_Policy(state_i,best_actions,R_best,theta,tilings,actions)
 				
 		if ep%20 == 0:
 			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep+1,np.round(fidelity,3),S_prime[0])
 			print 'best encountered fidelity is {}.'.format(np.round(best_fidelity,3))
 	
+
+	# calculate best protocol and fidelity
+	protocol_best,t_best = best_protocol(best_actions,hx_i,delta_t)
+
 	# save data
 	Data_fid = np.zeros((3,N_episodes))
 	
@@ -340,13 +319,3 @@ def Q_learning(RL_params,physics_params,theta=None,tilings=None):
 		
 	print "Calculating the Q function loop using Q-Learning took",("--- %s seconds ---" % (time.time() - start_time))
 
-
-def best_protocol(best_actions,hx_i,delta_t):
-	""" This function builds the best encounteres protocol from best_actions """
-	protocol=[]
-	t = [delta_t*_i for _i in range(len(best_actions))]
-	s = hx_i
-	for _i,a in enumerate(best_actions):
-		s+=a
-		protocol.append(s)
-	return protocol, t
