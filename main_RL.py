@@ -16,7 +16,6 @@ else:
 	hx_i= 0.0 # initial hx coupling
 	hx_f= 2.0 # final hx coupling
 
-#"""
 # define dynamic params of H(t)
 b=hx_i
 lin_fun = lambda t: b
@@ -72,16 +71,11 @@ eta = 0.6
 # TD(lambda) parameter
 lmbda = 0.5
 # softmax exploration inverse temperature
-beta_RL = 4.0
+beta_RL_i = 4.0
+beta_RL_inf = 100.0
 
-# display full strings
-np.set_printoptions(threshold='nan')
-
-
-RL_params = (N,N_episodes,alpha_0,eta,lmbda,beta_RL,N_tilings,N_tiles,state_i,h_field,dh_field)
-
+RL_params = (N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,N_tilings,N_tiles,state_i,h_field,dh_field)
 physics_params = (L,max_t_steps,delta_t,J,hz,hx_i,hx_f,psi_i,psi_f)
-
 
 
 # initiate learning
