@@ -4,6 +4,7 @@ import numpy.random as random
 import Hamiltonian
 import plot_data as plot
 from quspin.operators import exp_op
+from quspin.tools.measurements import ent_entropy
 
 import time
 import sys
@@ -138,7 +139,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	##### physical quantities ######
 
 	# define ED Hamiltonian H(t)
-	b=hx_i
+	b=state_i[0]
 	lin_fun = lambda t: b 
 	# define Hamiltonian
 	H = Hamiltonian.Hamiltonian(L,fun=lin_fun,**{'J':J,'hz':hz})
@@ -178,12 +179,12 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	Fidelity_ep = np.zeros_like(Return_ave)
 
 	# initialise best fidelity
-	best_R = 0.0 # best encountered fidelity
+	best_R = -1.0 # best encountered fidelity
 	# initialise reward
 	R = 0.0 
 	# preallocate theta_inds
 	theta_inds_zeros=np.zeros((N_tilings,),dtype=int)
-		
+
 	# loop over episodes
 	for ep in xrange(N_episodes):
 		# set traces to zero
@@ -207,7 +208,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 
 		#define beta
 		beta_RL = explore_beta(ep,m_expl,beta_RL_i,T_expl,beta_RL_const=beta_RL_inf)
-			
+
+		explored=False
 		# generate episode
 		for t_step in xrange(max_t_steps): 
 
@@ -215,7 +217,6 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			avail_inds = np.argwhere((S[0]+np.array(actions)<=h_field[-1])*(S[0]+np.array(actions)>=h_field[0])).squeeze()
 			avail_actions = actions[avail_inds]
 
-			# calculate greedy action(s) wrt Q policy
 			if beta_RL < 10.0:
 				if ep%2==0:
 					A_greedy = avail_actions[random.choice(np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
@@ -260,8 +261,10 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			R *= 0.0
 			if t_step == max_t_steps-1:
 				# calculate final fidelity and give it as a reward
-				R += abs(psi.conj().dot(psi_f))**2
+				EGS = H.eigsh(k=1,which='SA',maxiter=1E10,return_eigenvectors=False).squeeze()
+				R += abs(psi.conj().dot(psi_f))**2 #-(H.matrix_ele(psi,psi).real-EGS) #-ent_entropy(psi,H.basis)['Sent'] #
 				
+
 			################################################################################
 			################################################################################
 			################################################################################
@@ -313,7 +316,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			theta_inds[:]=theta_inds_prime[:]
 	
 		# if greedy policy completes a full episode and if greedy fidelity is worse than inst one
-		if R-best_R>1E-12:
+		if R-best_R > 1E-12:
 			# update list of best actions
 			best_actions = actions_taken[:]
 			# best reward and fidelity
@@ -321,11 +324,11 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			# learn policy
 			if beta_RL<10.0:
 				theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
-		
+
 		# force-learn best encountered every 100 episodes
 		if ( (ep+1)%(2*T_expl)-T_expl==0 and ep not in [0,N_episodes-1] ) and beta_RL<10.0:
 			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
-		
+
 		print "beta_RL,R,d_theta:",beta_RL,R, np.max(abs(theta.ravel() - theta_old.ravel() ))
 		theta_old=theta.copy()
 			
@@ -336,15 +339,17 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 
 
 		if (ep+1)%(2*T_expl) == 0:
-			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep+1,np.round(R,3),S_prime[0])
-			print 'best encountered fidelity is {}.'.format(np.round(best_R,3))
+			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep+1,np.round(R,5),S_prime[0])
+			print 'best encountered fidelity is {}.'.format(np.round(best_R,5))
 			print 'current inverse exploration tampeature is {}.'.format(np.round(beta_RL,3))
 
-	
-	# calculate best protocol and fidelity
-	protocol_best,t_best = best_protocol(best_actions,hx_i,delta_time)
-	protocol_greedy,t_greedy = greedy_protocol(theta,tilings,actions,hx_i,delta_time,max_t_steps,h_field)
-			
+			# calculate best protocol and fidelity
+			protocol_best,t_best = best_protocol(best_actions,state_i[0],delta_time)
+			protocol_greedy,t_greedy = greedy_protocol(theta,tilings,actions,state_i[0],delta_time,max_t_steps,h_field)
+					
+			print protocol_best
+			print protocol_greedy
+
 	# save data
 	Data_fid = np.zeros((N_episodes,3))
 	
@@ -359,9 +364,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	Data_protocol[:,2] = protocol_greedy
 
 	# define parameter-dependent part of file name
-	hx_i=-hx_f
-	args = (N,max_t_steps,L) + tuple( truncate([J,hz,hx_i,hx_f] ,2) )
-	data_params = "_N=%s_T=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s"   %args
+	args = (N,N_episodes,max_t_steps,L) + tuple( truncate([J,hz,hx_i,hx_f] ,2) )
+	data_params = "_N=%s_Nep=%s_T=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s"   %args
 
 	if save:
 		# display full strings
@@ -390,10 +394,10 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		cPickle.dump(phys_params, open(dataname, "wb" ) )
 
 	# create plots
-	plot.rewards(Fidelity_ep,Return,Return_ave,'RL_stats',data_params)
+	plot.plot_rewards(Fidelity_ep,Return,Return_ave,'RL_stats',data_params)
 
 	plot.observables(L,t_best,protocol_best,hx_i,hx_f,J,hz,data_params+'_best')
-	plot.observables(L,t_greedy,protocol_greedy,hx_i,hx_f,J,hz,data_params+'_greedy')
+	plot.observables(L,t_best,protocol_greedy,hx_i,hx_f,J,hz,data_params+'_greedy')
 
 
 

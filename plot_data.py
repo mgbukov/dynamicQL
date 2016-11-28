@@ -21,7 +21,7 @@ my_dir = str2[n-1]
 #####
 
 
-def rewards(Fidelity_ep,Return,Return_ave,save_name,data_params,save=True):
+def plot_rewards(Fidelity_ep,Return,Return_ave,save_name,data_params,save=True):
 	""" This function plots the rewards vs episodes. """
 
 	str_R = "$\\mathrm{episodic}$"
@@ -57,7 +57,12 @@ def rewards(Fidelity_ep,Return,Return_ave,save_name,data_params,save=True):
 
 
 def plot_protocols(times,protocol,observable,save_name,data_params,save=False):
-	""" This function plots the protocols vs. time."""
+	""" This function plots the protocols + observable vs. time."""
+
+	# extend time and protocol vecors
+	delta_times=times[1]-times[0]
+	times=np.append(times,times[-1]+delta_times)
+	protocol=np.append(protocol,protocol[-1])
 
 
 	str_p="$h_x(t)$"
@@ -119,7 +124,8 @@ def observables(L,times,protocol,hx_i,hx_f,J,hz,data_params,save=True):
 
 	# calculate initial state
 	b=hx_i
-	_,psi=H.eigsh(k=1,which='SA',maxiter=1E10,return_eigenvectors=True)
+	E_i,psi=H.eigsh(k=1,which='SA',maxiter=1E10,return_eigenvectors=True)
+	#E_i, psi=H.eigsh(k=1,sigma=-0.1,maxiter=1E10,return_eigenvectors=True)
 	psi=psi.squeeze()
 
 	subsys=[i for i in range(L/2)]
@@ -144,7 +150,6 @@ def observables(L,times,protocol,hx_i,hx_f,J,hz,data_params,save=True):
 		if L!=1:
 			Sent.append( ent_entropy(psi,H.basis,chain_subsys=subsys)['Sent'] )
 		else:
-			Sent.append(float('nan'))
 			# Bloch sphere image
 			bloch = Bloch()
 			
@@ -182,16 +187,6 @@ def observables(L,times,protocol,hx_i,hx_f,J,hz,data_params,save=True):
 	if not os.path.exists(save_dir):
 	    os.makedirs(save_dir)
 
-		
-	# create movie
-	movie_name="data/blochsphere_" + data_params
-	cmd = "ffmpeg -framerate 5 -i temp/bloch_%01d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+movie_name+".mp4"
-	os.system(cmd)
-	os.system("rm -rf temp*")
-
-	# extend time and protocol vecors
-	times=np.append(times,times[-1]+delta_times)
-	protocol=np.append(protocol,protocol[-1])
 	
 	# plot protocol
 	plot_protocols(times,protocol,Fidelity,'fid',data_params,save=save)
@@ -200,17 +195,13 @@ def observables(L,times,protocol,hx_i,hx_f,J,hz,data_params,save=True):
 	plot_protocols(times,protocol,Sd,'sd',data_params,save=save)
 	if L!=1:
 		plot_protocols(times,protocol,Sent,'sent',data_params,save=save)
+	else:
+		# create movie
+		movie_name="data/blochsphere_" + data_params
+		cmd = "ffmpeg -framerate 5 -i temp/bloch_%01d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+movie_name+".mp4"
+		# execute command cmd
+		os.system(cmd)
+		# remove temp directory
+		os.system("rm -rf temp*")
 
 
-	 
-"""
-L=1
-times=np.linspace(0.05,1.0,20)
-protocol=np.array([4 for i in range(10)] + [-4 for i in range(10)] )
-hx_i = -1.0
-hx_f = +1.0
-J=0.0
-hz=1.0
-
-observables(L,times,protocol,hx_i,hx_f,J,hz,'test')
-"""

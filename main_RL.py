@@ -1,4 +1,6 @@
 from Q_learning import Q_learning
+from evaluate_data import load_data
+from quspin.tools.measurements import ent_entropy
 import Hamiltonian
 import numpy as np
 
@@ -11,7 +13,7 @@ if L==1:
 	hx_i= -1.0 # initial hx coupling
 	hx_f= +1.0 # final hx coupling
 else:
-	J = -1.0 #/0.809 # zz interaction
+	J = 1.0 #/0.809 # zz interaction
 	hz = 0.5 #0.9045/0.809 #1.0 # hz field
 	hx_i= 0.0 # initial hx coupling
 	hx_f= 2.0 # final hx coupling
@@ -28,6 +30,7 @@ if L==1:
 	E_i, psi_i = H.eigh()
 else:
 	E_i, psi_i = H.eigsh(time=0,k=2,which='BE',maxiter=1E10,return_eigenvectors=True)
+	#E_i, psi_i = H.eigsh(time=0,k=1,sigma=-0.1,maxiter=1E10,return_eigenvectors=True)
 E_i = E_i[0]
 psi_i = psi_i[:,0]
 # calculate final state
@@ -44,6 +47,7 @@ delta_time = 0.05 #0.05
 
 print "number of states is:", H.Ns
 print "initial and final energies are:", E_i, E_f
+#print "initial entanglement is:", ent_entropy(psi_i,H.basis)['Sent']
 
 
 ##### RL params #####
@@ -58,13 +62,12 @@ dh_field = h_field[1]-h_field[0]
 
 ########
 # define RL  hyper params
-hx_i = -4.0
-state_i = np.array([hx_i])
+state_i = np.array([-4.0])
 
 # realisation number
 N=0
 # number of episodes
-N_episodes = 2001
+N_episodes = 1001
 # learning rate
 alpha_0 = 0.9
 # usage or "u" eta: alpha_0 decays to eta in long run
@@ -84,4 +87,5 @@ physics_params = (L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f)
 
 # initiate learning
 Q_learning(*(RL_params+physics_params),save=True)
+#load_data(*(RL_params+physics_params))
 
