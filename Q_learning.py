@@ -2,6 +2,7 @@ import numpy as np
 import numpy.random as random
 
 import Hamiltonian
+import plot_data as plot
 from quspin.operators import exp_op
 
 import time
@@ -10,6 +11,21 @@ import os
 import cPickle
 
 random.seed(0)
+
+
+# only for printing data
+def truncate(f,n):
+    '''Truncates/pads a float f to n decimal places without rounding'''
+
+    f_trunc=[]
+    for f_j in f:
+    	s = "{}".format(f_j)
+    	if 'e' in s or 'E' in s:
+    		f_trunc.append( '{0:.{1}f'.format(f,n))
+    	else:
+    		i,p,d = s.partition('.')
+    		f_trunc.append( '.'.join([i,(d + '0'*n)[:n]]))
+    return f_trunc
 
 def explore_beta(t,m,b,T,beta_RL_const=1000.0):
 	"""
@@ -32,6 +48,35 @@ def best_protocol(best_actions,hx_i,delta_t):
 	for _i,A in enumerate(best_actions):
 		S+=A
 		protocol[_i]=S
+	return protocol, t
+
+
+def greedy_protocol(theta,tilings,actions,hx_i,delta_t,max_t_steps,h_field):
+	""" This function builds the best encounteres protocol from best_actions """
+	protocol=np.zeros((max_t_steps,),dtype=np.float64)
+	t = np.array([delta_t*_i for _i in range(max_t_steps)])
+	S = np.array([hx_i])
+	
+	N_tilings = tilings.shape[0]
+	N_tiles = tilings.shape[1]
+	
+	# preallocate theta_inds
+	theta_inds_zeros=np.zeros((N_tilings,),dtype=int)
+	
+	for t_step in range(max_t_steps):
+
+		avail_inds = np.argwhere((S[0]+np.array(actions)<=h_field[-1])*(S[0]+np.array(actions)>=h_field[0])).squeeze()
+		avail_actions = actions[avail_inds]
+
+		# calculate Q(s,a)
+		theta_inds=find_feature_inds(tilings,S,theta_inds_zeros)
+		Q = np.sum(theta[theta_inds,t_step,:],axis=0)
+		# find greedy action
+		A_greedy=avail_actions[np.argmax(Q[avail_inds])]
+
+		S[0]+=A_greedy
+		protocol[t_step]=S
+
 	return protocol, t
 
 
@@ -77,8 +122,8 @@ def find_feature_inds(tilings,S,theta_inds):
 		theta_inds[_k]=idx[0]+_k*tilings.shape[1]
 	return theta_inds
 
-def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,N_tilings,N_tiles,state_i,h_field,dh_field,
-			   L,max_t_steps,delta_t,J,hz,hx_i,hx_f,psi_i,psi_f,
+def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field,
+			   L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f,
 			   theta=None,tilings=None,save=False):
 	"""
 	This function applies modified Watkins' Q-Learning for time-dependent states with
@@ -98,15 +143,15 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,N_tilings,N_
 	# define Hamiltonian
 	H = Hamiltonian.Hamiltonian(L,fun=lin_fun,**{'J':J,'hz':hz})
 	# define matrix exponential; will be changed every time b is overwritten
-	exp_H=exp_op(H,a=-1j*delta_t)
+	exp_H=exp_op(H,a=-1j*delta_time)
 	# preallocate physical state
 	psi = np.zeros_like(psi_i)
 
 	##### RL quantities	#####
 
 	# define actions
-	pos_actions=[0.01,0.02,0.05,0.1,0.2,0.5,1.0,2.0,3.0]
-	#pos_actions=[2.0]
+	pos_actions=[0.1,0.2,0.5,1.0,2.0,4.0,8.0]
+	#pos_actions=[8.0]
 	neg_actions=[-i for i in pos_actions]
 	actions = np.sort(neg_actions + [0.0] + pos_actions)
 	del pos_actions,neg_actions
@@ -133,15 +178,11 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,N_tilings,N_
 	Fidelity_ep = np.zeros_like(Return_ave)
 
 	# initialise best fidelity
-	best_fidelity = 0.0 # best encountered fidelity
+	best_R = 0.0 # best encountered fidelity
 	# initialise reward
 	R = 0.0 
 	# preallocate theta_inds
 	theta_inds_zeros=np.zeros((N_tilings,),dtype=int)
-
-	# set exploration period duration
-	T_expl=40
-	m_expl=0.25
 		
 	# loop over episodes
 	for ep in xrange(N_episodes):
@@ -175,8 +216,15 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,N_tilings,N_
 			avail_actions = actions[avail_inds]
 
 			# calculate greedy action(s) wrt Q policy
-			A_greedy = avail_actions[random.choice(np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
-			
+			if beta_RL < 10.0:
+				if ep%2==0:
+					A_greedy = avail_actions[random.choice(np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
+				else:
+					A_greedy=best_actions[t_step]
+			else:
+				A_greedy = avail_actions[random.choice(np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
+				
+
 			if beta_RL < beta_RL_inf:
 				# choose a random action
 				P = np.exp(beta_RL*Q[avail_inds])
@@ -211,10 +259,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,N_tilings,N_
 			# assign reward
 			R *= 0.0
 			if t_step == max_t_steps-1:
-				# calculate final fidelity
-				fidelity = abs(psi.conj().dot(psi_f))**2
-				# reward
-				R += fidelity
+				# calculate final fidelity and give it as a reward
+				R += abs(psi.conj().dot(psi_f))**2
 				
 			################################################################################
 			################################################################################
@@ -267,69 +313,89 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,N_tilings,N_
 			theta_inds[:]=theta_inds_prime[:]
 	
 		# if greedy policy completes a full episode and if greedy fidelity is worse than inst one
-		if fidelity-best_fidelity>1E-12:
+		if R-best_R>1E-12:
 			# update list of best actions
 			best_actions = actions_taken[:]
 			# best reward and fidelity
-			best_R, best_fidelity = R, fidelity
+			best_R = R
 			# learn policy
-			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
+			if beta_RL<10.0:
+				theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
 		
 		# force-learn best encountered every 100 episodes
-		if ( (ep+1)%(2*T_expl)-T_expl==0 and ep!=0 ) and beta_RL<beta_RL_inf:
+		if ( (ep+1)%(2*T_expl)-T_expl==0 and ep not in [0,N_episodes-1] ) and beta_RL<10.0:
 			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
-
-
-		print beta_RL, np.linalg.norm(theta.ravel() - theta_old.ravel() )
+		
+		print "beta_RL,R,d_theta:",beta_RL,R, np.max(abs(theta.ravel() - theta_old.ravel() ))
 		theta_old=theta.copy()
 			
 		# record average return
 		Return_ave[ep] = 1.0/(ep+1)*(R + ep*Return_ave[ep-1])
 		Return[ep] = R
-		Fidelity_ep[ep] = fidelity
+		Fidelity_ep[ep] = R
 
 
-		if ep%(2*T_expl) == 0:
-			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep+1,np.round(fidelity,3),S_prime[0])
-			print 'best encountered fidelity is {}.'.format(np.round(best_fidelity,3))
+		if (ep+1)%(2*T_expl) == 0:
+			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep+1,np.round(R,3),S_prime[0])
+			print 'best encountered fidelity is {}.'.format(np.round(best_R,3))
 			print 'current inverse exploration tampeature is {}.'.format(np.round(beta_RL,3))
 
-	# calculate best protocol and fidelity
-	protocol_best,t_best = best_protocol(best_actions,hx_i,delta_t)
-	print protocol_best
-
-	# save data
-	Data_fid = np.zeros((3,N_episodes))
 	
-	Data_fid[0,:] = Fidelity_ep
-	Data_fid[1,:] = Return
-	Data_fid[2,:] = Return_ave
+	# calculate best protocol and fidelity
+	protocol_best,t_best = best_protocol(best_actions,hx_i,delta_time)
+	protocol_greedy,t_greedy = greedy_protocol(theta,tilings,actions,hx_i,delta_time,max_t_steps,h_field)
+			
+	# save data
+	Data_fid = np.zeros((N_episodes,3))
+	
+	Data_fid[:,0] = Fidelity_ep
+	Data_fid[:,1] = Return
+	Data_fid[:,2] = Return_ave
 	#
-	Data_protocol = np.zeros((2,max_t_steps))
+	Data_protocol = np.zeros((max_t_steps,3))
 
-	Data_protocol[0,:] = t_best
-	Data_protocol[1,:] = protocol_best
+	Data_protocol[:,0] = t_best
+	Data_protocol[:,1] = protocol_best
+	Data_protocol[:,2] = protocol_greedy
+
+	# define parameter-dependent part of file name
+	hx_i=-hx_f
+	args = (N,max_t_steps,L) + tuple( truncate([J,hz,hx_i,hx_f] ,2) )
+	data_params = "_N=%s_T=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s"   %args
 
 	if save:
 		# display full strings
 		np.set_printoptions(threshold='nan')
-		# defone parameter-dependent part of file name
-		args = (N,L) + tuple( np.around([J,hz,hx_i,hx_f] ,2) )
 
 		# as txt format
-		dataname  =  "RL_data_N=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s.txt"   %args
-		np.savetxt(dataname,Data_fid.T)
+		dataname  =  "RL_data"+data_params+'.txt'
+		np.savetxt(dataname,Data_fid)
 
-		dataname  =  "protocol_data_N=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s.txt"   %args
-		np.savetxt(dataname,Data_protocol.T)
+		dataname  =  "protocol_data"+data_params+'.txt'
+		np.savetxt(dataname,Data_protocol)
 		# save as pickle
-		dataname  =  "theta_data_N=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s.pkl"   %args
+		dataname  =  "theta_data"+data_params+'.pkl'
 		cPickle.dump(theta, open(dataname, "wb" ) )
 		#cPickle.load(open(dataname, "rb" ))
 
-		dataname  =  "tilings_data_N=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s.pkl"   %args
+		dataname  =  "tilings_data"+data_params+'.pkl'
 		cPickle.dump(tilings, open(dataname, "wb" ) )
 
-		dataname  =  "RL_params_data_N=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s.pkl"   %args
+		RL_params = (N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field)
+		dataname  =  "RL_params_data"+data_params+'.pkl'
 		cPickle.dump(RL_params, open(dataname, "wb" ) )
+
+		phys_params = (L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f)
+		dataname  =  "phys_params_data"+data_params+'.pkl'
+		cPickle.dump(phys_params, open(dataname, "wb" ) )
+
+	# create plots
+	plot.rewards(Fidelity_ep,Return,Return_ave,'RL_stats',data_params)
+
+	plot.observables(L,t_best,protocol_best,hx_i,hx_f,J,hz,data_params+'_best')
+	plot.observables(L,t_greedy,protocol_greedy,hx_i,hx_f,J,hz,data_params+'_greedy')
+
+
+
+
 		

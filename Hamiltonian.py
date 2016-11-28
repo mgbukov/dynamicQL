@@ -7,7 +7,7 @@ import numpy as np
 
 def Hamiltonian(L,J,hz,fun=None,fun_args=[]):
 	######## define physics
-	basis = spin_basis_1d(L=L,kblock=0,pblock=1,pauli=False)
+	basis = spin_basis_1d(L=L,kblock=0,pblock=1,pauli=False) #
 			
 	zz_int =[[J,i,(i+1)%L] for i in range(L)]
 	if L==1:
