@@ -29,7 +29,6 @@ def main():
     
     action_set1=[-5.0,0.,2.]
     action_set2=np.array([0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.],dtype=np.float32) # 17 actions in total
-    np.round
     action_set2=list(np.round(np.concatenate((action_set2,-1.0*action_set2,[0])),3))
     action_set3=[8.0,-8.0,0.0]
     #action_set4=[-0.]
@@ -269,7 +268,7 @@ def simulate_anneal(params):
     while T>1E-6:
         if N_quench==0:break
         #print(T,best_fid)
-        print("Current temperature: %.2f\tBest fidelity: %.4f\tFidelity count: %i"%(T,best_fid,count_fid_eval))
+        print("Current temperature: %.4f\tBest fidelity: %.4f\tFidelity count: %i"%(T,best_fid,count_fid_eval))
         
         #print("Current temperature=%s"%(1./beta),"Best fidelity=%s"%best_fid)
         beta=1./T
