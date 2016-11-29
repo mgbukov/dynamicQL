@@ -7,38 +7,46 @@ import math
 import sys # for running in batch from terminal
 from scipy.sparse.linalg import expm_multiply as expm
 #from matplotlib import pyplot as plt
-                
+      
+np.set_printoptions(precision=4)
+          
 def main():
     
-    global action_set,hx_discrete,max_step,hx_max
+    global action_set,hx_discrete,hx_max,FIX_NUMBER_FID_EVAL
     
     L = 1 # system size
     J = 1.0/0.809 # zz interaction
     hz = 1.0 #0.9045/0.809 #1.0 # hz field
-    hx_i = -1.0# -1.0 # initial hx coupling
+    hx_i = -4.0# -1.0 # initial hx coupling
+    hx_initial_state= -1.0 # initial state
     hx_f = 1.0 #+1.0 # final hx coupling
-    N_quench=40
-    delta_t=0.05
-    N_restart=50
-    hx_max=1
+    N_quench=30
+    delta_t=0.01
+    N_restart=10
+    hx_max=4
+    max_fid_eval=1000
+    FIX_NUMBER_FID_EVAL=False
     
-    action_set1=[-2.0,0.,2.0]
-    action_set2=np.array([0.01,0.02,0.05,0.1,0.2,0.5,1.0,2.0],dtype=np.float32)
-    action_set2=list(np.concatenate((action_set2,-1.0*action_set2,[0])))
-    action_set3=[0.,0.02,0.05,0.08,0.1,0.2,0.4,0.8]
-    action_set4=[-10.,0.,10.]
+    action_set1=[-5.0,0.,2.]
+    action_set2=np.array([0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.],dtype=np.float32) # 17 actions in total
+    np.round
+    action_set2=list(np.round(np.concatenate((action_set2,-1.0*action_set2,[0])),3))
+    action_set3=[8.0,-8.0,0.0]
+    #action_set4=[-0.]
     
     if len(sys.argv)>1:
-        # argv order : Number of time step, action set number, filename for output
+        # argv order : Number of time step, action set number, filename for output max_fid_eval
+        # 
         N_time_step=int(sys.argv[1])
         action_set_no=sys.argv[2]
         action_set=eval('action_set'+action_set_no)
         outfile_name=sys.argv[3]
+        max_fid_eval=int(sys.argv[4])
     else:
-        N_time_step=40
+        N_time_step=20
         outfile_name='BB_action_set_1'
         action_set=action_set1
-        max_step=max(action_set)
+        max_fid_eval=3000
 
     param={'J':J,'hz':hz,'hx':hx_i}
     
@@ -50,7 +58,7 @@ def main():
    # print(H)
     
     # calculate initial and final states
-    hx_discrete[0]=hx_i # just a trick to get initial state
+    hx_discrete[0]=hx_initial_state # just a trick to get initial state
     E_i, psi_i = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=hx_f # just a trick to get final state
     E_f, psi_target = H.eigsh(time=0,k=1,which='SA')
@@ -85,17 +93,24 @@ def main():
     # exit()
     # #test=np.loadtxt("data/text.dat",delimiter="\t")
     #===========================================================================
+    sweep_size=N_time_step*len(action_set)
+    if FIX_NUMBER_FID_EVAL:
+        N_quench=(max_fid_eval-5*sweep_size)//sweep_size
+        assert N_quench >= 0
+    print("Using N_quench=:%d"%N_quench)
     
-    param_SA={'Ti':0.04,'sweep_size':N_time_step*len(action_set),
+    param_SA={'Ti':0.04,'sweep_size':sweep_size,
                 'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
                 'delta_t':delta_t,'psi_target':psi_target,
-                'hx_i':hx_i,'N_quench':N_quench}
+                'hx_i':hx_i,'N_quench':N_quench
+                }
 
     
     all_results=[]
     for it in range(N_restart):
        # print("Iteration:",it)
         result=simulate_anneal(param_SA)
+        print(result)
         all_results.append(result)
         pkl_file=open('data/%s.pkl'%outfile_name,'wb')
         pickle.dump(all_results,pkl_file)
@@ -153,7 +168,7 @@ def random_trajectory(hx_i,N_time_step):
         while True:
             action_choice=np.random.choice(action_set)
             current_h+=action_choice
-            if abs(current_h) < 2.0001:
+            if abs(current_h) < hx_max+0.0001:
                 action_protocol.append(action_choice)
                 break
             else:
@@ -209,7 +224,7 @@ def propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step)
                 rand_pos=np.random.randint(N_time_step)
     #new_action_protocol=np.copy(old_action_protocol)
     new_action_protocol=np.diff(new_hx_discrete)
-    new_action_protocol=np.concatenate(([new_hx_discrete[0]-(-1.0)],new_action_protocol))
+    new_action_protocol=np.concatenate(([new_hx_discrete[0]-hx_i],new_action_protocol))
     return new_action_protocol,new_hx_discrete
     #new_action_protocol[rand_pos]=np.random.choice(action_set)
     #print(N_tim)
@@ -224,8 +239,8 @@ def simulate_anneal(params):
     T=params['Ti']
     Ti=T
     N_quench=params['N_quench']
+    #max_fid_eval=params['max_fid_eval']
     step=0.0
-    #dT=params['dT']
     sweep_size=params['sweep_size']
     beta=1./T
 
@@ -249,9 +264,13 @@ def simulate_anneal(params):
     old_action_protocol=best_action_protocol
     old_fid=best_fid
     
+    count_fid_eval=0
+    
     while T>1E-6:
+        if N_quench==0:break
         #print(T,best_fid)
-        #print("Current temperature=%s"%T,"Best fidelity=%s"%best_fid)
+        print("Current temperature: %.2f\tBest fidelity: %.4f\tFidelity count: %i"%(T,best_fid,count_fid_eval))
+        
         #print("Current temperature=%s"%(1./beta),"Best fidelity=%s"%best_fid)
         beta=1./T
         for _ in range(sweep_size):
@@ -259,6 +278,7 @@ def simulate_anneal(params):
             hx_discrete=new_hx_discrete
             
             new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+            count_fid_eval+=1
             
             if new_fid > best_fid: # Record best encountered !
                 best_fid=new_fid
@@ -282,21 +302,23 @@ def simulate_anneal(params):
         T=Ti*(1.0-step/N_quench)
       
     for _ in range(5*sweep_size): ## Perform greedy sweeps (zero-temperature):
-            new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step)
-            hx_discrete=new_hx_discrete
-            new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
-            if new_fid > best_fid:# Record best encountered !
-                best_fid=new_fid
-                best_action_protocol=new_action_protocol
-                best_hx_discrete=new_hx_discrete
+        #print(_)
+        new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step)
+        hx_discrete=new_hx_discrete
+        new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+        count_fid_eval+=1
+        if new_fid > best_fid:# Record best encountered !
+            best_fid=new_fid
+            best_action_protocol=new_action_protocol
+            best_hx_discrete=new_hx_discrete
             
-            dF=(new_fid-old_fid)
-            if dF>0:
-                old_hx_discrete=new_hx_discrete
-                old_action_protocol=new_action_protocol
-                old_fid=new_fid
-    
-    return best_fid,best_action_protocol,best_hx_discrete
+        dF=(new_fid-old_fid)
+        if dF>0:
+            old_hx_discrete=new_hx_discrete
+            old_action_protocol=new_action_protocol
+            old_fid=new_fid
+    print("Done")
+    return count_fid_eval,best_fid,best_action_protocol,best_hx_discrete
 
 # Run main program !
 if __name__ == "__main__":

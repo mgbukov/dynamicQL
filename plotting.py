@@ -31,41 +31,45 @@ def main():
     ''' 
     
     # Import pkl file
-    t=50
-    action_set=1
+    t=25
+    action_set=2
     L=1
     
-    fid_vs_t=[]
-    for tt in [5,10,15,20,25,30,35,40,45,50]:
-        file=open('data/a1_t%d.pkl'%tt,'rb')
-        data=pickle.load(file,encoding='latin1')
-        print(np.mean(np.array([d[0] for d in data])))
-        fid_vs_t.append([tt*0.05,np.mean(np.array([d[0] for d in data]))])
-    
-    title="Fidelity vs quench time for $L=1$ with $a\in\\{0,\pm2\\}$, $h_z=1.0$"
-    out_file="plots/FidvsT_L=1_a=1.pdf"
-    plot_fidelity(np.array(fid_vs_t),title=title,out_file=out_file)
-
     #===========================================================================
-    # file=open('data/a1_t%d.pkl','rb')%(t)
-    # data=pickle.load(file,encoding='latin1') # encoding must be specified if the file was saved with pickle python 2.
-    # fid=[d[0] for d in data[:10]]
+    # fid_vs_t=[]
+    # for tt in [5,10,15,20,25,30,35,40,45,50]:
+    #     file=open('data/a%d_t%d.pkl'%(action_set,tt),'rb')
+    #     data=pickle.load(file,encoding='latin1')
+    #     print(np.mean(np.array([d[0] for d in data])))
+    #     fid_vs_t.append([tt*0.05,np.mean(np.array([d[0] for d in data]))])
     # 
-    # print(np.array([d[0] for d in data]))
-    # protocol=[d[2] for d in data[:10]]
-    # plot_protocols(protocol,
-    #                fid,
-    #                title='$t=%.2f,h_z=1.0,action set = %d, L=%d,a\in\\{0,\pm2\\}$'%(t*0.05,action_set,L),
-    #                out_file="plots/SA_t=%d_actionset=%d_L=%d.pdf"%(t,action_set,L)
-    #                )
+    # title="Fidelity vs quench time for $L=1$ \n $a\in\\{0,2\\}$, $h_z=1.0$"#\pm0.02,\pm0.02,\pm 0.1,\pm 0.2,\pm 0.5,\pm 1.0,\pm 2.0\\}$, $h_z=1.0$"
+    # out_file="plots/FidvsT_L=1_a=1.pdf"
+    # plot_fidelity(np.array(fid_vs_t),title=title,out_file=out_file)
     #===========================================================================
+
+    file=open('data/a2_t%d.pkl'%(t),'rb')
+    data=pickle.load(file,encoding='latin1') # encoding must be specified if the file was saved with pickle python 2.
+    fid=[d[0] for d in data[:10]]
+    
+   # print('$t=%.2f,h_z=1.0$,action set $= %d, L=%d \n a\in\\{0,2\\}$, $h_z=1.0$'%(t*0.05,action_set,L))
+   # exit(0)
+    protocol=[d[2] for d in data[:10]]
+    plot_protocols(protocol,
+                   fid,
+                   title='$t=%.2f,h_z=1.0$,action set $= %d, L=%d$ \n $a\in\\{0,2\\}$, $h_z=1.0$'%(t*0.05,action_set,L),
+                   out_file="plots/SA_t=%d_actionset=%d_L=%d.pdf"%(t,action_set,L)
+                   )
 def plot_fidelity(fid_vs_time,title,out_file=None):
+    fontsize=15
+    
     plt.rc('text', usetex=True)
     plt.rc('font', **{'family':'serif'})
     plt.plot(fid_vs_time[:,0],fid_vs_time[:,1],'-o',clip_on=False)
-    plt.title(title)
-    plt.xlabel('Time')
-    plt.ylabel('Fidelity')
+    plt.tick_params(labelsize=16)
+    plt.title(title,fontsize=fontsize)
+    plt.xlabel('Time',fontsize=fontsize)
+    plt.ylabel('Fidelity',fontsize=fontsize)
     
     if out_file is not None:
         plt.savefig(out_file)
@@ -90,7 +94,7 @@ def plot_protocols(y_val_list,z_val_list,x_val_list=None,title=None,out_file=Non
             y=list(protocol)
             
             # Change plot to step if u want true protocol 
-            points=plt.plot(x,y,label=str(round(fidelity,2)))
+            points=plt.step(x,y,label=str(round(fidelity,2)))
             i+=1
             
         plt.title(title)
