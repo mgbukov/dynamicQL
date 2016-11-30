@@ -65,9 +65,9 @@ dh_field = h_field[1]-h_field[0]
 state_i = np.array([-4.0])
 
 # realisation number
-N=0
+N=3
 # number of episodes
-N_episodes = 1001
+N_episodes = 20001
 # learning rate
 alpha_0 = 0.9
 # usage or "u" eta: alpha_0 decays to eta in long run
@@ -79,7 +79,7 @@ beta_RL_i = 2.0
 beta_RL_inf = 100.0
 # set exploration period duration
 T_expl=20
-m_expl=0.25 # 0.125
+m_expl=0.125 # 0.125
 
 RL_params = (N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field)
 physics_params = (L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f)

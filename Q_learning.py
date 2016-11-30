@@ -11,7 +11,7 @@ import sys
 import os
 import cPickle
 
-random.seed(0)
+random.seed()
 
 
 # only for printing data
@@ -151,8 +151,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	##### RL quantities	#####
 
 	# define actions
-	pos_actions=[0.1,0.2,0.5,1.0,2.0,4.0,8.0]
-	#pos_actions=[8.0]
+	#pos_actions=[0.1,0.2,0.5,1.0,2.0,4.0,8.0]
+	pos_actions=[8.0]
 	neg_actions=[-i for i in pos_actions]
 	actions = np.sort(neg_actions + [0.0] + pos_actions)
 	del pos_actions,neg_actions
@@ -217,7 +217,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			avail_inds = np.argwhere((S[0]+np.array(actions)<=h_field[-1])*(S[0]+np.array(actions)>=h_field[0])).squeeze()
 			avail_actions = actions[avail_inds]
 
-			if beta_RL < 10.0:
+			if beta_RL < 20.0:
 				if ep%2==0:
 					A_greedy = avail_actions[random.choice(np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
 				else:
@@ -322,11 +322,11 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			# best reward and fidelity
 			best_R = R
 			# learn policy
-			if beta_RL<10.0:
+			if beta_RL<20.0:
 				theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
 
 		# force-learn best encountered every 100 episodes
-		if ( (ep+1)%(2*T_expl)-T_expl==0 and ep not in [0,N_episodes-1] ) and beta_RL<10.0:
+		if ( (ep+1)%(2*T_expl)-T_expl==0 and ep not in [0,N_episodes-1] ) and beta_RL<20.0:
 			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
 
 		print "beta_RL,R,d_theta:",beta_RL,R, np.max(abs(theta.ravel() - theta_old.ravel() ))

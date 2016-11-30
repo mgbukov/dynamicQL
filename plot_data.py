@@ -170,7 +170,6 @@ def observables(L,times,protocol,hx_i,hx_f,J,hz,data_params,save=True):
 			if not os.path.exists(save_dir):
 			    os.makedirs(save_dir)
 			bloch.save(name='temp/bloch_{}.png'.format(i))
-			
 		
 
 		if i == len(protocol):
