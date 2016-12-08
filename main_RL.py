@@ -1,8 +1,17 @@
+#from Q_learning_c import Q_learning
 from Q_learning import Q_learning
-from evaluate_data import load_data
+from evaluate_data import load_data, real_ave
 from quspin.tools.measurements import ent_entropy
 import Hamiltonian
 import numpy as np
+
+import time
+import sys
+import os
+import gc
+
+max_t_steps_vec=np.linspace(5,50,10,dtype=int)
+
 
 
 # define model params
@@ -42,7 +51,7 @@ else:
 E_f = E_f[0]
 psi_f = psi_f[:,0]
 
-max_t_steps = 20 #40 
+max_t_steps = max_t_steps_vec[int(sys.argv[3])-1] #40 
 delta_time = 0.05 #0.05
 
 print "number of states is:", H.Ns
@@ -65,7 +74,8 @@ dh_field = h_field[1]-h_field[0]
 state_i = np.array([-4.0])
 
 # realisation number
-N=3
+N=int(sys.argv[2])-1
+bang=int(sys.argv[1])-1 # 1: bang-bang; 0: continuous actions 
 # number of episodes
 N_episodes = 20001
 # learning rate
@@ -81,11 +91,13 @@ beta_RL_inf = 100.0
 T_expl=20
 m_expl=0.125 # 0.125
 
-RL_params = (N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field)
+RL_params = (N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field,bang)
 physics_params = (L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f)
 
 
 # initiate learning
-Q_learning(*(RL_params+physics_params),save=True)
+#Q_learning(*(RL_params+physics_params),save=True)
 #load_data(*(RL_params+physics_params))
+
+real_ave(*(RL_params+physics_params))
 

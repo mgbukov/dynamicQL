@@ -1,3 +1,6 @@
+import matplotlib as mpl
+mpl.use('Agg')
+
 from Bloch import *
 import numpy as np
 
@@ -20,36 +23,69 @@ my_dir = str2[n-1]
 
 #####
 
+def plot_best_fid_vs_T(Ts,best_fid,best_fid_ave,save_name,data_params):
 
-def plot_rewards(Fidelity_ep,Return,Return_ave,save_name,data_params,save=True):
-	""" This function plots the rewards vs episodes. """
+	str_F = "$\\mathrm{best}$"
+	str_Fave = "$\\mathrm{average}\\ \\mathrm{best}$"
 
-	str_R = "$\\mathrm{episodic}$"
-	str_Rave = "$\\mathrm{average}$"
-	str_F = "$\\mathrm{fidelity}$"
+	plt.plot(Ts,best_fid,'g',marker='x',linewidth=2.0,label=str_F)
+	plt.plot(Ts,best_fid_ave,'--b',marker='o',linewidth=1.0,label=str_Fave)
 
-	N_episodes = len(Fidelity_ep)
-	
-	plt.plot(xrange(N_episodes),Fidelity_ep,'g',linewidth=2.0,label=str_F)
-	plt.plot(xrange(N_episodes),Return,'r-.',linewidth=0.5,label=str_R)
-	plt.plot(xrange(N_episodes),Return_ave,'b',linewidth=2.0,label=str_Rave)
-	
+	plt.xlabel('$T$', fontsize=20)
+	plt.ylabel('$\\mathrm{Fidelity}$', fontsize=20)
 
-	#plt.xscale('log')
-
-	plt.xlabel('$\\#\\ \\mathrm{episodes}$', fontsize=20)
-	plt.ylabel('$\\mathrm{reward}$', fontsize=20)
 
 	plt.legend(loc='lower right')
 	plt.tick_params(labelsize=16)
 	plt.grid(True)
 
-	save_dir = my_dir+"/data"
+	save_dir = my_dir+"/plots"
 	if not os.path.exists(save_dir):
 	    os.makedirs(save_dir)
 
 	if save:
-		save_str = "data/"+save_name+data_params+'.png'
+		save_str = "plots/"+save_name+data_params+'.png'
+		plt.savefig(save_str)
+
+	#plot.show()
+	plt.close()
+
+
+def plot_rewards(Fidelity_ep,Return,Return_ave,save_name,data_params,save=True,log_scale=False,fid_only=False):
+	""" This function plots the rewards vs episodes. """
+
+	str_R = "$\\mathrm{fidelity}\\ F$"
+	str_Rave = "$\\mathrm{average}\\ F$"
+	str_F = "$\\mathrm{fidelity} F$"
+
+	N_episodes = len(Fidelity_ep)
+	
+	
+	if fid_only:
+		plt.plot(xrange(N_episodes),Fidelity_ep,'g',linewidth=2.0)
+	else:
+		plt.plot(xrange(N_episodes),Fidelity_ep,'g',linewidth=2.0,label=str_F)
+		plt.plot(xrange(N_episodes),Return,'r-.',linewidth=0.5,label=str_R)
+		plt.plot(xrange(N_episodes),Return_ave,'b',linewidth=2.0,label=str_Rave)
+	
+	if log_scale:
+		plt.xscale('log')
+		save_name=save_name+'log_scale_'
+
+	plt.xlabel('$\\mathrm{episode}$', fontsize=20)
+	if fid_only:
+		plt.ylabel('$\\mathrm{fidelity}$', fontsize=20)
+	
+	plt.legend(loc='lower right')
+	plt.tick_params(labelsize=16)
+	plt.grid(True)
+
+	save_dir = my_dir+"/plots"
+	if not os.path.exists(save_dir):
+	    os.makedirs(save_dir)
+
+	if save:
+		save_str = "plots/"+save_name+data_params+'.png'
 		plt.savefig(save_str)
 
 	#plot.show()
@@ -62,46 +98,48 @@ def plot_protocols(times,protocol,observable,save_name,data_params,save=False):
 	# extend time and protocol vecors
 	delta_times=times[1]-times[0]
 	times=np.append(times,times[-1]+delta_times)
-	protocol=np.append(protocol,protocol[-1])
+	if protocol is not None:
+		protocol=np.append(protocol,protocol[-1])
 
 
 	str_p="$h_x(t)$"
-	if save_name=='fid':
+	if 'fid' in save_name:
 		str_f="$F(t)$"
-	elif save_name=='en':
-		str_f="$E(t)-E_\\mathrm{gs}(t)$"
-	elif save_name=='en_fluct':
+	elif 'en_fluct' in save_name:
 		str_f="$\delta E(t)$"
-	elif save_name=='sd':
+	elif 'en' in save_name:
+		str_f="$E(t)-E_\\mathrm{gs}(t)$"
+	elif 'sd' in save_name:
 		str_f="$S_\\mathrm{d}^\\mathrm{target}$"
-	elif save_name=='sent':
+	elif 'sent' in save_name:
 		str_f="$S_\\mathrm{ent}(t)$"
 	
 	
-	plt.step(times,protocol,'b',marker='.',where='post',linewidth=1,label=str_p)
 	plt.plot(times,observable,'b--',linewidth=1,label=str_f)
-
-	t_max = times[-1]
-	p_max = max( max(protocol),max(observable) ) 
-	p_min = min( min(protocol),min(observable) )
-
+	if protocol is not None:
+		plt.step(times,protocol,'b',marker='.',where='post',linewidth=1,label=str_p)
+	
+		p_max = max( max(protocol),max(observable) ) 
+		p_min = min( min(protocol),min(observable) )
+		plt.ylim([p_min-0.5,p_max+0.5])
 
 	plt.xlabel('$t$', fontsize=20)
 	#plt.ylabel('$h_x(t)$', fontsize=20)
 
+	#t_max = times[-1]
 	#plt.xlim([0,t_max])
-	plt.ylim([p_min-0.5,p_max+0.5])
+	
 
 	plt.legend(loc='best')
 	plt.tick_params(labelsize=16)
 	plt.grid(True)
 
-	save_dir = my_dir+"/data"
+	save_dir = my_dir+"/plots"
 	if not os.path.exists(save_dir):
 	    os.makedirs(save_dir)
 
 	if save:
-		save_str = "data/"+save_name+data_params+'.png'
+		save_str = "plots/"+save_name+data_params+'.png'
 		plt.savefig(save_str)
 
 	#show()
@@ -109,7 +147,7 @@ def plot_protocols(times,protocol,observable,save_name,data_params,save=False):
 
 
 
-def observables(L,times,protocol,hx_i,hx_f,J,hz,data_params,save=True):
+def observables(L,times,protocol,hx_i,hx_f,J,hz,data_params,save=True,plot_data=True,fore_str=''):
 
 	b=hx_f	
 	lin_fun = lambda t: b
@@ -147,13 +185,14 @@ def observables(L,times,protocol,hx_i,hx_f,J,hz,data_params,save=True):
 		pn = abs( V_target.conj().T.dot(psi) )**2.0 + np.finfo(psi[0].dtype).eps
 		Sd.append( -pn.dot(np.log(pn))/L )
 		# entanglement entropy
-		if L!=1:
+		if L!=1:	
 			Sent.append( ent_entropy(psi,H.basis,chain_subsys=subsys)['Sent'] )
 		else:
 			# Bloch sphere image
 			bloch = Bloch()
 			
 			# plot the states as arrow
+			#print 'fidelity', abs(psi.conj().dot(V_target[:,0]) )**2
 			bloch.add_states([psi,V_target[:,0]])
 			# extract spherical coordinates of psi
 			points.append(bloch.vectors[0])
@@ -182,25 +221,30 @@ def observables(L,times,protocol,hx_i,hx_f,J,hz,data_params,save=True):
 			
 
 	#create temporary save directory
-	save_dir = my_dir+"/data"
+	save_dir = my_dir+"/plots"
 	if not os.path.exists(save_dir):
 	    os.makedirs(save_dir)
 
-	
-	# plot protocol
-	plot_protocols(times,protocol,Fidelity,'fid',data_params,save=save)
-	plot_protocols(times,protocol,E,'en',data_params,save=save)
-	plot_protocols(times,protocol,delta_E,'en_fluct',data_params,save=save)
-	plot_protocols(times,protocol,Sd,'sd',data_params,save=save)
-	if L!=1:
-		plot_protocols(times,protocol,Sent,'sent',data_params,save=save)
+	if plot_data:
+		# plot protocol
+		plot_protocols(times,protocol,Fidelity,fore_str+'fid',data_params,save=save)
+		plot_protocols(times,protocol,E,fore_str+'en',data_params,save=save)
+		plot_protocols(times,protocol,delta_E,fore_str+'en_fluct',data_params,save=save)
+		plot_protocols(times,protocol,Sd,fore_str+'sd',data_params,save=save)
+		if L!=1:
+			plot_protocols(times,protocol,Sent,fore_str+'sent',data_params,save=save)
+		else:
+			# create movie
+			movie_name="plots/"+fore_str+'lochsphere' + data_params
+			cmd = "ffmpeg -loglevel panic -framerate 5 -i temp/bloch_%01d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+movie_name+".mp4"
+			# execute command cmd
+			os.system(cmd)
+			# remove temp directory
+			os.system("rm -rf temp*")
 	else:
-		# create movie
-		movie_name="data/blochsphere_" + data_params
-		cmd = "ffmpeg -framerate 5 -i temp/bloch_%01d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+movie_name+".mp4"
-		# execute command cmd
-		os.system(cmd)
-		# remove temp directory
-		os.system("rm -rf temp*")
+		if L!=1:
+			return Fidelity,E,delta_E,Sd,Sent
+		else:
+			return Fidelity,E,delta_E,Sd
 
 

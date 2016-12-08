@@ -11,7 +11,9 @@ import sys
 import os
 import cPickle
 
-random.seed()
+# set pseudorandom generator
+seed = random.randint(0,4294967295)
+random.seed(seed)
 
 
 # only for printing data
@@ -110,7 +112,7 @@ def Learn_Policy(state_i,best_actions,R,theta,tilings,actions):
 		
 		S+=A
 
-	print 'force-learned best encountered policy'
+	#print 'force-learned best encountered policy'
 	return theta
 
 
@@ -123,7 +125,7 @@ def find_feature_inds(tilings,S,theta_inds):
 		theta_inds[_k]=idx[0]+_k*tilings.shape[1]
 	return theta_inds
 
-def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field,
+def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field,bang,
 			   L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f,
 			   theta=None,tilings=None,save=False):
 	"""
@@ -151,8 +153,11 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	##### RL quantities	#####
 
 	# define actions
-	#pos_actions=[0.1,0.2,0.5,1.0,2.0,4.0,8.0]
-	pos_actions=[8.0]
+	if bang:
+		pos_actions=[8.0]; a_str='_bang';
+	else:
+		pos_actions=[0.1,0.2,0.5,1.0,2.0,4.0,8.0]; a_str='_cont';
+	
 	neg_actions=[-i for i in pos_actions]
 	actions = np.sort(neg_actions + [0.0] + pos_actions)
 	del pos_actions,neg_actions
@@ -329,7 +334,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		if ( (ep+1)%(2*T_expl)-T_expl==0 and ep not in [0,N_episodes-1] ) and beta_RL<20.0:
 			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
 
-		print "beta_RL,R,d_theta:",beta_RL,R, np.max(abs(theta.ravel() - theta_old.ravel() ))
+		#print "beta_RL,R,d_theta:",beta_RL,R, np.max(abs(theta.ravel() - theta_old.ravel() ))
 		theta_old=theta.copy()
 			
 		# record average return
@@ -343,12 +348,12 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			print 'best encountered fidelity is {}.'.format(np.round(best_R,5))
 			print 'current inverse exploration tampeature is {}.'.format(np.round(beta_RL,3))
 
-			# calculate best protocol and fidelity
-			protocol_best,t_best = best_protocol(best_actions,state_i[0],delta_time)
-			protocol_greedy,t_greedy = greedy_protocol(theta,tilings,actions,state_i[0],delta_time,max_t_steps,h_field)
-					
-			print protocol_best
-			print protocol_greedy
+	# calculate best protocol and fidelity
+	protocol_best,t_best = best_protocol(best_actions,state_i[0],delta_time)
+	protocol_greedy,t_greedy = greedy_protocol(theta,tilings,actions,state_i[0],delta_time,max_t_steps,h_field)
+			
+			#print protocol_best
+			#print protocol_greedy
 
 	# save data
 	Data_fid = np.zeros((N_episodes,3))
@@ -366,31 +371,68 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	# define parameter-dependent part of file name
 	args = (N,N_episodes,max_t_steps,L) + tuple( truncate([J,hz,hx_i,hx_f] ,2) )
 	data_params = "_N=%s_Nep=%s_T=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s"   %args
+	data_params+=a_str
+
+	### define save directory for data
+	# read in local directory path
+	str1=os.getcwd()
+	str2=str1.split('\\')
+	n=len(str2)
+	my_dir = str2[n-1]
+	# create directory if non-existant
+	save_dir = my_dir+"/data"
+	if not os.path.exists(save_dir):
+	    os.makedirs(save_dir)
+	save_dir="data/"
 
 	if save:
 		# display full strings
 		np.set_printoptions(threshold='nan')
 
 		# as txt format
-		dataname  =  "RL_data"+data_params+'.txt'
+		dataname  = save_dir + "RL_data"+data_params+'.txt'
 		np.savetxt(dataname,Data_fid)
 
-		dataname  =  "protocol_data"+data_params+'.txt'
+		dataname  = save_dir + "protocol_data"+data_params+'.txt'
 		np.savetxt(dataname,Data_protocol)
 		# save as pickle
-		dataname  =  "theta_data"+data_params+'.pkl'
+		dataname  = save_dir + "theta_data"+data_params+'.pkl'
 		cPickle.dump(theta, open(dataname, "wb" ) )
 		#cPickle.load(open(dataname, "rb" ))
 
-		dataname  =  "tilings_data"+data_params+'.pkl'
+		dataname  = save_dir + "tilings_data"+data_params+'.pkl'
 		cPickle.dump(tilings, open(dataname, "wb" ) )
 
-		RL_params = (N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field)
-		dataname  =  "RL_params_data"+data_params+'.pkl'
+		RL_params = {"N":N,
+					 "N_episodes":N_episodes,
+					 "alpha_0":alpha_0,
+					 "eta":eta,
+					 "lmbda":lmbda,
+					 "beta_RL_i":beta_RL_i,
+					 "beta_RL_inf":beta_RL_inf,
+					 "T_expl":T_expl,
+					 "m_expl":m_expl,
+					 "N_tilings":N_tilings,
+					 "N_tiles":N_tiles,
+					 "state_i":state_i,
+					 "h_field":h_field,
+					 "dh_field":dh_field,
+					 "seed":seed,
+					 }
+		dataname  = save_dir + "RL_params_data"+data_params+'.pkl'
 		cPickle.dump(RL_params, open(dataname, "wb" ) )
 
-		phys_params = (L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f)
-		dataname  =  "phys_params_data"+data_params+'.pkl'
+		phys_params = {"L":L,
+					   "max_t_steps":max_t_steps,
+					   "delta_time":delta_time,
+					   "J":J,
+					   "hz":hz,
+					   "hx_i":hx_i,
+					   "hx_f":hx_f,
+					   "psi_i":psi_i,
+					   "psi_f":psi_f,
+					   }
+		dataname  =  save_dir + "phys_params_data"+data_params+'.pkl'
 		cPickle.dump(phys_params, open(dataname, "wb" ) )
 
 	# create plots
