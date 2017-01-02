@@ -1,3 +1,20 @@
+"""
+Purpose: (PYTHON3 IMPLEMENTATION)
+    Implements simulated annealing for 1D spin chain with uniform hz-field and uniform and time varying hx-field
+    Can be run from command line
+    
+Example of use:
+    1. Run with default parameters (specified in file)
+        $python LZ_sim_anneal
+        
+    2. Run with optional parameters: 20 times steps, action_set 1, dumping results in out.txt,
+      3000 is the maximum number of fid evaluations, dt=0.05:
+        $python LZ_sim_anneal 20 1 out.txt 3000 0.05
+        
+    3. Get some help
+        $python LZ_sim_anneal -h
+"""
+
 import numpy as np
 import pickle
 import Hamiltonian_alex as Hamiltonian
@@ -6,7 +23,6 @@ import time
 import math
 import sys,os # for running in batch from terminal
 from scipy.sparse.linalg import expm_multiply as expm
-#from matplotlib import pyplot as plt
 
 np.set_printoptions(precision=4)
     
@@ -98,61 +114,7 @@ def main():
     hx_discrete[0]=hx_final_state # just a trick to get final state
     E_f, psi_target = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=0
-    
-    #compute_matrix_exp() accelerate dynamics, here !
-    
-    #print("Current action set:",np.array(action_set))
-    #print("Choosing random trajectory:")
-    
-    #action_protocol,hx_discrete=random_trajectory(hx_i,N_time_step)
-    #===========================================================================
-    # for a in action_set:
-    #     print(is_element_of_set(a, action_set))
-    #===========================================================================
-    
-    #===========================================================================
-    # print(hx_discrete)
-    # print(action_protocol)
-    # for i in np.arange(N_time_step):
-    #     print(i,avail_action(i,action_protocol,hx_discrete,hx_i,N_time_step))
-    # 
-    #===========================================================================
-    #print(3,avail_action(3,action_protocol,hx_discrete,hx_i,N_time_step))
-    #exit()
-    
-    # Check protocol
-    #hx_discrete=[ 4.,4.,4.,4.,4.,4.,4.,-4.,4.,-4.,4.,-4.,4,-4.,-4.,-4.,-4.,-4.,-4.,-4.]
-    #print(Fidelity(psi_i,H,N_time_step,delta_t,psi_target))
-    #exit()
-    #N_time_step=len(hx_discrete)
-    #hx_discrete=hx_discrete[:-1]
-    #print(len(hx_discrete))
-    #print(Fidelity(psi_i,H,N_time_step,delta_t,psi_target))
-    #print(N_time_step)
-    #exit()
-    #===========================================================================
-    # 
-    # hx_discrete=[ 1.,1.,1.,1.,1.,-1.,-1.,-1.,-1.,-1.]
-    # print(Fidelity(psi_i,H,N_time_step,delta_t,psi_target))
-    # test=np.loadtxt("data/text.dat",delimiter="\t")h
-    
-    # fbest=0.0
-    # i=0
-    # 
-    # for hx_tmp in test:
-    #     print(i)
-    #     hx_discrete=hx_tmp
-    #     f=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
-    #     if f>fbest:
-    #         fbest=f
-    #         hbest=hx_discrete
-    #     i+=1
-    # print(fbest)
-    # print(hbest)
-    # exit()
-    # #test=np.loadtxt("data/text.dat",delimiter="\t")
-    #===========================================================================
-    
+
     
     sweep_size=N_time_step*len(action_set)
     if FIX_NUMBER_FID_EVAL:
@@ -172,6 +134,7 @@ def main():
     all_results=[]
     
     for it in range(N_restart):
+        print("-----------> Starting new iteration <-----------")
         
         count_fid_eval,best_fid,best_action_protocol,best_hx_discrete=simulate_anneal(param_SA)
         result=count_fid_eval,best_fid,best_action_protocol,best_hx_discrete
@@ -187,20 +150,7 @@ def main():
             pickle.dump(all_results,pkl_file);pkl_file.close()
             
         print("Saved iteration --> %i to %s"%(it,'data/%s'%outfile_name))
-        print("-----------------------------------")
-        print("----> Starting new iteration <-----")
-        print("-----------------------------------")
-        
-        
-    #print("Best of all:",best_result)
-    #print("All results:",all_results)
     
-    
-    #Saving results:
-#pkl_file=open('data/%s'%outfile_name,'wb')
-#pickle.dump(all_results,pkl_file)
-    pkl_file.close()
-
     
 def Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
     """
@@ -456,14 +406,43 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 def check_sys_arg(argv):
+    """
+    Purpose:
+        Check command line arguments, (user might need help or has given wrong number of arguments)
+    """
     if len(argv)>1:
         if argv[1]=='-h':
             print("Expecting 5 parameters from command line: n_step, action_set_number,outfile_name, max_number_fid, dt")
             exit()
         else:
             assert len(sys.argv) == 6, "Wrong number of parameters, expecting 5 parameters : n_step, action_set_number,outfile_name, max_number_fid, dt"
-        
+
+def check_custom_protocol(hx_protocol,J=1.236,
+                          L=1,hz=1.0,hx_i=-1.0,hx_f=1.0,
+                          delta_t=0.05):
     
+    """ 
+    Purpose:
+        Just quickly checking a given protocol (or performance of fidelity function for instance)
+    Return:
+        Obtained fidelity
+    """
+    global action_set,hx_discrete
+    N_time_step=len(hx_protocol)
+    
+    param={'J':J,'hz':hz,'hx':hx_i} # Hamiltonian kwargs 
+    hx_discrete=[0]*N_time_step # dynamical part at every time step (initiaze to zero everywhere)
+    # full system hamiltonian
+    H,_ = Hamiltonian.Hamiltonian(L,fct=hx_vs_t,**param)
+    # calculate initial and final states
+    hx_discrete[0]=hx_i # just a trick to get initial state
+    E_i, psi_i = H.eigsh(time=0,k=1,which='SA')
+    hx_discrete[0]=hx_f # just a trick to get final state
+    E_f, psi_target = H.eigsh(time=0,k=1,which='SA')
+    
+    hx_discrete=hx_protocol
+    return Fidelity(psi_i,H,N_time_step,delta_t,psi_target) 
+       
 # Run main program !
 if __name__ == "__main__":
     main()
