@@ -9,11 +9,16 @@ Example of use:
         
     2. Run with optional parameters: 20 times steps, action_set 1, dumping results in out.txt,
       3000 is the maximum number of fid evaluations, dt=0.05:
-        $python LZ_sim_anneal 20 1 out.txt 3000 0.05
+        $python LZ_sim_anneal.py 20 1 out.txt 3000 0.05
         
     3. Get some help
         $python LZ_sim_anneal -h
 """
+
+import utilities as ut
+import sys,os # for running in batch from terminal
+ut.check_sys_arg(sys.argv)
+
 
 import numpy as np
 import pickle
@@ -21,14 +26,11 @@ import Hamiltonian_alex as Hamiltonian
 from quspin.operators import exp_op
 import time
 import math
-import sys,os # for running in batch from terminal
 from scipy.sparse.linalg import expm_multiply as expm
 
 np.set_printoptions(precision=4)
     
 def main():
-    
-    check_sys_arg(sys.argv)
     
     global action_set,hx_discrete,hx_max,FIX_NUMBER_FID_EVAL
     action_set1=np.array([-8.0,0.,8.])
@@ -62,17 +64,17 @@ def main():
     hx_final_state = 1.0 #+1.0 # final hx coupling
     N_quench=0
     
-    N_time_step=5
+    N_time_step=20
     outfile_name='first_test.pkl'
     action_set=action_set1
     max_fid_eval=3000
     delta_t=0.05
     
-    N_restart=10
+    N_restart=100
     hx_max=4
     max_fid_eval=1000
     FIX_NUMBER_FID_EVAL=False # this fixes the number of quenches automatically, supersedes N_quench 
-    RL_CONSTRAINT=True 
+    RL_CONSTRAINT=False 
     verbose=True
     
     
@@ -99,7 +101,6 @@ def main():
     print("max_fid_eval (%s) \t %i"%(str(FIX_NUMBER_FID_EVAL),max_fid_eval))
     print("Action_set \t <- \t %s"%np.round(action_set,3))
     print("# of possible actions \t %i"%len(action_set))
-    print("---------------> Starting computation <----------------")
 
     param={'J':J,'hz':hz,'hx':hx_i} # Hamiltonian kwargs 
     hx_discrete=[0]*N_time_step # dynamical part at every time step (initiaze to zero everywhere)
@@ -121,7 +122,8 @@ def main():
         # Determines the number of quenches needed to anneal w/o exceeding the max number of fidelity evaluations.
         N_quench=(max_fid_eval-5*sweep_size)//sweep_size
         assert N_quench >= 0
-    print("Using N_quench\t<-\t%d"%N_quench)
+        print("N_quench (FIX)\t\t%i"%N_quench)
+    
     
     # simulated annealing kwargs:
     param_SA={'Ti':0.04,'sweep_size':sweep_size,
@@ -134,11 +136,12 @@ def main():
     all_results=[]
     
     for it in range(N_restart):
-        print("-----------> Starting new iteration <-----------")
+        print("\n\n-----------> Starting new iteration <-----------")
+        start_time=time.time()
         
         count_fid_eval,best_fid,best_action_protocol,best_hx_discrete=simulate_anneal(param_SA)
         result=count_fid_eval,best_fid,best_action_protocol,best_hx_discrete
-        print("----------> RESULT FOR RESTART NO %i <-------------"%(it+1))
+        print("\n----------> RESULT FOR ANNEALING NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%count_fid_eval)
         print("Best fidelity \t\t\t%.4f"%best_fid)
         print("Best action_protocol\t\t",best_action_protocol)
@@ -150,6 +153,7 @@ def main():
             pickle.dump(all_results,pkl_file);pkl_file.close()
             
         print("Saved iteration --> %i to %s"%(it,'data/%s'%outfile_name))
+        print("Iteration run time --> %.2f s"%(time.time()-start_time))
     
     
 def Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
@@ -375,7 +379,7 @@ def simulate_anneal(params):
         step+=1.0
         T=Ti*(1.0-step/N_quench)
     
-    print("Performing 5 sweeps at zero-temperature")
+    print("Performing 5 sweeps (1 sweep=%i evals) at zero-temperature"%sweep_size)
     ## Need to have a stochastic gradient descent option here ... so number of sweeps is optionally calibrated 
     for _ in range(5*sweep_size): ## Perform greedy sweeps (zero-temperature):
         new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step,RL_constraint=RL_constraint)
@@ -404,18 +408,6 @@ def blockPrint():
 
 def enablePrint():
     sys.stdout = sys.__stdout__
-
-def check_sys_arg(argv):
-    """
-    Purpose:
-        Check command line arguments, (user might need help or has given wrong number of arguments)
-    """
-    if len(argv)>1:
-        if argv[1]=='-h':
-            print("Expecting 5 parameters from command line: n_step, action_set_number,outfile_name, max_number_fid, dt")
-            exit()
-        else:
-            assert len(sys.argv) == 6, "Wrong number of parameters, expecting 5 parameters : n_step, action_set_number,outfile_name, max_number_fid, dt"
 
 def check_custom_protocol(hx_protocol,J=1.236,
                           L=1,hz=1.0,hx_i=-1.0,hx_f=1.0,
