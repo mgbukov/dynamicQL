@@ -12,7 +12,14 @@ np.set_printoptions(precision=4)
     
 def main():
     
+    check_sys_arg(sys.argv)
+    
     global action_set,hx_discrete,hx_max,FIX_NUMBER_FID_EVAL
+    action_set1=np.array([-8.0,0.,8.])
+    action_set2=np.array([0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.],dtype=np.float32) # 17 actions in total
+    action_set2=np.sort(np.round(np.concatenate((action_set2,-1.0*action_set2,[0])),3))
+    action_set3=np.array([8.0,-8.0,0.0])
+    
     
     """ 
     Parameters
@@ -37,50 +44,45 @@ def main():
     hx_i = -4.0# -1.0 # initial hx coupling
     hx_initial_state= -1.0 # initial state
     hx_final_state = 1.0 #+1.0 # final hx coupling
-    N_quench=30
+    N_quench=0
+    
+    N_time_step=5
+    outfile_name='first_test.pkl'
+    action_set=action_set1
+    max_fid_eval=3000
     delta_t=0.05
+    
     N_restart=10
     hx_max=4
     max_fid_eval=1000
-    FIX_NUMBER_FID_EVAL=False
-    RL_CONSTRAINT=True
-    verbose=True 
+    FIX_NUMBER_FID_EVAL=False # this fixes the number of quenches automatically, supersedes N_quench 
+    RL_CONSTRAINT=True 
+    verbose=True
     
     
     print("-------------------- > Parameters < --------------------")
     print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx(t=0) \t\t %.3f\nhx_max \t\t\t %.3f "%(L,J,hz,hx_i,hx_max))
     print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state,hx_final_state))
     print("N_quench \t\t %i\ndelta_t \t\t %.2f\nN_restart \t\t %i"%(N_quench,delta_t,N_restart))
-
-    action_set1=np.array([-8.0,0.,8.])
-    action_set2=np.array([0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.],dtype=np.float32) # 17 actions in total
-    action_set2=np.sort(np.round(np.concatenate((action_set2,-1.0*action_set2,[0])),3))
-    action_set3=np.array([8.0,-8.0,0.0])
     
     if len(sys.argv)>1:
         """ 
-            if len(sys.argv) > 1 : run from command line 
-        
+            if len(sys.argv) > 1 : run from command line -- check command line for parameters 
         """        
-        assert len(sys.argv) == 5, "Wrong number of parameters, expecting 4 parameters : n_step, n_action, action_set_number,outfile_name, max_number_fid"
         
         N_time_step=int(sys.argv[1])
         action_set_no=sys.argv[2]
         action_set=eval('action_set'+action_set_no)
         outfile_name=sys.argv[3]
         max_fid_eval=int(sys.argv[4])
-    else:
-        N_time_step=20
-        outfile_name='first_test'
-        action_set=action_set1
-        max_fid_eval=3000
-
+        delta_t=float(sys.argv[5])
 
     print("N_time_step \t\t %i"%N_time_step)
-    print("Output file \t\t %s"%('data/'+outfile_name+".pkl"))
-    print("max_fid_eval (%s) \t\t %i"%(str(FIX_NUMBER_FID_EVAL),max_fid_eval))
-    print("Action_set -> %s"%np.round(action_set,3))
-    print("# of possible actions -> %i"%len(action_set))
+    print("Total_time \t\t %.2f"%(N_time_step*delta_t))
+    print("Output file \t\t %s"%('data/'+outfile_name))
+    print("max_fid_eval (%s) \t %i"%(str(FIX_NUMBER_FID_EVAL),max_fid_eval))
+    print("Action_set \t <- \t %s"%np.round(action_set,3))
+    print("# of possible actions \t %i"%len(action_set))
     print("---------------> Starting computation <----------------")
 
     param={'J':J,'hz':hz,'hx':hx_i} # Hamiltonian kwargs 
@@ -157,7 +159,7 @@ def main():
         # Determines the number of quenches needed to anneal w/o exceeding the max number of fidelity evaluations.
         N_quench=(max_fid_eval-5*sweep_size)//sweep_size
         assert N_quench >= 0
-    print("Using N_quench=:%d"%N_quench)
+    print("Using N_quench\t<-\t%d"%N_quench)
     
     # simulated annealing kwargs:
     param_SA={'Ti':0.04,'sweep_size':sweep_size,
@@ -171,33 +173,31 @@ def main():
     
     for it in range(N_restart):
         
-        result=simulate_anneal(param_SA)
-        
-        print("Result for iteration %i"%i,result)
+        count_fid_eval,best_fid,best_action_protocol,best_hx_discrete=simulate_anneal(param_SA)
+        result=count_fid_eval,best_fid,best_action_protocol,best_hx_discrete
+        print("----------> RESULT FOR RESTART NO %i <-------------"%(it+1))
+        print("Number of fidelity eval \t%i"%count_fid_eval)
+        print("Best fidelity \t\t\t%.4f"%best_fid)
+        print("Best action_protocol\t\t",best_action_protocol)
+        print("Best hx_protocol\t\t",best_hx_discrete)
         
         all_results.append(result)
         
-        with open('data/%s.pkl'%outfile_name,'wb') as pkl_file:
-            pkl_file.dump(all_results,pkl_file);pkl_file.close()
+        with open('data/%s'%outfile_name,'wb') as pkl_file:
+            pickle.dump(all_results,pkl_file);pkl_file.close()
             
-        print("Saved iteration --> %i to %s"%(it,'data/%s.pkl'%outfile_name))
-
-        #print(result[0])
-        #print(result[1])
-        #print(result[2])
-        #np.savetxt("test.txt",result[1])
-        #print("Best fidelity during iteration: %s"%result[0])
-        #print("Corresponding trajectory:",result[2])
+        print("Saved iteration --> %i to %s"%(it,'data/%s'%outfile_name))
+        print("-----------------------------------")
+        print("----> Starting new iteration <-----")
+        print("-----------------------------------")
         
-        #if result[0] > best_result[0]:
-        #    best_result=result
-    
+        
     #print("Best of all:",best_result)
     #print("All results:",all_results)
     
     
     #Saving results:
-#pkl_file=open('data/%s.pkl'%outfile_name,'wb')
+#pkl_file=open('data/%s'%outfile_name,'wb')
 #pickle.dump(all_results,pkl_file)
     pkl_file.close()
 
@@ -347,7 +347,7 @@ def simulate_anneal(params):
     Purpose:
         Performs simulated annealing by trying to maximize the fidelity between a state evolved
         using a quantum time evolution protocol and a predefined target state.
-    Return:
+    Return: (4-tuple)
         Number of times of fidelity evaluation,
         Best obtained fidelity,
         Corresponding action protocol,
@@ -426,6 +426,7 @@ def simulate_anneal(params):
         T=Ti*(1.0-step/N_quench)
     
     print("Performing 5 sweeps at zero-temperature")
+    ## Need to have a stochastic gradient descent option here ... so number of sweeps is optionally calibrated 
     for _ in range(5*sweep_size): ## Perform greedy sweeps (zero-temperature):
         new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step,RL_constraint=RL_constraint)
         hx_discrete=new_hx_discrete
@@ -441,6 +442,8 @@ def simulate_anneal(params):
             old_hx_discrete=new_hx_discrete
             old_action_protocol=new_action_protocol
             old_fid=new_fid
+        if _%10 == 0:
+            print("Zero temperature sweep no: %i\tBest fidelity: %.4f\tFidelity count: %i"%(_,best_fid,count_fid_eval))
     print("Done")
     
     enablePrint()
@@ -452,7 +455,15 @@ def blockPrint():
 def enablePrint():
     sys.stdout = sys.__stdout__
 
-
+def check_sys_arg(argv):
+    if len(argv)>1:
+        if argv[1]=='-h':
+            print("Expecting 5 parameters from command line: n_step, action_set_number,outfile_name, max_number_fid, dt")
+            exit()
+        else:
+            assert len(sys.argv) == 6, "Wrong number of parameters, expecting 5 parameters : n_step, action_set_number,outfile_name, max_number_fid, dt"
+        
+    
 # Run main program !
 if __name__ == "__main__":
     main()
