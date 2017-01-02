@@ -1,7 +1,12 @@
-"""
+'''
+Created on Jan 2 , 2017
+
+@author: Alexandre Day
+
 Purpose:
     This module is just for testing protocols
-"""
+
+'''
 
 import LZ_sim_anneal as LZ
 

@@ -1,4 +1,8 @@
-"""
+'''
+Created on Sep 1 , 2016
+
+@author: Alexandre Day
+
 Purpose: (PYTHON3 IMPLEMENTATION)
     Implements simulated annealing for 1D spin chain with uniform hz-field and uniform and time varying hx-field
     Can be run from command line
@@ -13,7 +17,7 @@ Example of use:
         
     3. Get some help
         $python LZ_sim_anneal -h
-"""
+'''
 
 import utilities as ut
 import sys,os # for running in batch from terminal

@@ -1,3 +1,8 @@
+'''
+Created on Sep 1 , 2016
+
+@author: Alexandre Day
+'''
 from quspin.operators import hamiltonian
 from quspin.basis import spin_basis_1d
 import numpy as np

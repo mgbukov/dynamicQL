@@ -1,3 +1,10 @@
+'''
+Created on Jan 2 , 2017
+
+@author: Alexandre Day
+
+'''
+
 def check_sys_arg(argv):
 	import sys
 	"""
