@@ -37,12 +37,13 @@ np.set_printoptions(precision=4)
 def main():
     
     global action_set,hx_discrete,hx_max,FIX_NUMBER_FID_EVAL
-    action_set1=np.array([-8.0,0.,8.])
-    action_set2=np.array([0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.],dtype=np.float32) # 17 actions in total
-    action_set2=np.sort(np.round(np.concatenate((action_set2,-1.0*action_set2,[0])),3))
-    action_set3=np.array([8.0,-8.0,0.0])
     
-    
+    continuous=[0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.]
+    all_action_sets={
+                     "bang-bang8":np.array([-8.0,0.,8.]),
+                     "continuous-pos":np.array(continuous,dtype=np.float32),
+                     "continuous":np.array([-c for c in continuous]+[0]+continuous,dtype=np.float32)                     
+                     }
     """ 
     Parameters
         L: system size
@@ -51,32 +52,37 @@ def main():
         hx_i: initial tranverse field coupling
         hx_initial_state: initial state transverse field
         hx_final_state: final state transverse field
+        
         N_quench: number of quenches (i.e. no. of discrete time evolutions)
+        N_time_step: number of time steps
+        outfile_name: file where data is being dumped (via pickle)
+        action_set: array of possible actions
+        max_fid_eval: maximum number of fidelity evaluations
         delta_t: time scale 
         N_restart: number of restart for the annealing
+        
         hx_max : maximum hx field (the annealer can go between -hx_max and hx_max
-        max_fid_eval: maximum number of fidelity evaluations
         FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations
         RL_CONSTRAINT: use reinforcement learning constraints or not
         verbose: If you want the program to print to screen the progress
     """
+    ## ----- Default parameters ------ ###
     L = 1 # system size
     J = 1.0/0.809 # zz interaction
     hz = 1.0 #0.9045/0.809 #1.0 # hz field
     hx_i = -4.0# -1.0 # initial hx coupling
     hx_initial_state= -1.0 # initial state
     hx_final_state = 1.0 #+1.0 # final hx coupling
-    N_quench=0
     
+    N_quench=0
     N_time_step=20
     outfile_name='first_test.pkl'
-    action_set=action_set1
+    action_set=all_action_sets['bang-bang8']
     max_fid_eval=3000
     delta_t=0.05
-    
     N_restart=100
+    
     hx_max=4
-    max_fid_eval=1000
     FIX_NUMBER_FID_EVAL=False # this fixes the number of quenches automatically, supersedes N_quench 
     RL_CONSTRAINT=False 
     verbose=True
@@ -91,14 +97,8 @@ def main():
         """ 
             if len(sys.argv) > 1 : run from command line -- check command line for parameters 
         """        
+        N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart=ut.read_command_line_arg(sys.argv,all_action_sets)
         
-        N_time_step=int(sys.argv[1])
-        action_set_no=sys.argv[2]
-        action_set=eval('action_set'+action_set_no)
-        outfile_name=sys.argv[3]
-        max_fid_eval=int(sys.argv[4])
-        delta_t=float(sys.argv[5])
-
     print("N_time_step \t\t %i"%N_time_step)
     print("Total_time \t\t %.2f"%(N_time_step*delta_t))
     print("Output file \t\t %s"%('data/'+outfile_name))
@@ -127,7 +127,7 @@ def main():
         N_quench=(max_fid_eval-5*sweep_size)//sweep_size
         assert N_quench >= 0
         print("N_quench (FIX)\t\t%i"%N_quench)
-    
+
     
     # simulated annealing kwargs:
     param_SA={'Ti':0.04,'sweep_size':sweep_size,
@@ -142,7 +142,7 @@ def main():
     for it in range(N_restart):
         print("\n\n-----------> Starting new iteration <-----------")
         start_time=time.time()
-        
+        exit()
         count_fid_eval,best_fid,best_action_protocol,best_hx_discrete=simulate_anneal(param_SA)
         result=count_fid_eval,best_fid,best_action_protocol,best_hx_discrete
         print("\n----------> RESULT FOR ANNEALING NO %i <-------------"%(it+1))
