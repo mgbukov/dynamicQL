@@ -1,2 +1,2 @@
-# dynamic_QL
-This repository contains a WIS-TO-TD(lambda) Q-learning algorithm for time-dependent states
+# dynamic_QL 
+This branch the code for performing simulated annealing
