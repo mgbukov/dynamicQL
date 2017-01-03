@@ -45,7 +45,7 @@ def f_to_str(number,prec=2):
 def make_file_name(params_SA):
 	extension=".pkl"
 	param_to_display=['N_time_step','N_quench','Ti','action_set','hx_initial_state','hx_final_state','delta_t','hx_i',  'RL_CONSTRAINT','L','J','hz']
-	cast_type_spec=  ['int',        'int',     'int','int',      'float-2',        'float-2',       'float-2','float-2', 'bool','int','float-2','float-2']
+	cast_type_spec=  ['int',        'int',     'float-2','int',      'float-2',        'float-2',       'float-2','float-2', 'bool','int','float-2','float-2']
 	n_param=len(param_to_display)
 	param_value=[0]*n_param
 	

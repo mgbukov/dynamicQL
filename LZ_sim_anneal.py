@@ -11,9 +11,9 @@ Example of use:
     1. Run with default parameters (specified in file)
         $python LZ_sim_anneal
         
-    2. Run with optional parameters: 20 times steps, action_set 1, dumping results in out.txt,
-      3000 is the maximum number of fid evaluations, dt=0.05:
-        $python LZ_sim_anneal.py 20 1 out.txt 3000 0.05
+    2. Run with optional parameters: 30 quenches, 20 times steps, action_set, outfile, max number of fidelity evaluations,
+    time_scale, number of restarts, verbose:
+        $python LZ_sim_anneal.py 30 20 bang-bang8 out.txt 3000 0.05 100 False
         
     3. Get some help
         $python LZ_sim_anneal -h
@@ -76,18 +76,19 @@ def main():
     hx_i = -4.0# -1.0 # initial hx coupling
     hx_initial_state= -1.0 # initial state
     hx_final_state = 1.0 #+1.0 # final hx coupling
+    act_set_name='bang-bang8'
     
-    N_quench=0
+    N_quench=5
     N_time_step=20
     outfile_name='first_test.pkl'
     action_set=all_action_sets['bang-bang8']
     max_fid_eval=3000
     delta_t=0.05
-    N_restart=100
+    N_restart=5
     
     hx_max=4
     FIX_NUMBER_FID_EVAL=False # this fixes the number of quenches automatically, supersedes N_quench 
-    RL_CONSTRAINT=True 
+    RL_CONSTRAINT=False 
     verbose=True
     
     

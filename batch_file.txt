@@ -1,18 +1,18 @@
 #!/bin/bash
-# This batch file if for checking SGD for for varying N_time_step 
-python LZ_sim_anneal.py 0 5 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 10 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 15 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 20 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 25 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 30 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 35 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 40 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 45 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 50 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 55 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 60 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 65 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 70 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 75 'bang-bang8' auto 3000 0.05 200 False &
-python LZ_sim_anneal.py 0 80 'bang-bang8' auto 3000 0.05 200 False &
+# This batch file runs 
+#python LZ_sim_anneal.py 0 5 'bang-bang8' auto 3000 0.05 400 False &
+#python LZ_sim_anneal.py 0 10 'bang-bang8' auto 3000 0.05 400 False &
+#python LZ_sim_anneal.py 0 15 'bang-bang8' auto 3000 0.05 400 False &
+#python LZ_sim_anneal.py 0 20 'bang-bang8' auto 3000 0.05 400 False &
+#python LZ_sim_anneal.py 0 25 'bang-bang8' auto 3000 0.05 400 False &
+#python LZ_sim_anneal.py 0 30 'bang-bang8' auto 3000 0.05 400 False &
+#python LZ_sim_anneal.py 0 35 'bang-bang8' auto 3000 0.05 400 False &
+#python LZ_sim_anneal.py 0 40 'bang-bang8' auto 3000 0.05 400 False &
+python LZ_sim_anneal.py 0 45 'bang-bang8' auto 3000 0.05 400 False > out45.txt & 
+python LZ_sim_anneal.py 0 50 'bang-bang8' auto 3000 0.05 400 False > out50.txt &
+python LZ_sim_anneal.py 0 55 'bang-bang8' auto 3000 0.05 400 False > out55.txt &
+python LZ_sim_anneal.py 0 60 'bang-bang8' auto 3000 0.05 400 False > out60.txt &
+#python LZ_sim_anneal.py 0 65 'bang-bang8' auto 3000 0.05 400 False &
+#python LZ_sim_anneal.py 0 70 'bang-bang8' auto 3000 0.05 400 False &
+#python LZ_sim_anneal.py 0 75 'bang-bang8' auto 3000 0.05 400 False &
+#python LZ_sim_anneal.py 0 80 'bang-bang8' auto 3000 0.05 400 False &
