@@ -1,1 +1,2 @@
 scp -r $buip:/Users/alexday/dynamic_QL/data/* data/
+echo 'done'
