@@ -12,7 +12,7 @@ log/
 # data files
 data/
 # plot file
-plot/
+plots/
 # cython source file #
 *.pyx
 # backup files from gedit #
