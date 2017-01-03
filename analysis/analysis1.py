@@ -12,6 +12,7 @@ import pandas
 import sys
 sys.path.append("..")
 from plots import plotting
+import compute_observable
 
 def main():
     
@@ -41,6 +42,18 @@ def main():
     compute_time_vs_Nstep=np.array(compute_time_vs_Nstep)
     fid_vs_Nstep=np.array(fid_vs_Nstep)
     
+    #===========================================================================
+    # EA_OP=[]
+    # for file_n in even_file:
+    #     print(file_n)
+    #     EA_OP.append(compute_observable.Ed_Ad_OP(h_prot_dict[file_n]))
+    # 
+    # title="Edward-Anderson order parameter ($n=400$) vs. evolution time for SGD\n with the bang-bang8 protocol ($L=1$)"        
+    # plotting.observable(np.array(EA_OP),
+    #                     np.sort(np.array(list(fid_dict.keys())))*0.05,
+    #                     title=title,out_file="SGD_EAOPvsT.pdf",show=True,ylabel="$q_{EA}$"
+    #                     )
+    #===========================================================================
     
     #===========================================================================
     # title="Std. of fidelity ($n=400$) vs. evolution time for SGD\n with the bang-bang8 protocol ($L=1$)" 
@@ -55,11 +68,12 @@ def main():
     #===========================================================================
     
       
-    title="Computation time ($n=400$) vs. evolution time for SGD\n with the bang-bang8 protocol ($L=1$)" 
-    plotting.observable(compute_time_vs_Nstep[:,0],np.sort(np.array(list(fid_dict.keys())))*0.05,title=title,
-                        out_file="SGD_compTvsT.pdf",show=True,ylabel="Computation time",xlabel="Evolution Time")
+    #===========================================================================
+    # title="Computation time ($n=400$) vs. evolution time for SGD\n with the bang-bang8 protocol ($L=1$)" 
+    # plotting.observable(compute_time_vs_Nstep[:,0],np.sort(np.array(list(fid_dict.keys())))*0.05,title=title,
+    #                     out_file="SGD_compTvsT.pdf",show=True,ylabel="Computation time",xlabel="Evolution Time")
+    #===========================================================================
      
-    
     #===========================================================================
     # for n_time_step in [3,7,9,11,13]:
     #     print(n_time_step)
