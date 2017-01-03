@@ -10,7 +10,7 @@
 # log directory
 log/
 # data files
-#data/
+data/
 # cython source file #
 *.pyx
 # backup files from gedit #
