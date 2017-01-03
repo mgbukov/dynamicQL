@@ -12,11 +12,15 @@ import pandas
 
 def main():
     
-    with open("../data/SA_nstep=20_as=1_dt=0p05.pkl",'rb') as f:
-        result_all=pickle.load(f)
+    with open("../data/test.txt",'rb') as f:
+        [param_SA,result_all]=pickle.load(f)
     
     n_fid,fid,a_prot,h_prot=split_data(result_all)
+    print(param_SA)
+    print(n_fid)
     
+    #n_fid,fid,a_prot,h_prot=split_data(result_all)
+    exit()
     plt.hist(fid,bins=np.arange(0.78,0.85,0.005))
     plt.show()
     #print(fid)

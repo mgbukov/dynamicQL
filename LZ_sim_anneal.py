@@ -145,6 +145,13 @@ def main():
     
     if outfile_name=="auto": outfile_name=ut.make_file_name(param_SA)
     
+    to_save_par=['Ti','sweep_size','psi_i','N_time_step',
+                'delta_t','psi_target','hx_i','N_quench','RL_CONSTRAINT',
+                'hx_initial_state','hx_final_state','L','J','hz','action_set'
+                ]
+    
+    dict_to_save_parameters=dict(zip(to_save_par,[param_SA[p] for p in to_save_par]))
+    
     all_results=[]
     
     for it in range(N_restart):
@@ -162,7 +169,7 @@ def main():
         all_results.append(result)
         
         with open('data/%s'%outfile_name,'wb') as pkl_file:
-            pickle.dump([param_SA,all_results],pkl_file);pkl_file.close()
+            pickle.dump([dict_to_save_parameters,all_results],pkl_file);pkl_file.close()
             
         print("Saved iteration --> %i to %s"%(it,'data/%s'%outfile_name))
         print("Iteration run time --> %.2f s"%(time.time()-start_time))
