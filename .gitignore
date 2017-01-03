@@ -5,6 +5,12 @@
 *.so
 # pure fortran source files #
 *.f90
+# log files
+*.log
+# log directory
+log/
+# data files
+data/
 # cython source file #
 *.pyx
 # backup files from gedit #
@@ -17,3 +23,4 @@
 build/
 bin/
 dist/
+
