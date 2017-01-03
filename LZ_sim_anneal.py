@@ -84,7 +84,7 @@ def main():
     
     hx_max=4
     FIX_NUMBER_FID_EVAL=False # this fixes the number of quenches automatically, supersedes N_quench 
-    RL_CONSTRAINT=False 
+    RL_CONSTRAINT=True 
     verbose=True
     
     
@@ -97,7 +97,7 @@ def main():
         """ 
             if len(sys.argv) > 1 : run from command line -- check command line for parameters 
         """        
-        N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart=ut.read_command_line_arg(sys.argv,all_action_sets)
+        N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart,verbose=ut.read_command_line_arg(sys.argv,all_action_sets)
         
     print("N_time_step \t\t %i"%N_time_step)
     print("Total_time \t\t %.2f"%(N_time_step*delta_t))
@@ -105,6 +105,8 @@ def main():
     print("max_fid_eval (%s) \t %i"%(str(FIX_NUMBER_FID_EVAL),max_fid_eval))
     print("Action_set \t <- \t %s"%np.round(action_set,3))
     print("# of possible actions \t %i"%len(action_set))
+    print("Fixing no of fid eval \t %s"%str(FIX_NUMBER_FID_EVAL))
+    print("Using RL constraints \t %s"%str(RL_CONSTRAINT))
 
     param={'J':J,'hz':hz,'hx':hx_i} # Hamiltonian kwargs 
     hx_discrete=[0]*N_time_step # dynamical part at every time step (initiaze to zero everywhere)
@@ -131,18 +133,21 @@ def main():
     
     # simulated annealing kwargs:
     param_SA={'Ti':0.04,'sweep_size':sweep_size,
-                'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
-                'delta_t':delta_t,'psi_target':psi_target,
-                'hx_i':hx_i,'N_quench':N_quench,'RL_CONSTRAINT':RL_CONSTRAINT,
-                'verbose':verbose
-                }
-        
+              'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
+              'delta_t':delta_t,'psi_target':psi_target,
+              'hx_i':hx_i,'N_quench':N_quench,'RL_CONSTRAINT':RL_CONSTRAINT,
+              'verbose':verbose,'hx_initial_state':hx_initial_state,'hx_final_state':hx_final_state,
+              'L':L,'J':J,'hz':hz
+            }
+    
+    if outfile_name=="auto": outfile_name=ut.make_file_name(param_SA)
+    
     all_results=[]
     
     for it in range(N_restart):
         print("\n\n-----------> Starting new iteration <-----------")
         start_time=time.time()
-        exit()
+    
         count_fid_eval,best_fid,best_action_protocol,best_hx_discrete=simulate_anneal(param_SA)
         result=count_fid_eval,best_fid,best_action_protocol,best_hx_discrete
         print("\n----------> RESULT FOR ANNEALING NO %i <-------------"%(it+1))
@@ -154,7 +159,7 @@ def main():
         all_results.append(result)
         
         with open('data/%s'%outfile_name,'wb') as pkl_file:
-            pickle.dump(all_results,pkl_file);pkl_file.close()
+            pickle.dump([param_SA,all_results],pkl_file);pkl_file.close()
             
         print("Saved iteration --> %i to %s"%(it,'data/%s'%outfile_name))
         print("Iteration run time --> %.2f s"%(time.time()-start_time))
@@ -258,7 +263,7 @@ def avail_action(time_position,old_action_protocol,old_hx_discrete,hx_i,N_time_s
                 action_subset.append(a)
     return action_subset
 
-def propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step,RL_constraint=False):
+def propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step,RL_constraint=False,rand_pos=None):
     '''
     Purpose:
         Given the old_action_protocol, makes a random change and returns the new action protocol
@@ -267,7 +272,8 @@ def propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step,
         New action protocol,New hx as a function of the time slice
     '''
     new_hx_discrete=np.copy(old_hx_discrete)
-    rand_pos=np.random.randint(N_time_step)
+    if rand_pos==None:
+        rand_pos=np.random.randint(N_time_step)
     current_action=old_action_protocol[rand_pos]
     
     tmp=[]
@@ -385,12 +391,28 @@ def simulate_anneal(params):
     
     print("Performing 5 sweeps (1 sweep=%i evals) at zero-temperature"%sweep_size)
     ## Need to have a stochastic gradient descent option here ... so number of sweeps is optionally calibrated 
+    n_iter_without_progress=0
+    propose_update=np.arange(N_time_step)
+    np.random.shuffle(propose_update)
+    propose_update_pos=0
+    
     for _ in range(5*sweep_size): ## Perform greedy sweeps (zero-temperature):
-        new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step,RL_constraint=RL_constraint)
+        rand_pos=propose_update[propose_update_pos]
+        new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,
+                                                                   hx_i,N_time_step,RL_constraint=RL_constraint,
+                                                                   rand_pos=rand_pos
+                                                                   )
         hx_discrete=new_hx_discrete
         new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+        
         count_fid_eval+=1
+        n_iter_without_progress+=1
+        propose_update_pos+=1
+        
         if new_fid > best_fid:# Record best encountered !
+            n_iter_without_progress=0
+            propose_update_pos=0
+            np.random.shuffle(propose_update)
             best_fid=new_fid
             best_action_protocol=new_action_protocol
             best_hx_discrete=new_hx_discrete
@@ -401,8 +423,10 @@ def simulate_anneal(params):
             old_action_protocol=new_action_protocol
             old_fid=new_fid
         if _%10 == 0:
-            print("Zero temperature sweep no: %i\tBest fidelity: %.4f\tFidelity count: %i"%(_,best_fid,count_fid_eval))
-    print("Done")
+            '{:>8} {:>8} {:>8}'
+            print('{:<25} {:<25} {:<20}'.format("Zero T iteration # %i"%_,"Best fidelity: %.4f"%best_fid,"Fidelity count: %i"%count_fid_eval))
+        if n_iter_without_progress > N_time_step-1: print("Reached local minima with probability 1");break;
+    print("~~ Done ~~")
     
     enablePrint()
     return count_fid_eval,best_fid,best_action_protocol,best_hx_discrete
