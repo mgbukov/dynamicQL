@@ -39,11 +39,14 @@ def main():
     global action_set,hx_discrete,hx_max,FIX_NUMBER_FID_EVAL
     
     continuous=[0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.]
-    all_action_sets={
-                     "bang-bang8":np.array([-8.0,0.,8.]),
-                     "continuous-pos":np.array(continuous,dtype=np.float32),
-                     "continuous":np.array([-c for c in continuous]+[0]+continuous,dtype=np.float32)                     
-                     }
+    action_set_name=["bang-bang8","continuous-pos","continuous"]
+    action_set_arrays=[
+                      np.array([-8.0,0.,8.]),
+                      np.array(continuous,dtype=np.float32),
+                      np.array([-c for c in continuous]+[0]+continuous,dtype=np.float32)   
+                      ]
+    all_action_sets=dict(zip(action_set_name,action_set_arrays))
+    
     """ 
     Parameters
         L: system size
@@ -97,7 +100,7 @@ def main():
         """ 
             if len(sys.argv) > 1 : run from command line -- check command line for parameters 
         """        
-        N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart,verbose=ut.read_command_line_arg(sys.argv,all_action_sets)
+        N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart,verbose,act_set_name=ut.read_command_line_arg(sys.argv,all_action_sets)
         
     print("N_time_step \t\t %i"%N_time_step)
     print("Total_time \t\t %.2f"%(N_time_step*delta_t))
@@ -137,7 +140,7 @@ def main():
               'delta_t':delta_t,'psi_target':psi_target,
               'hx_i':hx_i,'N_quench':N_quench,'RL_CONSTRAINT':RL_CONSTRAINT,
               'verbose':verbose,'hx_initial_state':hx_initial_state,'hx_final_state':hx_final_state,
-              'L':L,'J':J,'hz':hz
+              'L':L,'J':J,'hz':hz,'action_set':action_set_name.index(act_set_name)
             }
     
     if outfile_name=="auto": outfile_name=ut.make_file_name(param_SA)

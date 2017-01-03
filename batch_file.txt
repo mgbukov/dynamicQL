@@ -1,5 +1,5 @@
 #!/bin/bash
-# This batch file runs 
+# This batch file if for checking SGD for for varying N_time_step 
 python LZ_sim_anneal.py 0 5 'bang-bang8' auto 3000 0.05 200 False &
 python LZ_sim_anneal.py 0 10 'bang-bang8' auto 3000 0.05 200 False &
 python LZ_sim_anneal.py 0 15 'bang-bang8' auto 3000 0.05 200 False &

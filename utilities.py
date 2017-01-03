@@ -26,16 +26,16 @@ def check_sys_arg(argv):
 			assert len(sys.argv) == n_par+1, message
 
 def read_command_line_arg(argv,all_action_sets):
-	_,N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart,verbose=argv
+	_,N_quench,N_time_step,action_set_name,outfile_name,max_fid_eval,delta_t,N_restart,verbose=argv
 	N_quench=int(N_quench)
 	N_time_step=int(N_time_step)
-	assert action_set in all_action_sets.keys(),"Wrong action set label, expecting one of the following: "+str(list(all_action_sets.keys()))
-	action_set=all_action_sets[action_set]
+	assert action_set_name in all_action_sets.keys(),"Wrong action set label, expecting one of the following: "+str(list(all_action_sets.keys()))
+	action_set=all_action_sets[action_set_name]
 	max_fid_eval=int(max_fid_eval)
 	delta_t=float(delta_t)
 	N_restart=int(N_restart)
 	verbose=(verbose=="True")
-	return N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart,verbose
+	return N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart,verbose,action_set_name
 
 def f_to_str(number,prec=2):
 	s=("%."+str(prec)+"f")%number
@@ -44,8 +44,8 @@ def f_to_str(number,prec=2):
 
 def make_file_name(params_SA):
 	extension=".pkl"
-	param_to_display=['N_time_step','N_quench','Ti','hx_initial_state','hx_final_state','delta_t','hx_i',  'RL_CONSTRAINT','L','J','hz']
-	cast_type_spec=  ['int',        'int',     'int','float-2',        'float-2',       'float-2','float-2', 'bool','int','float-2','float-2']
+	param_to_display=['N_time_step','N_quench','Ti','action_set','hx_initial_state','hx_final_state','delta_t','hx_i',  'RL_CONSTRAINT','L','J','hz']
+	cast_type_spec=  ['int',        'int',     'int','int',      'float-2',        'float-2',       'float-2','float-2', 'bool','int','float-2','float-2']
 	n_param=len(param_to_display)
 	param_value=[0]*n_param
 	
@@ -60,7 +60,7 @@ def make_file_name(params_SA):
 				print(tmp)
 				assert False,"Wrong cast-type format"
 	
-	file_name_composition=["SA","nStep-%s","nQuench-%s","Ti-%s","hxIS-%s","hxFS-%s","deltaT-%s","hxI-%s","RL-%s","L-%s","J-%s","hz-%s"]
+	file_name_composition=["SA","nStep-%s","nQuench-%s","Ti-%s","as-%s","hxIS-%s","hxFS-%s","deltaT-%s","hxI-%s","RL-%s","L-%s","J-%s","hz-%s"]
 	file_name="_".join(file_name_composition)+extension
 	file_name=file_name%tuple(param_value)
 	
