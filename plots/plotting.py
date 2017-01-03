@@ -3,8 +3,8 @@ Created on Nov 7, 2016
 
 @author: robertday
 
-Description:
-    Some plotting functions; ********** Compatible only with Python 3 **********
+Purpose:
+    Plotting functions for the different quantities of interest    
 '''
 
 import seaborn as sns
@@ -12,18 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import os
-
-# For latex use !
-os.environ["PATH"] += os.pathsep + '/usr/local/texlive/2015/bin/x86_64-darwin'
-cwd = os.getcwd()
-
-# Import pkl file
-#file=open('data/allresultsL1.pkl','rb')
-#data=pickle.load(file,encoding='latin1') # encoding must be specified if the file was saved with pickle python 2.
-
-#Color palette
-palette_ALEX = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a']
-
+import latex
 
 def main():
     '''
@@ -48,65 +37,88 @@ def main():
     # plot_fidelity(np.array(fid_vs_t),title=title,out_file=out_file)
     #===========================================================================
 
-    file=open('data/a2_t%d.pkl'%(t),'rb')
-    data=pickle.load(file,encoding='latin1') # encoding must be specified if the file was saved with pickle python 2.
-    fid=[d[0] for d in data[:10]]
+
+
+def protocol(protocol_array,time_slice,title=None,out_file=None,labels=None,show=False,ylabel='$h_x(t)$'):
+    """
+    Purpose:
+        Plots protocol vs time in latex form
+    """
     
-   # print('$t=%.2f,h_z=1.0$,action set $= %d, L=%d \n a\in\\{0,2\\}$, $h_z=1.0$'%(t*0.05,action_set,L))
-   # exit(0)
-    protocol=[d[2] for d in data[:10]]
-    plot_protocols(protocol,
-                   fid,
-                   title='$t=%.2f,h_z=1.0$,action set $= %d, L=%d$ \n $a\in\\{0,2\\}$, $h_z=1.0$'%(t*0.05,action_set,L),
-                   out_file="plots/SA_t=%d_actionset=%d_L=%d.pdf"%(t,action_set,L)
-                   )
-def plot_fidelity(fid_vs_time,title,out_file=None):
+    n_curve=protocol_array.shape[0]
+    palette = np.array(sns.color_palette('hls',n_curve))
     fontsize=15
     
-    plt.rc('text', usetex=True)
-    plt.rc('font', **{'family':'serif'})
-    plt.plot(fid_vs_time[:,0],fid_vs_time[:,1],'-o',clip_on=False)
-    plt.tick_params(labelsize=16)
-    plt.title(title,fontsize=fontsize)
-    plt.xlabel('Time',fontsize=fontsize)
-    plt.ylabel('Fidelity',fontsize=fontsize)
+    ext_ts=np.hstack((time_slice,time_slice[-1]+time_slice[1]-time_slice[0]))
     
+    if labels is not None:
+        for i,p in zip(range(n_curve),protocol_array):
+            ext_p=np.hstack((p,p[-1]))
+            plt.step(ext_ts,ext_p,'-',clip_on=False,c=palette[i],label=labels[i],where='post')
+            plt.plot(time_slice,protocol,'o',clip_on=False,c=palette[i])
+        plt.legend(loc='best', shadow=True)
+        
+    else:
+        for i,p in zip(range(n_curve),protocol_array):
+            ext_p=np.hstack((p,p[-1]))
+            plt.step(ext_ts,ext_p,'-',clip_on=False,c=palette[i],where='post')
+            plt.plot(time_slice,protocol,'o',clip_on=False,c=palette[i])
+        
+    if title is not None:
+        plt.title(title,fontsize=fontsize)
+    
+
+    plt.xlim([np.min(ext_ts),np.max(ext_ts)])
+    plt.xlabel('Time',fontsize=fontsize)
+    plt.ylabel(ylabel,fontsize=fontsize)
+        
     if out_file is not None:
         plt.savefig(out_file)
-    plt.show()
-
-
-
-def plot_protocols(y_val_list,z_val_list,x_val_list=None,title=None,out_file=None):
-    '''
-        Shows the plot for the followed protocols. Fidelity is shown in the legend.
-        Make constraints -> hx with [-3,1]
+    if show:
+        plt.show()
+    plt.close()
     
-    ''' 
-    plt.rc('text', usetex=True)
-    plt.rc('font', **{'family':'serif'})
+def observable(yarray,xarray,title=None,out_file=None,ylabel="$F$",xlabel="Time",show=False,labels=None):
+    """
+    Purpose:
+        Plots an observable in latex format
+    """
+
+    fontsize=15
+
+    if len(yarray.shape)==1:
+        yarray=yarray.reshape(1,-1)
+    assert len(yarray.shape)==2, "Y has the wrong shape"
     
-    if x_val_list is None:
-        i=0
-        for protocol,fidelity in zip(y_val_list,z_val_list):
-            N_time_step=len(protocol)
-            x=np.linspace(0,N_time_step*0.05,N_time_step)
-            y=list(protocol)
-            
-            # Change plot to step if u want true protocol 
-            points=plt.step(x,y,label=str(round(fidelity,2)))
-            i+=1
-            
-        plt.title(title)
-        plt.xlabel('Time')
-        plt.ylabel('$h_x(t)$')
-        plt.legend(loc='upper right', shadow=True)
-        if out_file is not None:
-            plt.savefig(out_file)
+    if len(xarray.shape)==1:
+        xarray=xarray.reshape(1,-1)
+    assert len(xarray.shape)==2, "X has the wrong shape"
+
+    n_curve=yarray.shape[0]
+    palette =np.array(sns.color_palette('hls',n_curve))
+    
+    if labels is not None:
+        for y,x,c,l in zip(yarray,xarray,palette,labels):
+            plt.plot(x,y,"o-",c=c,clip_on=False,label=l)
+        plt.legend(loc='best', shadow=True)
+    else:
+        for y,x,c in zip(yarray,xarray,palette):
+            plt.plot(x,y,"o-",c=c,clip_on=False)
         
-    plt.show()
-
-
+    if title is not None:
+        plt.title(title,fontsize=fontsize)
+    
+    plt.xlabel(xlabel,fontsize=fontsize)
+    plt.ylabel(ylabel,fontsize=fontsize)
+        
+    if out_file is not None:
+        plt.savefig(out_file)
+    if show:
+        plt.show()
+    plt.close()
+    
+    
+    
 # Run main program !
 if __name__ == "__main__":
     main()

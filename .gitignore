@@ -11,6 +11,8 @@
 log/
 # data files
 data/
+# plot file
+plot/
 # cython source file #
 *.pyx
 # backup files from gedit #

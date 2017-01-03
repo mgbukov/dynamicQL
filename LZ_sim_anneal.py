@@ -69,7 +69,8 @@ def main():
         RL_CONSTRAINT: use reinforcement learning constraints or not
         verbose: If you want the program to print to screen the progress
     """
-    ## ----- Default parameters ------ ###
+    #----------------------------------------
+    # DEFAULT PARAMETERS
     L = 1 # system size
     J = 1.0/0.809 # zz interaction
     hz = 1.0 #0.9045/0.809 #1.0 # hz field
@@ -88,9 +89,10 @@ def main():
     
     hx_max=4
     FIX_NUMBER_FID_EVAL=False # this fixes the number of quenches automatically, supersedes N_quench 
-    RL_CONSTRAINT=False 
+    RL_CONSTRAINT=True 
     verbose=True
     
+    #----------------------------------------
     
     print("-------------------- > Parameters < --------------------")
     print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx(t=0) \t\t %.3f\nhx_max \t\t\t %.3f "%(L,J,hz,hx_i,hx_max))
