@@ -43,6 +43,29 @@ def main():
     fid_vs_Nstep=np.array(fid_vs_Nstep)
     
     #===========================================================================
+    # all_embeddings=[]
+    # for file_n in even_file:
+    #     print("t-sne for n_time_step=",file_n)
+    #     embed=compute_observable.run_tsne(h_prot_dict[file_n])
+    #     all_embeddings.append(embed)
+    # with open("SGD_tsne_embeddings.pkl","wb") as f:
+    #     pickle.dump(all_embeddings,f);
+    # print("Done")
+    # exit()
+    #===========================================================================
+    with open("SGD_tsne_embeddings.pkl","rb") as f:
+        all_embeddings=pickle.load(f);f.close()
+    
+    
+    for i,file_n in zip(range(len(even_file)),even_file):
+        print(file_n)
+        xy=all_embeddings[i]
+        z=fid_dict[file_n]
+        file_name="SGD_tsne_t-%i.pdf"%file_n
+        plotting.visne_2D(xy,z,zlabel="Fidelity",out_file=file_name,label="T=%i"%file_n)    
+        
+         
+#===========================================================================
     # EA_OP=[]
     # for file_n in even_file:
     #     print(file_n)

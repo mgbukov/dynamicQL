@@ -117,6 +117,36 @@ def observable(yarray,xarray,title=None,out_file=None,ylabel="$F$",xlabel="Time"
         plt.show()
     plt.close()
     
+def visne_2D(xy,marker_intensity,zlabel="Fidelity",out_file=None,title=None,show=False,label=None):
+    print("Starting viSNE plot 2D")
+    fontsize=15
+
+    """ 
+    Purpose:
+        2-D scatter plot of data embedded in t-SNE space (2 dimensional) with intensity levels
+    
+    """
+    
+    x=xy[:,0]
+    y=xy[:,1]
+    z=marker_intensity
+    plt.scatter(x,y,c=z,cmap="BuGn",alpha=1.0,label=label)
+    plt.tick_params(labelbottom='off',labelleft='off')
+    cb=plt.colorbar()
+    cb.set_label(label=zlabel,labelpad=10)
+    
+    if title is not None:
+        plt.title(title,fontsize=fontsize)
+    
+    plt.xlabel('t-SNE 1',fontsize=fontsize)
+    plt.ylabel('t-SNE 2',fontsize=fontsize)
+    plt.legend(loc='upper right', shadow=True)
+    
+    if out_file is not None:
+        plt.savefig(out_file)
+    if show:
+        plt.show()
+    plt.close()
     
     
 # Run main program !
