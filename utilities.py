@@ -69,5 +69,5 @@ def make_file_name(params_SA):
 def check_version():
 	import sys
 	if sys.version_info[0] < 3:
-    	raise "Must be using Python 3"
+		raise "Must be using Python 3"
 		
