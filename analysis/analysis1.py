@@ -42,6 +42,12 @@ def main():
     compute_time_vs_Nstep=np.array(compute_time_vs_Nstep)
     fid_vs_Nstep=np.array(fid_vs_Nstep)
     
+    
+    
+    print(fid_dict[2])
+    
+    
+    
     #===========================================================================
     # all_embeddings=[]
     # for file_n in even_file:
@@ -53,18 +59,22 @@ def main():
     # print("Done")
     # exit()
     #===========================================================================
-    with open("SGD_tsne_embeddings.pkl","rb") as f:
-        all_embeddings=pickle.load(f);f.close()
-    
-    
-    for i,file_n in zip(range(len(even_file)),even_file):
-        print(file_n)
-        xy=all_embeddings[i]
-        z=fid_dict[file_n]
-        file_name="SGD_tsne_t-%i.pdf"%file_n
-        plotting.visne_2D(xy,z,zlabel="Fidelity",out_file=file_name,label="T=%i"%file_n)    
-        
-         
+    #===========================================================================
+    # with open("SGD_tsne_embeddings.pkl","rb") as f:
+    #     all_embeddings=pickle.load(f);f.close()
+    # 
+    # 
+    # for i,file_n in zip(range(len(even_file)),even_file):
+    #     print(file_n)
+    #     xy=all_embeddings[i]
+    #     z=fid_dict[file_n]
+    #     file_name="SGD_tsne_t-%i.pdf"%file_n
+    #     plotting.visne_2D(xy,z,zlabel="Fidelity",out_file=file_name,label="T=%i"%file_n)    
+    #     
+    #===========================================================================
+       
+
+  
 #===========================================================================
     # EA_OP=[]
     # for file_n in even_file:

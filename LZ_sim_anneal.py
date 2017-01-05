@@ -39,7 +39,7 @@ def main():
     
     global action_set,hx_discrete,hx_max,FIX_NUMBER_FID_EVAL
     
-    continuous=[0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.]
+    continuous=[0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.,8.]
     action_set_name=["bang-bang8","continuous-pos","continuous"]
     action_set_arrays=[
                       np.array([-8.0,0.,8.]),
@@ -57,18 +57,18 @@ def main():
         hx_initial_state: initial state transverse field
         hx_final_state: final state transverse field
         
-        N_quench: number of quenches (i.e. no. of discrete time evolutions)
+        N_quench: number of quenches (i.e. no. of time temperature is quenched to reach exactly T=0)
         N_time_step: number of time steps
-        outfile_name: file where data is being dumped (via pickle)
         action_set: array of possible actions
+        outfile_name: file where data is being dumped (via pickle) 
         max_fid_eval: maximum number of fidelity evaluations
-        delta_t: time scale 
+        delta_t: time scale
         N_restart: number of restart for the annealing
+        verbose: If you want the program to print to screen the progress
         
         hx_max : maximum hx field (the annealer can go between -hx_max and hx_max
         FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations
         RL_CONSTRAINT: use reinforcement learning constraints or not
-        verbose: If you want the program to print to screen the progress
     """
     #----------------------------------------
     # DEFAULT PARAMETERS
@@ -452,7 +452,7 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 def check_custom_protocol(hx_protocol,J=1.236,
-                          L=1,hz=1.0,hx_i=-1.0,hx_f=1.0,
+                          L=1,hz=1.0,hx_init_state=-1.0,hx_target_state=1.0,
                           delta_t=0.05):
     
     """ 
@@ -464,15 +464,17 @@ def check_custom_protocol(hx_protocol,J=1.236,
     global action_set,hx_discrete
     N_time_step=len(hx_protocol)
     
-    param={'J':J,'hz':hz,'hx':hx_i} # Hamiltonian kwargs 
+    param={'J':J,'hz':hz,'hx':hx_init_state} # Hamiltonian kwargs 
     hx_discrete=[0]*N_time_step # dynamical part at every time step (initiaze to zero everywhere)
     # full system hamiltonian
     H,_ = Hamiltonian.Hamiltonian(L,fct=hx_vs_t,**param)
     # calculate initial and final states
-    hx_discrete[0]=hx_i # just a trick to get initial state
+    hx_discrete[0]=hx_init_state # just a trick to get initial state
     E_i, psi_i = H.eigsh(time=0,k=1,which='SA')
-    hx_discrete[0]=hx_f # just a trick to get final state
+    hx_discrete[0]=hx_target_state # just a trick to get final state
     E_f, psi_target = H.eigsh(time=0,k=1,which='SA')
+
+    print("No evolution yields dot(psi_i,psi_target)=",np.dot(psi_target.flatten(),psi_i.flatten())**2)
     
     hx_discrete=hx_protocol
     return Fidelity(psi_i,H,N_time_step,delta_t,psi_target) 
