@@ -22,6 +22,7 @@ Example of use:
 import utilities as ut
 import sys,os # for running in batch from terminal
 ut.check_sys_arg(sys.argv)
+ut.check_version()
 
 
 import numpy as np

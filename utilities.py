@@ -65,4 +65,9 @@ def make_file_name(params_SA):
 	file_name=file_name%tuple(param_value)
 	
 	return file_name
+
+def check_version():
+	import sys
+	if sys.version_info[0] < 3:
+    	raise "Must be using Python 3"
 		
