@@ -39,7 +39,7 @@ def main():
 
 
 
-def protocol(protocol_array,time_slice,title=None,out_file=None,labels=None,show=False,ylabel='$h_x(t)$'):
+def protocol(protocol_array,time_slice,title=None,out_file=None,labels=None,show=False,ylabel='$h_x(t)$',xlabel="$t$"):
     """
     Purpose:
         Plots protocol vs time in latex form
@@ -55,21 +55,21 @@ def protocol(protocol_array,time_slice,title=None,out_file=None,labels=None,show
         for i,p in zip(range(n_curve),protocol_array):
             ext_p=np.hstack((p,p[-1]))
             plt.step(ext_ts,ext_p,'-',clip_on=False,c=palette[i],label=labels[i],where='post')
-            plt.plot(time_slice,protocol,'o',clip_on=False,c=palette[i])
+            plt.plot(time_slice,p,'o',clip_on=False,c=palette[i])
         plt.legend(loc='best', shadow=True)
         
     else:
         for i,p in zip(range(n_curve),protocol_array):
             ext_p=np.hstack((p,p[-1]))
             plt.step(ext_ts,ext_p,'-',clip_on=False,c=palette[i],where='post')
-            plt.plot(time_slice,protocol,'o',clip_on=False,c=palette[i])
+            plt.plot(time_slice,p,'o',clip_on=False,c=palette[i])
         
     if title is not None:
         plt.title(title,fontsize=fontsize)
     
 
     plt.xlim([np.min(ext_ts),np.max(ext_ts)])
-    plt.xlabel('Time',fontsize=fontsize)
+    plt.xlabel(xlabel,fontsize=fontsize)
     plt.ylabel(ylabel,fontsize=fontsize)
         
     if out_file is not None:
@@ -78,23 +78,37 @@ def protocol(protocol_array,time_slice,title=None,out_file=None,labels=None,show
         plt.show()
     plt.close()
     
-def observable(yarray,xarray,title=None,out_file=None,ylabel="$F$",xlabel="Time",show=False,labels=None):
+def observable(yarray,xarray,title=None,out_file=None,ylabel="$F$",xlabel="$t$",show=False,labels=None):
     """
     Purpose:
         Plots an observable in latex format
-    """
-
-    fontsize=15
-
-    if len(yarray.shape)==1:
-        yarray=yarray.reshape(1,-1)
-    assert len(yarray.shape)==2, "Y has the wrong shape"
+        
+    Parameter
+    ------------
     
-    if len(xarray.shape)==1:
-        xarray=xarray.reshape(1,-1)
-    assert len(xarray.shape)==2, "X has the wrong shape"
-
-    n_curve=yarray.shape[0]
+    yarray: 1D-array or list of arrays or 2D-array
+        Data component along the y-axis. Multiple data series can be passed, but this must be done
+        in one of the two available formats, list of arrays of 2D-array.
+        -- Warning : do not try to pass an array of arrays ! 
+        
+    xarray: Same as yarray but along x-axis (must match the dimensions of y !)
+    
+    """
+    fontsize=15
+    
+    if isinstance(yarray,list) is False:    
+        if len(yarray.shape)==1:
+            yarray=yarray.reshape(1,-1)
+        assert len(yarray.shape)==2, "Y has the wrong shape"
+        n_curve=yarray.shape[0]
+    else:
+        n_curve=len(yarray)
+    
+    if isinstance(xarray,list) is False:
+        if len(xarray.shape)==1:
+            xarray=xarray.reshape(1,-1)
+        assert len(xarray.shape)==2, "X has the wrong shape"
+        
     palette =np.array(sns.color_palette('hls',n_curve))
     
     if labels is not None:
@@ -115,6 +129,7 @@ def observable(yarray,xarray,title=None,out_file=None,ylabel="$F$",xlabel="Time"
         plt.savefig(out_file)
     if show:
         plt.show()
+        
     plt.close()
     
 def visne_2D(xy,marker_intensity,zlabel="Fidelity",out_file=None,title=None,show=False,label=None):

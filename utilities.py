@@ -5,6 +5,7 @@ Created on Jan 2 , 2017
 
 '''
 from lib2to3.fixer_util import Number
+import numpy as np
 
 def check_sys_arg(argv):
 	import sys
@@ -57,6 +58,23 @@ def check_sys_arg(argv):
 			assert len(sys.argv) == n_par+1, message_1
 
 def read_command_line_arg(argv,all_action_sets):
+	"""
+	Purpose:
+		Read comment line argument that the user provides, casting strings to proper types.
+	
+	Parameters
+	----------
+	argv : string array, shape(n_parameters)
+		Array of string of parsed command line
+		
+	all_action_set: dict, {string: array of floats, shape(n_action)}
+		Dictionary map of action sets name ('bang-bang8,continuous,continuous-op') to corresponding
+		array of possible actions 
+	
+	Returns:
+		Tuple of parsed command line. Last element is the action set name.
+	"""
+	
 	_,N_quench,N_time_step,action_set_name,outfile_name,max_fid_eval,delta_t,N_restart,verbose=argv
 	N_quench=int(N_quench)
 	N_time_step=int(N_time_step)
@@ -97,8 +115,60 @@ def make_file_name(params_SA):
 	
 	return file_name
 
+def split_data(result_all,verbose=True):
+	N_time_step=len(result_all[0][2])
+	N_sample=len(result_all)
+	if verbose:
+		print("--- > N_sample=%i,\t N_time_step=%i"%(N_sample,N_time_step))
+	action_protocols=np.empty((N_sample,N_time_step),dtype=np.float32)
+	hx_protocols=np.empty((N_sample,N_time_step),dtype=np.float32)
+	count_fid_eval=np.empty((N_sample,),dtype=np.int32)
+	best_fid=np.empty((N_sample,),dtype=np.float32)
+	
+	for result,i in zip(result_all,range(N_sample)):
+		count_fid_eval[i],best_fid[i],action_protocols[i],hx_protocols[i]=result    
+	
+	return count_fid_eval,best_fid,action_protocols,hx_protocols
+
+def gather_data(file_name_with_replace,param_value):
+	"""
+	Purpose:
+		Gather data produced by LZ_sim_anneal in nice format (dictionary, mapping param_values to the corresponding result)
+	"""
+	
+	import pickle
+	
+	compute_time_vs_Nstep=[]
+	fid_vs_Nstep=[]
+	a_prot_dict={}
+	h_prot_dict={}
+	fid_dict={}
+	n_fid_dict={}
+
+	assert(len(np.array(param_value).shape)==1), "Wrong set of parameters"
+	
+	for file_n in param_value:
+		file=file_name_with_replace%file_n
+		with open(file,'rb') as f:
+			[param_SA,result_all]=pickle.load(f)
+			n_fid,fid,a_prot,h_prot=split_data(result_all,verbose=False)
+
+			compute_time_vs_Nstep.append([np.mean(n_fid),np.std(n_fid)])
+			fid_vs_Nstep.append([np.mean(fid),np.std(fid)])
+			
+			fid_dict[file_n]=fid
+			n_fid_dict[file_n]=fid
+			a_prot_dict[file_n]=a_prot
+			h_prot_dict[file_n]=h_prot
+		
+	compute_time_vs_Nstep=np.array(compute_time_vs_Nstep)
+	fid_vs_Nstep=np.array(fid_vs_Nstep)
+	return fid_dict,n_fid_dict,a_prot_dict,h_prot_dict,compute_time_vs_Nstep,fid_vs_Nstep
+	
 def check_version():
 	import sys
 	if sys.version_info[0] < 3:
 		raise "Must be using Python 3"
-		
+
+
+
