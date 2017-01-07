@@ -2,6 +2,12 @@
 
 This branch contains a Python3 implementation of simulated annealing for performing quantum state preparation on a 1D chain. The code is fairly well commented (so dig in !).
 
+# Requirements
+
+Non-standard packages:
+- Quspin 
+- Seaborn
+
 # To run #
 
 Clone or download this repository, then run the following command :
