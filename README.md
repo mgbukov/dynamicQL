@@ -5,7 +5,7 @@ This branch contains a Python3 implementation of simulated annealing for perform
 # Requirements
 
 Non-standard packages:
-- [Quspin](https://github.com/weinbe58/QuSpin)
+- [Quspin](https://github.com/weinbe58/QuSpin#installation)
 - Seaborn (install using pip or conda)
 
 # To run #
