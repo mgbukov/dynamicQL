@@ -4,7 +4,7 @@ Created on Jan 2 , 2017
 @author: Alexandre Day
 
 '''
-from lib2to3.fixer_util import Number
+#from lib2to3.fixer_util import Number
 import numpy as np
 
 def check_sys_arg(argv):
