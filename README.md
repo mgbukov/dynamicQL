@@ -1,2 +1,4 @@
 # dynamic_QL
-This repository contains a variant of TO-TD(lambda) Q-learning algorithm for time-dependent states
+This repository contains two main branches:
+	- TO-TD(lambda) Q-learning algorithm for time-dependent states.
+	- Stochastic gradient descent and simulated annealing for time-dependent states.
