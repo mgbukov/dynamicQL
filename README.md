@@ -1,6 +1,12 @@
 # dynamic_QL
 
-This branch contains a Python3 implementation of simulated annealing for performing quantum state preparation on a 1D chain. The code is fairly well commented (so dig in !).
+This branch contains a Python3 implementation of simulated annealing and stochastic gradient descent for performing quantum state preparation on a 1D chain. The code is fairly well commented (so dig in !).
+
+# Requirements
+
+Non-standard packages:
+- [Quspin](https://github.com/weinbe58/QuSpin#installation)
+- Seaborn (install using pip or conda)
 
 # To run #
 
