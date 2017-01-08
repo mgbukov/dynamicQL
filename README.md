@@ -1,6 +1,6 @@
 # dynamic_QL
 
-This branch contains a Python3 implementation of simulated annealing for performing quantum state preparation on a 1D chain. The code is fairly well commented (so dig in !).
+This branch contains a Python3 implementation of simulated annealing and stochastic gradient descent for performing quantum state preparation on a 1D chain. The code is fairly well commented (so dig in !).
 
 # Requirements
 
