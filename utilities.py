@@ -60,11 +60,11 @@ def check_sys_arg(argv):
 def read_command_line_arg(argv,all_action_sets):
 	"""
 	Purpose:
-		Read comment line argument that the user provides, casting strings to proper types.
+		Read command line argument that the user provides, casting strings to proper types (int and float).
 	
 	Parameters
 	----------
-	argv : string array, shape(n_parameters)
+	argv : array of strings, shape(n_parameters)
 		Array of string of parsed command line
 		
 	all_action_set: dict, {string: array of floats, shape(n_action)}
@@ -92,19 +92,41 @@ def f_to_str(number,prec=2):
 	return s	
 
 def make_file_name(params_SA):
+	"""
+	Purpose:
+		Given the simulation parameters, produces a file name that contains the information about all the simulation parameters needed
+		to reproduce the simulation results. Floats are converted to string where the dot "." is converted to "p" and the minus sign
+		"-" is converted to "m"
+	Return:
+		String representing a file name (extension is always .pkl)
+	"""
+	
 	extension=".pkl"
-	param_to_display=['N_time_step','N_quench','Ti','action_set','hx_initial_state','hx_final_state','delta_t','hx_i',  'RL_CONSTRAINT','L','J','hz']
-	cast_type_spec=  ['int',        'int',     'float-2','int',      'float-2',        'float-2',       'float-2','float-2', 'bool','int','float-2','float-2']
-	n_param=len(param_to_display)
+	param_and_type=[
+					['N_time_step','int'],
+					['N_quench','int'],
+					['Ti','float-2'],
+					['action_set','int'],
+					['hx_initial_state','float-2'],
+					['hx_final_state','float-2'],
+					['delta_t','float-4'],
+					['hx_i','float-2'],
+					['RL_CONSTRAINT','bool'],
+					['L','int'],
+					['J','float-2'],
+					['hz','float-2']
+					]
+	n_param=len(param_and_type)
 	param_value=[0]*n_param
 	
-	for i,param,cast_type in zip(range(n_param),param_to_display,cast_type_spec):
+	for i,p in zip(range(n_param),param_and_type):
+		param_name,cast_type=p
 		if (cast_type=='bool') or (cast_type=='int'):
-			param_value[i]=str(int(params_SA[param]))
+			param_value[i]=str(int(params_SA[param_name]))
 		else:
 			tmp=cast_type.split('-')
 			if tmp[0]=='float':
-				param_value[i]=f_to_str(params_SA[param],prec=int(tmp[1]))
+				param_value[i]=f_to_str(params_SA[param_name],prec=int(tmp[1]))
 			else:
 				print(tmp)
 				assert False,"Wrong cast-type format"
