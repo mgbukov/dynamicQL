@@ -91,6 +91,14 @@ def f_to_str(number,prec=2):
 	s=s.replace("-","m").replace(".","p")
 	return s	
 
+def i_to_str(number,prec=2):
+	l=len(str(number))
+	if prec-l > 0:
+		s="0"*(prec-l)+str(number)
+	else:
+		s=str(number)
+	return s	
+
 def make_file_name(params_SA):
 	"""
 	Purpose:
@@ -103,16 +111,16 @@ def make_file_name(params_SA):
 	
 	extension=".pkl"
 	param_and_type=[
-					['N_time_step','int'],
-					['N_quench','int'],
+					['N_time_step','int-3'],
+					['N_quench','int-3'],
 					['Ti','float-2'],
-					['action_set','int'],
+					['action_set','int-1'],
 					['hx_initial_state','float-2'],
 					['hx_final_state','float-2'],
 					['delta_t','float-4'],
 					['hx_i','float-2'],
 					['RL_CONSTRAINT','bool'],
-					['L','int'],
+					['L','int-2'],
 					['J','float-2'],
 					['hz','float-2']
 					]
@@ -121,12 +129,14 @@ def make_file_name(params_SA):
 	
 	for i,p in zip(range(n_param),param_and_type):
 		param_name,cast_type=p
-		if (cast_type=='bool') or (cast_type=='int'):
+		if cast_type=='bool':
 			param_value[i]=str(int(params_SA[param_name]))
 		else:
 			tmp=cast_type.split('-')
 			if tmp[0]=='float':
 				param_value[i]=f_to_str(params_SA[param_name],prec=int(tmp[1]))
+			elif tmp[0] == 'int':
+				param_value[i]=i_to_str(params_SA[param_name],prec=int(tmp[1]))
 			else:
 				print(tmp)
 				assert False,"Wrong cast-type format"
