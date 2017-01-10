@@ -1,10 +1,16 @@
 # compliled python code #
 *.pyc
 *.pyf
+# Text files
+*.txt
+
 # cpp libraries
 *.so
 # pure fortran source files #
 *.f90
+# bash files
+*.sh
+
 # log files
 *.log
 # log directory
