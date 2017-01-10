@@ -191,6 +191,8 @@ def Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
     for t in range(N_time_step):
         psi_evolve = exp_op(H(time=t),a=-1j*delta_t).dot(psi_evolve)
     
+    # for making a fidelity fast function, use H_dense = H.todense(time=time,order=None,out=None) and then use numpy matrix exponentiation method
+    # --- coming soon !
     #print(psi_evolve)
     return abs(np.sum(np.conj(psi_evolve)*psi_target))**2
 

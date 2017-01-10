@@ -20,14 +20,26 @@ def main():
     
     even_file_AS0=[2,4,6,8,10,12,14,16,18,20,22,24,30,40,45,50,55,60]
     file_name_with_replace="../data/SA_nStep-%i_nQuench-0_Ti-0p04_as-0_hxIS-m1p00_hxFS-1p00_deltaT-0p05_hxI-m4p00_RL-1_L-1_J-1p24_hz-1p00.pkl"
-    fid_dict_AS0,_,_,h_prot_dict_AS0,_,fid_vs_Nstep_AS0=ut.gather_data(file_name_with_replace,even_file_AS0)
+    results_AS0=ut.gather_data(file_name_with_replace,even_file_AS0)
+    fid_dict_AS0=results_AS0["fid"]
+    h_prot_dict_AS0=results_AS0["h_protocol"]
+    fid_vs_Nstep_AS0=results_AS0["fid_vs_nStep"]
     
     even_file_AS2=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50,55,60]
     file_name_with_replace="../data/SA_nStep-%i_nQuench-0_Ti-0p04_as-2_hxIS-m1p00_hxFS-1p00_deltaT-0p05_hxI-m4p00_RL-1_L-1_J-1p24_hz-1p00.pkl"
-    fid_dict_AS2,_,_,h_prot_dict_AS2,_,fid_vs_Nstep_AS2=ut.gather_data(file_name_with_replace,even_file_AS2)
+    
+    results_AS2=ut.gather_data(file_name_with_replace,even_file_AS2)
+    fid_dict_AS2=results_AS2["fid"]
+    h_prot_dict_AS2=results_AS2["h_protocol"]
+    fid_vs_Nstep_AS2=results_AS2["fid_vs_nStep"]
+    
     
     fid_vs_Nstep=[fid_vs_Nstep_AS0[:,0],fid_vs_Nstep_AS2[:,0]]
     std_vs_Nstep=[fid_vs_Nstep_AS0[:,1],fid_vs_Nstep_AS2[:,1]]
+    
+    for e in fid_dict_AS2.values():
+        print(e.shape)
+    exit()
     
     #print(fid_vs_Nstep)
     xtimes=[np.sort(np.array(list(fid_dict_AS0.keys())))*0.05,np.sort(np.array(list(fid_dict_AS2.keys())))*0.05]

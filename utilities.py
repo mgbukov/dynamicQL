@@ -176,6 +176,7 @@ def gather_data(file_name_with_replace,param_value):
 	h_prot_dict={}
 	fid_dict={}
 	n_fid_dict={}
+	param_dict={}
 
 	assert(len(np.array(param_value).shape)==1), "Wrong set of parameters"
 	
@@ -192,10 +193,21 @@ def gather_data(file_name_with_replace,param_value):
 			n_fid_dict[file_n]=fid
 			a_prot_dict[file_n]=a_prot
 			h_prot_dict[file_n]=h_prot
+			param_dict[file_n]=param_SA
 		
 	compute_time_vs_Nstep=np.array(compute_time_vs_Nstep)
 	fid_vs_Nstep=np.array(fid_vs_Nstep)
-	return fid_dict,n_fid_dict,a_prot_dict,h_prot_dict,compute_time_vs_Nstep,fid_vs_Nstep
+	
+	parsed_results={
+				"fid":fid_dict,
+				"n_fid":n_fid_dict,
+				"action_protocol":a_prot_dict,
+				"h_protocol":h_prot_dict,
+				"compute_time_vs_nStep":compute_time_vs_Nstep,
+				"fid_vs_nStep":fid_vs_Nstep
+				}
+	
+	return parsed_results
 	
 def check_version():
 	import sys
