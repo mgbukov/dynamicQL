@@ -20,7 +20,7 @@ def main():
     
     print("hello")    
     
-def Ed_Ad_OP(h_protocol):
+def Ed_Ad_OP(h_protocol,normalize_factor):
     """
     Purpose:
         Computes Edward-Anderson order parameter
@@ -32,7 +32,7 @@ def Ed_Ad_OP(h_protocol):
     assert h_protocol.shape[0]>4, "Need more than a few samples !"
     n_sample,n_time=h_protocol.shape
     OP=0.
-    h_protocol=h_protocol/np.max(h_protocol) # So protocol is normalized (between -1 and 1)
+    h_protocol=h_protocol/np.max(normalize_factor) # So protocol is normalized (between -1 and 1)
     
     for t in range(n_time):
         corr=0.

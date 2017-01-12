@@ -162,49 +162,25 @@ def split_data(result_all,verbose=True):
 	
 	return count_fid_eval,best_fid,action_protocols,hx_protocols
 
-def gather_data(file_name_with_replace,param_value):
+def gather_data(params_SA,root):
 	"""
 	Purpose:
 		Gather data produced by LZ_sim_anneal in nice format (dictionary, mapping param_values to the corresponding result)
-	"""
-	
+	"""	
 	import pickle
 	
-	compute_time_vs_Nstep=[]
-	fid_vs_Nstep=[]
-	a_prot_dict={}
-	h_prot_dict={}
-	fid_dict={}
-	n_fid_dict={}
-	param_dict={}
-
-	assert(len(np.array(param_value).shape)==1), "Wrong set of parameters"
+	file_name=root+make_file_name(params_SA)
 	
-	for file_n in param_value:
-		file=file_name_with_replace%file_n
-		with open(file,'rb') as f:
-			[param_SA,result_all]=pickle.load(f)
-			n_fid,fid,a_prot,h_prot=split_data(result_all,verbose=False)
-
-			compute_time_vs_Nstep.append([np.mean(n_fid),np.std(n_fid)])
-			fid_vs_Nstep.append([np.mean(fid),np.std(fid)])
-			
-			fid_dict[file_n]=fid
-			n_fid_dict[file_n]=fid
-			a_prot_dict[file_n]=a_prot
-			h_prot_dict[file_n]=h_prot
-			param_dict[file_n]=param_SA
-		
-	compute_time_vs_Nstep=np.array(compute_time_vs_Nstep)
-	fid_vs_Nstep=np.array(fid_vs_Nstep)
+	with open(file_name,'rb') as f:
+		[_,result_all]=pickle.load(f)
 	
+	n_fid,fid,a_prot,h_prot=split_data(result_all,verbose=False)
+
 	parsed_results={
-				"fid":fid_dict,
-				"n_fid":n_fid_dict,
-				"action_protocol":a_prot_dict,
-				"h_protocol":h_prot_dict,
-				"compute_time_vs_nStep":compute_time_vs_Nstep,
-				"fid_vs_nStep":fid_vs_Nstep
+				"n_fid":n_fid,
+				"fid":fid,
+				"action_protocol":a_prot,
+				"h_protocol":h_prot,
 				}
 	
 	return parsed_results

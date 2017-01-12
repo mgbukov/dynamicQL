@@ -113,11 +113,11 @@ def observable(yarray,xarray,title=None,out_file=None,ylabel="$F$",xlabel="$t$",
     
     if labels is not None:
         for y,x,c,l in zip(yarray,xarray,palette,labels):
-            plt.plot(x,y,"o-",c=c,clip_on=False,label=l)
+            plt.plot(x,y,"-",c=c,clip_on=False,label=l)
         plt.legend(loc='best', shadow=True)
     else:
         for y,x,c in zip(yarray,xarray,palette):
-            plt.plot(x,y,"o-",c=c,clip_on=False)
+            plt.plot(x,y,"-",c=c,clip_on=False)
         
     if title is not None:
         plt.title(title,fontsize=fontsize)
@@ -132,7 +132,7 @@ def observable(yarray,xarray,title=None,out_file=None,ylabel="$F$",xlabel="$t$",
         
     plt.close()
     
-def visne_2D(xy,marker_intensity,zlabel="Fidelity",out_file=None,title=None,show=False,label=None):
+def visne_2D(x,y,marker_intensity,zlabel="Fidelity",out_file=None,title=None,show=False,label=None,xlabel='Dim 1',ylabel='Dim 2'):
     print("Starting viSNE plot 2D")
     fontsize=15
 
@@ -142,19 +142,19 @@ def visne_2D(xy,marker_intensity,zlabel="Fidelity",out_file=None,title=None,show
     
     """
     
-    x=xy[:,0]
-    y=xy[:,1]
     z=marker_intensity
     plt.scatter(x,y,c=z,cmap="BuGn",alpha=1.0,label=label)
     plt.tick_params(labelbottom='off',labelleft='off')
     cb=plt.colorbar()
-    cb.set_label(label=zlabel,labelpad=10)
+    
+    if label is not None:
+        cb.set_label(label=zlabel,labelpad=10)
     
     if title is not None:
         plt.title(title,fontsize=fontsize)
     
-    plt.xlabel('t-SNE 1',fontsize=fontsize)
-    plt.ylabel('t-SNE 2',fontsize=fontsize)
+    plt.xlabel(xlabel,fontsize=fontsize)
+    plt.ylabel(ylabel,fontsize=fontsize)
     plt.legend(loc='upper right', shadow=True)
     
     if out_file is not None:

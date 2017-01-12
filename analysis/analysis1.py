@@ -12,40 +12,202 @@ import pandas
 import sys
 import utilities as ut
 import compute_observable
+from utilities import make_file_name
 sys.path.append("..")
 from plots import plotting
+import seaborn as sns
 from sklearn.decomposition import PCA
 
 def main():
+    param={'N_time_step':10,
+           'N_quench':0,
+           'Ti':0.04,
+           'action_set':2,
+           'hx_initial_state':-1.0,
+           'hx_final_state':1.0,
+            'delta_t':0.01,
+            'hx_i':-4.0,
+            'RL_CONSTRAINT':True,
+            'L':1,
+            'J':1.24,
+            'hz':1.0
+            }
+ 
+    import os
     
-    even_file_AS0=[2,4,6,8,10,12,14,16,18,20,22,24,30,40,45,50,55,60]
-    file_name_with_replace="../data/SA_nStep-%i_nQuench-0_Ti-0p04_as-0_hxIS-m1p00_hxFS-1p00_deltaT-0p05_hxI-m4p00_RL-1_L-1_J-1p24_hz-1p00.pkl"
-    results_AS0=ut.gather_data(file_name_with_replace,even_file_AS0)
-    fid_dict_AS0=results_AS0["fid"]
-    h_prot_dict_AS0=results_AS0["h_protocol"]
-    fid_vs_Nstep_AS0=results_AS0["fid_vs_nStep"]
     
-    even_file_AS2=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50,55,60]
-    file_name_with_replace="../data/SA_nStep-%i_nQuench-0_Ti-0p04_as-2_hxIS-m1p00_hxFS-1p00_deltaT-0p05_hxI-m4p00_RL-1_L-1_J-1p24_hz-1p00.pkl"
+    #===========================================================================
+    # pca=PCA(n_components=2)
+    # param['N_time_step']=10
+    # dc=ut.gather_data(param,'../data/')
+    # pca.fit(dc['h_protocol']/4.)
+    # X=pca.transform(dc['h_protocol']/4.)
+    # 
+    # plt.scatter(X[:,0],X[:,1])
+    # plt.title('PCA, $t=0.1$, continuous protocol')
+    # plt.savefig("PCA_AS2_t-0p1.pdf")
+    # plt.show()
+    # exit()
+    #===========================================================================
+  
+    #===========================================================================
+    # dataBB8=[]
+    # param['action_set']=0
+    # param['N_time_step']=60
+    # 
+    # param['delta_t']=0.5/60.
+    # dc=ut.gather_data(param,'../data/')
+    # pca=PCA(n_components=2)
+    # pca.fit(dc['h_protocol']/4.)
+    # 
+    # 
+    # param['delta_t']=3.0/60.
+    # dc=ut.gather_data(param,'../data/')
+    # X=pca.transform(dc['h_protocol']/4.)
+    # 
+    # title='PCA$_{50}$, $t=3.0$, continuous protocol, nStep$=60$'
+    # out_file="PCA_AS0_t-3p0_nStep-60.pdf"
+    # plotting.visne_2D(X[:,0],X[:,1],dc['fid'],zlabel="Fidelity",out_file=out_file,title=title,show=True,xlabel='PCA-1',ylabel='PCA-2')
+    #===========================================================================
     
-    results_AS2=ut.gather_data(file_name_with_replace,even_file_AS2)
-    fid_dict_AS2=results_AS2["fid"]
-    h_prot_dict_AS2=results_AS2["h_protocol"]
-    fid_vs_Nstep_AS2=results_AS2["fid_vs_nStep"]
+    #exit()
+    #plt.scatter(X[:,0],X[:,1])
+    #plt.title('PCA$_{50}$, $t=1.5$, continuous protocol, nStep$=60$')
+    #plt.savefig("PCA_AS0_t-0p8_nStep-60.pdf")
+    #plt.show()
+    #exit()
+    # exit()
     
+    param['N_time_step']=60
+    param['action_set']=0
+    dataBB8=[]
+    param['delta_t']=0.1/60.
+    for dt in np.arange(0.1,3.05,0.1):
+        param['delta_t']=dt/60.
+        print(dt)
+        dc=ut.gather_data(param,'../data/')
+        eaop=compute_observable.Ed_Ad_OP(dc['h_protocol'],4.0)
+        print(eaop)
+        dataBB8.append(eaop)
     
-    fid_vs_Nstep=[fid_vs_Nstep_AS0[:,0],fid_vs_Nstep_AS2[:,0]]
-    std_vs_Nstep=[fid_vs_Nstep_AS0[:,1],fid_vs_Nstep_AS2[:,1]]
-    
-    for e in fid_dict_AS2.values():
-        print(e.shape)
+    x=list(np.arange(0.1,3.05,0.1))
+    title="Edward-Anderson Op. ($n=400$) vs. evolution time for SGD\n with the different action protocols ($L=1$)" 
+    plotting.observable(np.array(dataBB8),np.array(x),title=title,
+                         out_file="SGD_EAOPvsT_AS0_nStep-60.pdf",show=True,
+                         ylabel="$q_{EA}$",xlabel="$t$",labels=['bang-bang8'])
+     
     exit()
     
-    #print(fid_vs_Nstep)
-    xtimes=[np.sort(np.array(list(fid_dict_AS0.keys())))*0.05,np.sort(np.array(list(fid_dict_AS2.keys())))*0.05]
+    #pca.fit()
+    #===========================================================================
+    # dataCONT=[]
+    # for t in range(2,300,4):
+    #     print(t)
+    #     param['N_time_step']=t
+    #     dc=ut.gather_data(param,'../data/')
+    #     #print(dc['h_protocol'].shape)
+    #     eaop=compute_observable.Ed_Ad_OP(dc['h_protocol'],4.0)
+    #     print(eaop)
+    #     dataCONT.append(eaop)
+    #  
+    # file="../data/EAOP_"+ut.make_file_name(param)
+    # with open(file,'wb') as f:
+    #     pickle.dump(dataCONT,f);f.close();
+    # 
+    # exit()
+    # 
+    #===========================================================================
+    
+    #===========================================================================
+    # param['action_set']=0
+    # dataBB8=[]
+    # for t in range(2,300,4):
+    #     print(t)
+    #     param['N_time_step']=t
+    #     dc=ut.gather_data(param,'../data/')
+    #     eaop=compute_observable.Ed_Ad_OP(dc['h_protocol'],4.0)
+    #     print(eaop)
+    #     #print(dc['h_protocol'].shape)
+    #     dataBB8.append(eaop)
+    # 
+    # file="../data/EAOP_"+ut.make_file_name(param)
+    # with open(file,'wb') as f:
+    #     pickle.dump(dataBB8,f);f.close();
+    # 
+    # exit()
+    #===========================================================================
+    
+    #===========================================================================
+    # param['N_time_step']=298
+    # param['action_set']=0
+    # file="../data/EAOP_"+ut.make_file_name(param)
+    # with open(file,'rb') as f:
+    #     dataBB8=pickle.load(f);f.close();
+    # 
+    # param['action_set']=2
+    # f="../data/EAOP_"+ut.make_file_name(param)
+    # with open(f,'rb') as file:
+    #     dataCONT=pickle.load(file);
+    # 
+    # time_axis=np.array(range(2,300,4))*0.01
+    # title="Edward-Anderson parameter ($n=400$) vs. evolution time for SGD\n with the different action protocols ($L=1$)" 
+    # plotting.observable([dataBB8,dataCONT],[time_axis,time_axis],title=title,
+    #                      out_file="SGD_EAOPvsT_AS0-2.pdf",show=True,
+    #                      ylabel="$q_{EA}$",xlabel="$t$",labels=['bang-bang8','continuous'])
+    #===========================================================================
+    
+    #===========================================================================
+    # param['N_time_step']=250
+    # dc=ut.gather_data(param,'../data/')
+    # sns.distplot(dc['fid'],kde=False,label='$t=%.3f$'%(param['N_time_step']*0.01))
+    # plt.legend(loc='best')
+    # plt.savefig('SGD_hist_fid_t2p5.pdf')
+    # plt.show()
+    # exit()
+    #===========================================================================
+    
+    #===========================================================================
+    # title="Fidelity ($n=400$) vs. evolution time for SGD\n with the different action protocols ($L=1$)" 
+    # plotting.observable(np.array(data),np.array(range(2,300,4))*0.01,title=title,
+    #                      out_file="SGD_FvsT_AS2.pdf",show=True,
+    #                      ylabel="$F$",xlabel="$t$",labels=['continuous'])
+    # 
+    #===========================================================================
     
     
-    
+    exit()
+
+    #===========================================================================
+    # 
+    # even_file_AS0=range(2,300,2)
+    # file_name_with_replace="../data/SA_nStep-%i_nQuench-000_Ti-0p04_as-2_hxIS-m1p00_hxFS-1p00_deltaT-0p0100_hxI-m4p00_RL-1_L-1_J-1p24_hz-1p00.pkl
+    # results_AS0=ut.gather_data(file_name_with_replace,even_file_AS0)
+    # fid_dict_AS0=results_AS0["fid"]
+    # h_prot_dict_AS0=results_AS0["h_protocol"]
+    # fid_vs_Nstep_AS0=results_AS0["fid_vs_nStep"]
+    # 
+    # even_file_AS2=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50,55,60]
+    # file_name_with_replace="../data/SA_nStep-%i_nQuench-0_Ti-0p04_as-2_hxIS-m1p00_hxFS-1p00_deltaT-0p05_hxI-m4p00_RL-1_L-1_J-1p24_hz-1p00.pkl"
+    # 
+    # results_AS2=ut.gather_data(file_name_with_replace,even_file_AS2)
+    # fid_dict_AS2=results_AS2["fid"]
+    # h_prot_dict_AS2=results_AS2["h_protocol"]
+    # fid_vs_Nstep_AS2=results_AS2["fid_vs_nStep"]
+    # 
+    # 
+    # fid_vs_Nstep=[fid_vs_Nstep_AS0[:,0],fid_vs_Nstep_AS2[:,0]]
+    # std_vs_Nstep=[fid_vs_Nstep_AS0[:,1],fid_vs_Nstep_AS2[:,1]]
+    # 
+    # for e in fid_dict_AS2.values():
+    #     print(e.shape)
+    # exit()
+    # 
+    # #print(fid_vs_Nstep)
+    # xtimes=[np.sort(np.array(list(fid_dict_AS0.keys())))*0.05,np.sort(np.array(list(fid_dict_AS2.keys())))*0.05]
+    # 
+    # 
+    # 
+    #===========================================================================
     
     #===========================================================================
     # for n_time_step in [6,12,18,26,30,40,50,60]:
