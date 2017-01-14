@@ -168,22 +168,25 @@ def gather_data(params_SA,root):
 		Gather data produced by LZ_sim_anneal in nice format (dictionary, mapping param_values to the corresponding result)
 	"""	
 	import pickle
+	import os.path
 	
 	file_name=root+make_file_name(params_SA)
 	
-	with open(file_name,'rb') as f:
-		[_,result_all]=pickle.load(f)
+	if os.path.isfile(file_name): 
+		with open(file_name,'rb') as f:
+			[_,result_all]=pickle.load(f)
 	
-	n_fid,fid,a_prot,h_prot=split_data(result_all,verbose=False)
-
-	parsed_results={
-				"n_fid":n_fid,
-				"fid":fid,
-				"action_protocol":a_prot,
-				"h_protocol":h_prot,
-				}
+		n_fid,fid,a_prot,h_prot=split_data(result_all,verbose=False)
 	
-	return parsed_results
+		parsed_results={
+					"n_fid":n_fid,
+					"fid":fid,
+					"action_protocol":a_prot,
+					"h_protocol":h_prot,
+					}
+	else:
+		return False,'nothing.txt'
+	return True,parsed_results
 	
 def check_version():
 	import sys

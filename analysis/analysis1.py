@@ -54,22 +54,23 @@ def main():
     # dataBB8=[]
     # param['action_set']=0
     # param['N_time_step']=60
-    # 
+    #  
     # param['delta_t']=0.5/60.
     # dc=ut.gather_data(param,'../data/')
     # pca=PCA(n_components=2)
     # pca.fit(dc['h_protocol']/4.)
-    # 
-    # 
+    # print(pca.explained_variance_ratio_)
+    # exit()
+    #  
     # param['delta_t']=3.0/60.
     # dc=ut.gather_data(param,'../data/')
     # X=pca.transform(dc['h_protocol']/4.)
-    # 
+    #  
     # title='PCA$_{50}$, $t=3.0$, continuous protocol, nStep$=60$'
     # out_file="PCA_AS0_t-3p0_nStep-60.pdf"
     # plotting.visne_2D(X[:,0],X[:,1],dc['fid'],zlabel="Fidelity",out_file=out_file,title=title,show=True,xlabel='PCA-1',ylabel='PCA-2')
+    # 
     #===========================================================================
-    
     #exit()
     #plt.scatter(X[:,0],X[:,1])
     #plt.title('PCA$_{50}$, $t=1.5$, continuous protocol, nStep$=60$')
@@ -78,24 +79,115 @@ def main():
     #exit()
     # exit()
     
-    param['N_time_step']=60
-    param['action_set']=0
-    dataBB8=[]
-    param['delta_t']=0.1/60.
-    for dt in np.arange(0.1,3.05,0.1):
-        param['delta_t']=dt/60.
-        print(dt)
-        dc=ut.gather_data(param,'../data/')
-        eaop=compute_observable.Ed_Ad_OP(dc['h_protocol'],4.0)
-        print(eaop)
-        dataBB8.append(eaop)
+    #===========================================================================
+    # param['N_time_step']=2
+    # param['action_set']=0
+    # dc=ut.gather_data(param,'../data/')
+    # print(dc['h_protocol'])
+    # exit()
+    # dataBB8=[]
+    #===========================================================================
+#===============================================================================
+#     
+#     param['action_set']=0
+#     param['N_time_step']=60
+#     param['delta_t']=0.5/60
+#     
+#     dc=ut.gather_data(param,'../data/')
+#     
+#     protocols=dc['h_protocol']
+#     #print(np.shape(dc['h_protocol']))
+#     sort_f=np.argsort(dc['fid'])[::-1]
+#     
+#     print(sort_f[0])
+#     
+#     #protocols[sort_f[0]]
+#     
+#     best_prot=protocols[sort_f[0:10]]
+#     x=np.array(range(60))*1.0/60
+#     #print(best_prot.reshape)
+#     #print(x.shape)
+#     #print(np.array(range(60))*0.1/60)
+#     #print(best_prot)
+#     #print(np.shape(best_prot))
+#     #print(np.shape(np.arange(0.1,3.05,0.1)*0.05))
+# 
+#     plotting.protocol(protocols[:2],x,labels=dc['fid'][:2],show=True)
+#     
+#     exit()    
+#     
+#     
+#===============================================================================
     
-    x=list(np.arange(0.1,3.05,0.1))
-    title="Edward-Anderson Op. ($n=400$) vs. evolution time for SGD\n with the different action protocols ($L=1$)" 
-    plotting.observable(np.array(dataBB8),np.array(x),title=title,
-                         out_file="SGD_EAOPvsT_AS0_nStep-60.pdf",show=True,
-                         ylabel="$q_{EA}$",xlabel="$t$",labels=['bang-bang8'])
-     
+    param['N_time_step']=100
+    param['action_set']=0
+    
+    dataBB8=[]
+    compTime=[]
+    x=[]
+    #===========================================================================
+    # for t in np.arange(0.1,3.05,0.1):
+    #     dt=t/param['N_time_step']
+    #     param['delta_t']=dt
+    #     is_there,dc=ut.gather_data(param,'../data/')
+    #     
+    #     if is_there:
+    #         eaop=compute_observable.Ed_Ad_OP(dc['h_protocol'],4.0)
+    #         print(t,eaop,dc['fid'].shape,'\t',np.mean(dc['n_fid']))
+    #         compTime.append(np.mean(dc['n_fid']))
+    #         dataBB8.append(eaop)
+    #         x.append(t)
+    #     else:
+    #         print("Data not available for %.3f"%dt)
+    # 
+    #===========================================================================
+    #===========================================================================
+    # param['action_set']=0
+    # param['delta_t']=0.01
+    #===========================================================================
+    #===========================================================================
+    # for i in range(2,300,4):
+    #     param['N_time_step']=i
+    #     is_there,dc=ut.gather_data(param,'../data/')
+    #     if is_there:
+    #         eaop=compute_observable.Ed_Ad_OP(dc['h_protocol'],4.0)
+    #         print(i,eaop,dc['fid'].shape,'\t',np.mean(dc['n_fid']))
+    #         compTime.append(np.mean(dc['n_fid']))
+    #         dataBB8.append(eaop)
+    #         x.append(i)
+    #     else:
+    #         print("Data not available for %i"%i)
+    # 
+    #===========================================================================
+    
+    #===========================================================================
+    # param['N_time_step']=150
+    # is_there,dc=ut.gather_data(param,'../data/')
+    # x=np.arange(0,150*0.01,0.01)
+    # plotting.protocol(dc['h_protocol'][:3],x,labels=dc['fid'][:3],show=True)
+    # exit()
+    # #x=np.array(range(2,300,4))*0.01
+    #===========================================================================
+    param['action_set']=2
+    param['delta_t']=0.01
+    fid_BB=[]
+    h_protocol_BB={}
+    n_fid_BB=[]
+    x=[]
+    
+    for i in range(2,300,4):
+        param['N_time_step']=i
+        data_is_available,dc=ut.gather_data(param,'../data/')
+        if data_is_available:
+            fid_BB.append(np.mean(dc['fid']))
+            h_protocol_BB[i]=dc['h_protocol']
+            n_fid_BB.append(np.mean(dc['n_fid']))
+            x.append(i*param['delta_t'])
+            
+    title='Just fooling around'
+    plotting.observable(fid_BB,x,title=title,ylabel="$F$",labels=['bang-bang'])
+    #plotting.protocol(h_protocol_BB[130][20:25],np.arange(0,130,1)*param['delta_t'])
+    
     exit()
     
     #pca.fit()
