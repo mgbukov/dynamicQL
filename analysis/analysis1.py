@@ -168,24 +168,35 @@ def main():
     # exit()
     # #x=np.array(range(2,300,4))*0.01
     #===========================================================================
-    param['action_set']=2
+    param['action_set']=0
     param['delta_t']=0.01
-    fid_BB=[]
+    mean_fid_BB=[]
     h_protocol_BB={}
+    fid_BB={}
     n_fid_BB=[]
     x=[]
+    sigma_fid=[]
+    EA_OP=[]
     
-    for i in range(2,300,4):
+    for i in range(50,300,4):
         param['N_time_step']=i
         data_is_available,dc=ut.gather_data(param,'../data/')
         if data_is_available:
-            fid_BB.append(np.mean(dc['fid']))
+            mean_fid_BB.append(np.mean(dc['fid']))
+            sigma_fid.append(np.std(dc['fid']))
+            fid_BB[i]=dc['fid']
+            EA_OP.append(compute_observable.Ed_Ad_OP(dc['h_protocol'],4.0))
             h_protocol_BB[i]=dc['h_protocol']
             n_fid_BB.append(np.mean(dc['n_fid']))
             x.append(i*param['delta_t'])
-            
-    title='Just fooling around'
-    plotting.observable(fid_BB,x,title=title,ylabel="$F$",labels=['bang-bang'])
+     
+    #print(fid_BB[130])
+    #mean=np.mean(fid_BB[130])
+    #sns.distplot(fid_BB[130],bins=np.linspace(mean-0.005,mean+0.005,100))
+    #plt.tick_params(labelleft='off')
+    #plt.show()    
+        
+    plotting.observable(sigma_fid,x,title=None,ylabel=None,xlabel=None,marker="-")
     #plotting.protocol(h_protocol_BB[130][20:25],np.arange(0,130,1)*param['delta_t'])
     
     exit()

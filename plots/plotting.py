@@ -10,9 +10,7 @@ Purpose:
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-import pickle
-import os
-import latex
+#import latex
 
 def main():
     '''
@@ -23,7 +21,6 @@ def main():
     t=25
     action_set=2
     L=1
-    
     
 def adjust_format(my_array):
     if isinstance(my_array, np.ndarray):
@@ -36,7 +33,7 @@ def adjust_format(my_array):
         if isinstance(e1,np.ndarray):
             return my_array
         elif isinstance(e1,list):
-            return np.array(my_array)
+            return my_array
         else:
             return [np.array(my_array)]
     else:
@@ -74,8 +71,10 @@ def protocol(protocol_array,time_slice,title=None,out_file=None,labels=None,show
     
 
     plt.xlim([np.min(ext_ts),np.max(ext_ts)])
-    plt.xlabel(xlabel,fontsize=fontsize)
-    plt.ylabel(ylabel,fontsize=fontsize)
+    if xlabel is not None:
+        plt.xlabel(xlabel,fontsize=fontsize)
+    if ylabel is not None:
+        plt.ylabel(ylabel,fontsize=fontsize)
         
     if out_file is not None:
         plt.savefig(out_file)
@@ -84,7 +83,7 @@ def protocol(protocol_array,time_slice,title=None,out_file=None,labels=None,show
     plt.close()
     
 def observable(yarray,xarray,title=None,out_file=None,
-               ylabel="$F$",xlabel="$T$",
+               ylabel=None,xlabel=None,
                show=True,labels=None,
                marker="o-"
                ):
@@ -107,37 +106,24 @@ def observable(yarray,xarray,title=None,out_file=None,
     
     yarray_=adjust_format(yarray)
     xarray_=adjust_format(xarray)
-    #===========================================================================
-    # if isinstance(yarray,list) is False:    
-    #     if len(yarray.shape)==1:
-    #         yarray=yarray.reshape(1,-1)
-    #     assert len(yarray.shape)==2, "Y has the wrong shape"
-    #     n_curve=yarray.shape[0]
-    # else:
-    #     n_curve=len(yarray)
-    # 
-    # if isinstance(xarray,list) is False:
-    #     if len(xarray.shape)==1:
-    #         xarray=xarray.reshape(1,-1)
-    #     assert len(xarray.shape)==2, "X has the wrong shape"
-    #     
-    #===========================================================================
+   
     n_curve=len(yarray)
     palette=np.array(sns.color_palette('hls',n_curve))
     
     if labels is not None:
         for y,x,c,l in zip(yarray_,xarray_,palette,labels):
             plt.plot(x,y,marker,c=c,clip_on=False,label=l)
-        plt.legend(loc='best', shadow=True)
+        plt.legend(loc='best', shadow=True,fontsize=fontsize)
     else:
         for y,x,c in zip(yarray_,xarray_,palette):
             plt.plot(x,y,marker,c=c,clip_on=False)
         
     if title is not None:
         plt.title(title,fontsize=fontsize)
-    
-    plt.xlabel(xlabel,fontsize=fontsize)
-    plt.ylabel(ylabel,fontsize=fontsize)
+    if xlabel is not None:
+        plt.xlabel(xlabel,fontsize=fontsize)
+    if ylabel is not None:
+        plt.ylabel(ylabel,fontsize=fontsize)
         
     if out_file is not None:
         plt.savefig(out_file)
