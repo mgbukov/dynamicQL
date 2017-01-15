@@ -10,7 +10,7 @@ Purpose:
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-#import latex
+import latex
 
 def main():
     '''

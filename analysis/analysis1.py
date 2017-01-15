@@ -119,28 +119,31 @@ def main():
 #     
 #===============================================================================
     
-    param['N_time_step']=100
+    param['N_time_step']=60
     param['action_set']=0
     
     dataBB8=[]
     compTime=[]
     x=[]
-    #===========================================================================
-    # for t in np.arange(0.1,3.05,0.1):
-    #     dt=t/param['N_time_step']
-    #     param['delta_t']=dt
-    #     is_there,dc=ut.gather_data(param,'../data/')
-    #     
-    #     if is_there:
-    #         eaop=compute_observable.Ed_Ad_OP(dc['h_protocol'],4.0)
-    #         print(t,eaop,dc['fid'].shape,'\t',np.mean(dc['n_fid']))
-    #         compTime.append(np.mean(dc['n_fid']))
-    #         dataBB8.append(eaop)
-    #         x.append(t)
-    #     else:
-    #         print("Data not available for %.3f"%dt)
-    # 
-    #===========================================================================
+    
+    for t in np.arange(0.1,3.05,0.1):
+        dt=t/param['N_time_step']
+        param['delta_t']=dt
+        dc=ut.gather_data(param,'../data/')
+         
+        if dc is not False:
+            eaop=compute_observable.Ed_Ad_OP(dc['h_protocol'],4.0)
+            print(t,eaop,dc['fid'].shape,'\t',np.mean(dc['n_fid']))
+            compTime.append(np.mean(dc['n_fid']))
+            dataBB8.append(eaop)
+            x.append(t)
+        else:
+            print("Data not available for %.3f"%dt)
+     
+    y=compTime
+    plotting.observable(y,x,title='Depth of search for bang-bang protocol',ylabel='\# of fidelity evaluations',xlabel='$T$',marker="-",
+                        labels=['Obtained time (SGD)'])
+    exit()
     #===========================================================================
     # param['action_set']=0
     # param['delta_t']=0.01
@@ -178,7 +181,7 @@ def main():
     sigma_fid=[]
     EA_OP=[]
     
-    for i in range(50,300,4):
+    for i in range(2,300,4):
         param['N_time_step']=i
         data_is_available,dc=ut.gather_data(param,'../data/')
         if data_is_available:
@@ -189,14 +192,19 @@ def main():
             h_protocol_BB[i]=dc['h_protocol']
             n_fid_BB.append(np.mean(dc['n_fid']))
             x.append(i*param['delta_t'])
-     
+    
+    
     #print(fid_BB[130])
     #mean=np.mean(fid_BB[130])
     #sns.distplot(fid_BB[130],bins=np.linspace(mean-0.005,mean+0.005,100))
     #plt.tick_params(labelleft='off')
     #plt.show()    
-        
-    plotting.observable(sigma_fid,x,title=None,ylabel=None,xlabel=None,marker="-")
+    x=np.array(x)
+    y=[n/(x[i]/param['delta_t']) for n,i in zip(n_fid_BB,range(len(n_fid_BB)))]
+    
+    plotting.observable(y,x,title='Depth of search for bang-bang protocol',ylabel='(\# of fidelity evaluations)/$N$',xlabel='$T$',marker="-",
+                        labels=['Minimum time','Obtained time (SGD)'])
+    
     #plotting.protocol(h_protocol_BB[130][20:25],np.arange(0,130,1)*param['delta_t'])
     
     exit()

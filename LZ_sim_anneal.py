@@ -36,7 +36,7 @@ from scipy.sparse.linalg import expm_multiply as expm
 np.set_printoptions(precision=4)
     
 def main():
-    
+        
     global action_set,hx_discrete,hx_max,FIX_NUMBER_FID_EVAL
     
     continuous=[0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.,8.]
@@ -56,6 +56,7 @@ def main():
         hx_i: initial tranverse field coupling
         hx_initial_state: initial state transverse field
         hx_final_state: final state transverse field
+        Ti: initial temperature for annealing
         
         N_quench: number of quenches (i.e. no. of time temperature is quenched to reach exactly T=0)
         N_time_step: number of time steps
@@ -67,7 +68,7 @@ def main():
         verbose: If you want the program to print to screen the progress
         
         hx_max : maximum hx field (the annealer can go between -hx_max and hx_max
-        FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations
+        FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations (deprecated)
         RL_CONSTRAINT: use reinforcement learning constraints or not
     """
     #----------------------------------------
@@ -79,6 +80,7 @@ def main():
     hx_initial_state= -1.0 # initial state
     hx_final_state = 1.0 #+1.0 # final hx coupling
     act_set_name='bang-bang8'
+    Ti=0.04 # initial temperature (for annealing)
     
     N_quench=5
     N_time_step=20
@@ -89,7 +91,7 @@ def main():
     N_restart=5
     
     hx_max=4
-    FIX_NUMBER_FID_EVAL=False # this fixes the number of quenches automatically, supersedes N_quench 
+#    FIX_NUMBER_FID_EVAL=False # this fixes the number of quenches automatically, supersedes N_quench 
     RL_CONSTRAINT=True 
     verbose=True
     
@@ -112,7 +114,7 @@ def main():
     print("max_fid_eval (%s) \t %i"%(str(FIX_NUMBER_FID_EVAL),max_fid_eval))
     print("Action_set \t <- \t %s"%np.round(action_set,3))
     print("# of possible actions \t %i"%len(action_set))
-    print("Fixing no of fid eval \t %s"%str(FIX_NUMBER_FID_EVAL))
+    #print("Fixing no of fid eval \t %s"%str(FIX_NUMBER_FID_EVAL))
     print("Using RL constraints \t %s"%str(RL_CONSTRAINT))
 
     param={'J':J,'hz':hz,'hx':hx_i} # Hamiltonian kwargs 
@@ -129,17 +131,18 @@ def main():
     E_f, psi_target = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=0
 
-    
-    sweep_size=N_time_step*len(action_set)
-    if FIX_NUMBER_FID_EVAL:
-        # Determines the number of quenches needed to anneal w/o exceeding the max number of fidelity evaluations.
-        N_quench=(max_fid_eval-5*sweep_size)//sweep_size
-        assert N_quench >= 0
-        print("N_quench (FIX)\t\t%i"%N_quench)
+    #===========================================================================
+    # if FIX_NUMBER_FID_EVAL:
+    #     # Determines the number of quenches needed to anneal w/o exceeding the max number of fidelity evaluations.
+    #     N_quench=(max_fid_eval-5*sweep_size)//sweep_size
+    #     assert N_quench >= 0
+    #     print("N_quench (FIX)\t\t%i"%N_quench)
+    #===========================================================================
 
+    sweep_size=N_time_step*len(action_set)
     
     # simulated annealing kwargs:
-    param_SA={'Ti':0.04,'sweep_size':sweep_size,
+    param_SA={'Ti':Ti,'sweep_size':sweep_size,
               'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
               'delta_t':delta_t,'psi_target':psi_target,
               'hx_i':hx_i,'N_quench':N_quench,'RL_CONSTRAINT':RL_CONSTRAINT,
@@ -372,7 +375,7 @@ def simulate_anneal(params):
     old_fid=best_fid
     
     count_fid_eval=0
-    
+    if N_quench > 0 : print("[SA] : Quenching to zero temperature in %i steps"%N_quench);
     while T>1E-6:
         if N_quench==0:break
     
@@ -405,14 +408,15 @@ def simulate_anneal(params):
         step+=1.0
         T=Ti*(1.0-step/N_quench)
     
-    print("Performing 5 sweeps (1 sweep=%i evals) at zero-temperature"%sweep_size)
-    ## Need to have a stochastic gradient descent option here ... so number of sweeps is optionally calibrated 
+    print("SGD: Performing up to 5 sweeps (1 sweep=%i evals) at zero-temperature"%sweep_size)
+    
     n_iter_without_progress=0
     propose_update=np.arange(N_time_step)
     np.random.shuffle(propose_update)
     propose_update_pos=0
     
     for _ in range(5*sweep_size): ## Perform greedy sweeps (zero-temperature):
+        
         rand_pos=propose_update[propose_update_pos]
         new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,
                                                                    hx_i,N_time_step,RL_constraint=RL_constraint,

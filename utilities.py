@@ -184,9 +184,9 @@ def gather_data(params_SA,root):
 					"action_protocol":a_prot,
 					"h_protocol":h_prot,
 					}
+		return parsed_results
 	else:
-		return False,'nothing.txt'
-	return True,parsed_results
+		return False
 	
 def check_version():
 	import sys
