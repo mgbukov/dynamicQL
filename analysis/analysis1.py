@@ -129,6 +129,7 @@ def main():
     for t in np.arange(0.1,3.05,0.1):
         dt=t/param['N_time_step']
         param['delta_t']=dt
+        # Changed it to be returning False if file is not found ...
         dc=ut.gather_data(param,'../data/')
          
         if dc is not False:

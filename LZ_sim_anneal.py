@@ -111,7 +111,7 @@ def main():
     print("N_time_step \t\t %i"%N_time_step)
     print("Total_time \t\t %.2f"%(N_time_step*delta_t))
     print("Output file \t\t %s"%('data/'+outfile_name))
-    print("max_fid_eval (%s) \t %i"%(str(FIX_NUMBER_FID_EVAL),max_fid_eval))
+    #print("max_fid_eval (%s) \t %i"%(str(FIX_NUMBER_FID_EVAL),max_fid_eval))
     print("Action_set \t <- \t %s"%np.round(action_set,3))
     print("# of possible actions \t %i"%len(action_set))
     #print("Fixing no of fid eval \t %s"%str(FIX_NUMBER_FID_EVAL))

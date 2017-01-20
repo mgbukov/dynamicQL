@@ -185,9 +185,7 @@ def gather_data(params_SA,root):
 					"h_protocol":h_prot,
 					}
 		return parsed_results
-	else:
-		return False
-	
+		
 def check_version():
 	import sys
 	if sys.version_info[0] < 3:
