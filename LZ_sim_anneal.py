@@ -24,20 +24,17 @@ import sys,os # for running in batch from terminal
 ut.check_sys_arg(sys.argv)
 ut.check_version()
 
-
 import numpy as np
 import pickle
 import Hamiltonian_alex as Hamiltonian
 from quspin.operators import exp_op
 import time
-import math
-from scipy.sparse.linalg import expm_multiply as expm
 
 np.set_printoptions(precision=4)
     
 def main():
         
-    global action_set,hx_discrete,hx_max,FIX_NUMBER_FID_EVAL
+    global action_set,hx_discrete,hx_max#,FIX_NUMBER_FID_EVAL
     
     continuous=[0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.,8.]
     action_set_name=["bang-bang8","continuous-pos","continuous"]
@@ -70,6 +67,7 @@ def main():
         hx_max : maximum hx field (the annealer can go between -hx_max and hx_max
         FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations (deprecated)
         RL_CONSTRAINT: use reinforcement learning constraints or not
+        fidelity_fast: prepcompute exponential matrices and runs fast_Fidelity() instead of Fidelity()
     """
     #----------------------------------------
     # DEFAULT PARAMETERS
@@ -91,9 +89,10 @@ def main():
     N_restart=5
     
     hx_max=4
-#    FIX_NUMBER_FID_EVAL=False # this fixes the number of quenches automatically, supersedes N_quench 
+    h_set=compute_h_set(hx_i,hx_max)
     RL_CONSTRAINT=True 
     verbose=True
+    fidelity_fast=True
     
     #----------------------------------------
     
@@ -116,19 +115,19 @@ def main():
     print("# of possible actions \t %i"%len(action_set))
     #print("Fixing no of fid eval \t %s"%str(FIX_NUMBER_FID_EVAL))
     print("Using RL constraints \t %s"%str(RL_CONSTRAINT))
+    print("Fidelity MODE \t %s"%('fast' if fidelity_fast else 'standard'))
 
     param={'J':J,'hz':hz,'hx':hx_i} # Hamiltonian kwargs 
     hx_discrete=[0]*N_time_step # dynamical part at every time step (initiaze to zero everywhere)
     
     # full system hamiltonian
     H,_ = Hamiltonian.Hamiltonian(L,fct=hx_vs_t,**param)
-   # print(H)
    
     # calculate initial and final states
     hx_discrete[0]=hx_initial_state # just a trick to get initial state
-    E_i, psi_i = H.eigsh(time=0,k=1,which='SA')
+    _, psi_i = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=hx_final_state # just a trick to get final state
-    E_f, psi_target = H.eigsh(time=0,k=1,which='SA')
+    _, psi_target = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=0
 
     #===========================================================================
@@ -147,9 +146,14 @@ def main():
               'delta_t':delta_t,'psi_target':psi_target,
               'hx_i':hx_i,'N_quench':N_quench,'RL_CONSTRAINT':RL_CONSTRAINT,
               'verbose':verbose,'hx_initial_state':hx_initial_state,'hx_final_state':hx_final_state,
-              'L':L,'J':J,'hz':hz,'action_set':action_set_name.index(act_set_name)
+              'L':L,'J':J,'hz':hz,'action_set':action_set_name.index(act_set_name),
+              'fidelity_fast':fidelity_fast
             }
     
+    if param_SA['fidelity_fast'] :
+        print("Precomputing evolution matrices ...")
+        precompute_expmatrix(h_set,H,N_time_step,delta_t)
+        
     if outfile_name=="auto": outfile_name=ut.make_file_name(param_SA)
     
     to_save_par=['Ti','sweep_size','psi_i','N_time_step',
@@ -182,22 +186,57 @@ def main():
         print("Iteration run time --> %.2f s"%(time.time()-start_time))
     
     
-def Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
+def Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option='standard'):
     """
     Purpose:
         Calculates final fidelity by evolving psi_i over a N_time_step 
     Return: 
         Norm squared between the target state psi_target and the evolved state (according to the full hx_discrete protocol)
         
+    """
+    if option is 'standard':
+        psi_evolve=psi_i.copy()
+        for t in range(N_time_step):
+            psi_evolve = exp_op(H(time=t),a=-1j*delta_t).dot(psi_evolve)
+        
+        return abs(np.sum(np.conj(psi_evolve)*psi_target))**2
+    else:
+        return fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+    
+    
+def compute_h_set(hx_i,hx_max):
+    tmp=np.array([hx_i+a for a in action_set])
+    return tmp[(tmp < abs(hx_max)+0.0001) & (tmp > -abs(hx_max)-0.0001)]
+    
+def precompute_expmatrix(h_set,H,N_time_step,delta_t):
+    """
+    Purpose:
+        Precomputes the evolution matrix and stores them in a global dictionary        
     """    
+    from scipy.linalg import expm
+    global matrix_dict
+    matrix_dict={}
+    hx_dis_init=hx_discrete[0]
+    for h in h_set:
+        hx_discrete[0]=h
+        matrix_dict[h]=expm(H.todense(time=0)*-1j*delta_t)
+        
+    hx_discrete[0]=hx_dis_init # resetting to it's original value
+    
+def fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
+    """
+    Purpose:
+        Calculates final fidelity by evolving psi_i over a N_time_step using the matrix dictionary 
+    Return: 
+        Norm squared between the target state psi_target and the evolved state (according to the full hx_discrete protocol)
+    """   
+    
     psi_evolve=psi_i.copy()
     for t in range(N_time_step):
-        psi_evolve = exp_op(H(time=t),a=-1j*delta_t).dot(psi_evolve)
+        psi_evolve = matrix_dict[hx_discrete[t]].dot(psi_evolve)
     
-    # for making a fidelity fast function, use H_dense = H.todense(time=time,order=None,out=None) and then use numpy matrix exponentiation method
-    # --- coming soon !
-    #print(psi_evolve)
     return abs(np.sum(np.conj(psi_evolve)*psi_target))**2
+
 
 # Returns the hx field at a given time slice 
 def hx_vs_t(time): return hx_discrete[int(time)]
@@ -339,12 +378,8 @@ def simulate_anneal(params):
     
     global hx_discrete
     
-    if params['verbose']:
-        enablePrint()
-    else:
-        blockPrint()
+    enablePrint() if params['verbose'] else blockPrint()
     
-
     # Simulated annealing parameters
     T=params['Ti']
     Ti=T
@@ -353,8 +388,8 @@ def simulate_anneal(params):
     step=0.0
     sweep_size=params['sweep_size']
     beta=1./T
+    option_fidelity = ('fast' if params['fidelity_fast'] else 'standard')
 
-    
     # Fidelity calculation parameters
     psi_i=params['psi_i']
     H=params['H']
@@ -368,7 +403,7 @@ def simulate_anneal(params):
     
     best_action_protocol=action_protocol
     best_hx_discrete=hx_discrete
-    best_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+    best_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option=option_fidelity)
 
     old_hx_discrete=best_hx_discrete
     old_action_protocol=best_action_protocol
@@ -386,7 +421,7 @@ def simulate_anneal(params):
             new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step,RL_constraint=RL_constraint)
             hx_discrete=new_hx_discrete
             
-            new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+            new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option=option_fidelity)
             count_fid_eval+=1
             
             if new_fid > best_fid: # Record best encountered !
@@ -423,7 +458,7 @@ def simulate_anneal(params):
                                                                    rand_pos=rand_pos
                                                                    )
         hx_discrete=new_hx_discrete
-        new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+        new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option=option_fidelity)
         
         count_fid_eval+=1
         n_iter_without_progress+=1
@@ -459,7 +494,7 @@ def enablePrint():
 
 def check_custom_protocol(hx_protocol,J=1.236,
                           L=1,hz=1.0,hx_init_state=-1.0,hx_target_state=1.0,
-                          delta_t=0.05):
+                          delta_t=0.05,option='standard'):
     
     """ 
     Purpose:
@@ -483,8 +518,18 @@ def check_custom_protocol(hx_protocol,J=1.236,
     print("No evolution yields dot(psi_i,psi_target)=",np.dot(psi_target.flatten(),psi_i.flatten())**2)
     
     hx_discrete=hx_protocol
-    return Fidelity(psi_i,H,N_time_step,delta_t,psi_target) 
-       
+    
+    if option is 'standard':
+        return Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option='standard')
+    
+    elif option is 'fast':
+        precompute_expmatrix([-4.,4.],H,N_time_step,delta_t)
+        return Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option='fast')
+        #return fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
+    
+    else:
+        assert False,'Wrong option, use either fast or standard'
+        
 # Run main program !
 if __name__ == "__main__":
     main()

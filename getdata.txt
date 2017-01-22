@@ -1,2 +1,0 @@
-scp -r $buip:/Users/alexday/dynamic_QL/data/* data-t/
-echo 'done'
