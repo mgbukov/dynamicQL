@@ -82,7 +82,7 @@ def protocol(protocol_array,time_slice,title=None,out_file=None,labels=None,show
         plt.show()
     plt.close()
     
-def observable(yarray,xarray,title=None,out_file=None,
+def observable(xarray,yarray,title=None,out_file=None,
                ylabel=None,xlabel=None,
                show=True,labels=None,
                marker="o-"

@@ -3,6 +3,7 @@
 *.pyf
 # Text files
 *.txt
+test.py
 
 # cpp libraries
 *.so

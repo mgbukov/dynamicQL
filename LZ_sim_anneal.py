@@ -404,7 +404,7 @@ def simulate_anneal(params):
     best_action_protocol=action_protocol
     best_hx_discrete=hx_discrete
     best_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option=option_fidelity)
-
+    
     old_hx_discrete=best_hx_discrete
     old_action_protocol=best_action_protocol
     old_fid=best_fid
@@ -528,49 +528,6 @@ class custom_protocol():
         else:
             assert False,'Wrong option, use either fast or standard'
         
-#===============================================================================
-# 
-# def check_custom_protocol(hx_protocol,J=1.236,
-#                           L=1,hz=1.0,hx_init_state=-1.0,hx_target_state=1.0,
-#                           delta_t=0.05,option='standard'):
-#     
-#     
-#     
-#     
-#     """ 
-#     Purpose:
-#         Just quickly checking a given protocol (or performance of fidelity function for instance)
-#     Return:
-#         Obtained fidelity
-#     """
-#     global action_set,hx_discrete
-#     N_time_step=len(hx_protocol)
-#     
-#     param={'J':J,'hz':hz,'hx':hx_init_state} # Hamiltonian kwargs 
-#     hx_discrete=[0]*N_time_step # dynamical part at every time step (initiaze to zero everywhere)
-#     # full system hamiltonian
-#     H,_ = Hamiltonian.Hamiltonian(L,fct=hx_vs_t,**param)
-#     # calculate initial and final states
-#     hx_discrete[0]=hx_init_state # just a trick to get initial state
-#     E_i, psi_i = H.eigsh(time=0,k=1,which='SA')
-#     hx_discrete[0]=hx_target_state # just a trick to get final state
-#     E_f, psi_target = H.eigsh(time=0,k=1,which='SA')
-# 
-#     print("No evolution yields dot(psi_i,psi_target)=",np.dot(psi_target.flatten(),psi_i.flatten())**2)
-#     
-#     hx_discrete=hx_protocol
-#     
-#     if option is 'standard':
-#         return Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option='standard')
-#     
-#     elif option is 'fast':
-#         precompute_expmatrix([-4.,4.],H,N_time_step,delta_t)
-#         return Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option='fast')
-#         #return fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
-#     
-#     else:
-#         assert False,'Wrong option, use either fast or standard'
-#===============================================================================
         
 # Run main program !
 if __name__ == "__main__":
