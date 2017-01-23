@@ -12,13 +12,15 @@ import LZ_sim_anneal as LZ
 import time
 
 hx_tmp=[-4.,4.,4.,-4.,4.,-4.]
-param_check={"J":1.236,"L":1,"hz":1.0,"hx_init_state":-1.0,"hx_target_state":1.0,"delta_t":0.05}
+action_set=[-8.,0.,8.]
 
-#
-start=time.time()
-print(LZ.check_custom_protocol(hx_tmp,**param_check,option='standard'))
-print("Standard run in %.4f"%(time.time()-start))
+standard_eval=LZ.custom_protocol(delta_t=0.05,option='standard')
+fast_eval=LZ.custom_protocol(delta_t=0.05,option='fast')
 
 start=time.time()
-print(LZ.check_custom_protocol(hx_tmp,**param_check,option='fast'))
-print("Fast ran in %.4f"%(time.time()-start))
+print(standard_eval.evaluate_protocol_fidelity(hx_tmp))
+print("Standard run in %.6f"%(time.time()-start))
+
+start=time.time()
+print(fast_eval.evaluate_protocol_fidelity(hx_tmp))
+print("Fast ran in %.6f"%(time.time()-start))
