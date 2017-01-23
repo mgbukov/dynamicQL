@@ -18,7 +18,7 @@ import pickle
 def main():
     
     hx_i=-4.0
-    N_time_step=100
+    N_time_step=250
     hx_max=4.0
     action_set=[-8.,0,8.0]
     fast_eval=LZ.custom_protocol(delta_t=0.01,option='fast')
@@ -26,7 +26,7 @@ def main():
     random_protocols=unique_protocol(np.array([random_trajectory(hx_i,N_time_step,action_set,hx_max) for _ in range(5000)]))
     start=time.time()
     fidelities=[fast_eval.evaluate_protocol_fidelity(r) for r in random_protocols]
-    with open('data/DOS_fid-5000_dt-0p01_Nstep-100.pkl','wb') as f:
+    with open('data/DOS_fid-5000_dt-0p01_Nstep-250.pkl','wb') as f:
         pickle.dump(fidelities,f)
     
 #============================================================================

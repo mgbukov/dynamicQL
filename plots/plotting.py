@@ -8,6 +8,7 @@ Purpose:
 '''
 
 import seaborn as sns
+sns.set_style("whitegrid")
 import numpy as np
 import matplotlib.pyplot as plt
 import latex
@@ -162,7 +163,20 @@ def visne_2D(x,y,marker_intensity,zlabel="Fidelity",out_file=None,title=None,sho
     if show:
         plt.show()
     plt.close()
-    
+  
+def DOS(list_of_values,label=None,xlabel='$F$',ylabel='$\\rho(F)$',outfile=None,show=True):
+    c=sns.color_palette('hls',8)
+    sns.set(font_scale=1.5)
+    ax=sns.distplot(list_of_values,
+                 kde_kws={"color": c[0], "lw": 1,"label":label},
+                 hist_kws={"alpha":0.9,"range": [0,1]},color=c[4],
+                 )
+    ax.set_xlabel(xlabel,fontsize=16)
+    ax.set_ylabel(ylabel,fontsize=16)
+    if outfile is not None:
+        plt.savefig(outfile)
+    if show:
+        plt.show()  
     
 # Run main program !
 if __name__ == "__main__":
