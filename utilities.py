@@ -162,6 +162,10 @@ def split_data(result_all,verbose=True):
 	
 	return count_fid_eval,best_fid,action_protocols,hx_protocols
 
+def print_files(params_SA,root): 
+	print("hello")
+
+
 def gather_data(params_SA,root):
 	"""
 	Purpose:
@@ -191,5 +195,23 @@ def check_version():
 	if sys.version_info[0] < 3:
 		raise "Must be using Python 3"
 
-
+def default_parameters():
+	"""
+	Returns default paramters
+	"""
+	param={'N_time_step':10,
+		   'N_quench':0,
+		   'Ti':0.04,
+		   'action_set':0,
+		   'hx_initial_state':-1.0,
+		   'hx_final_state':1.0,
+			'delta_t':0.01,
+			'hx_i':-4.0,
+			'RL_CONSTRAINT':True,
+			'L':1,
+			'J':1.24,
+			'hz':1.0
+			}
+	return param
+			
 

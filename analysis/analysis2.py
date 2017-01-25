@@ -9,7 +9,6 @@ import numpy as np
 import pickle
 import utilities as ut
 import compute_observable
-from utilities import make_file_name
 import sys
 sys.path.append("..")
 from plots import plotting

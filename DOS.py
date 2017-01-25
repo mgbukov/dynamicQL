@@ -7,8 +7,6 @@ Purpose: (PYTHON3 IMPLEMENTATION)
     Computes density of state
 '''
 
-
-
 import LZ_sim_anneal as LZ
 import time
 import numpy as np
@@ -28,6 +26,7 @@ def main():
     fidelities=[fast_eval.evaluate_protocol_fidelity(r) for r in random_protocols]
     with open('data/DOS_fid-5000_dt-0p01_Nstep-250.pkl','wb') as f:
         pickle.dump(fidelities,f)
+    
     
 #============================================================================
 # start=time.time()

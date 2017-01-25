@@ -4,6 +4,7 @@
 # Text files
 *.txt
 test.py
+bh_tsne
 
 # cpp libraries
 *.so

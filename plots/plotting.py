@@ -114,7 +114,7 @@ def observable(xarray,yarray,title=None,out_file=None,
     if labels is not None:
         for y,x,c,l in zip(yarray_,xarray_,palette,labels):
             plt.plot(x,y,marker,c=c,clip_on=False,label=l)
-        plt.legend(loc='best', shadow=True,fontsize=fontsize)
+        plt.legend(loc='upper left', bbox_to_anchor=(1,1),shadow=True,fontsize=fontsize)
     else:
         for y,x,c in zip(yarray_,xarray_,palette):
             plt.plot(x,y,marker,c=c,clip_on=False)
@@ -133,36 +133,46 @@ def observable(xarray,yarray,title=None,out_file=None,
         
     plt.close()
     
-def visne_2D(x,y,marker_intensity,zlabel="Fidelity",out_file=None,title=None,show=False,label=None,xlabel='Dim 1',ylabel='Dim 2'):
-    print("Starting viSNE plot 2D")
-    fontsize=15
-
+def density_map(x,y,z,
+                xlabel=None,ylabel=None,zlabel=None,label=None,
+                centers=None,
+                out_file=None,title=None,show=True,cmap='coolwarm',remove_tick=False):
     """ 
     Purpose:
-        2-D scatter plot of data embedded in t-SNE space (2 dimensional) with intensity levels
-    
+        Produces a 2D intensity map
     """
+    palette=np.array(sns.color_palette('hls', 10))
     
-    z=marker_intensity
-    plt.scatter(x,y,c=z,cmap="BuGn",alpha=1.0,label=label)
-    plt.tick_params(labelbottom='off',labelleft='off')
+    fontsize=15
+
+    if label is not None:
+        plt.scatter(x,y,c=z,cmap=cmap,alpha=1.0,rasterized=True,label=label)
+    else:
+        plt.scatter(x,y,c=z,cmap=cmap,alpha=1.0,rasterized=True)
+    
     cb=plt.colorbar()
     
-    if label is not None:
-        cb.set_label(label=zlabel,labelpad=10)
+    if remove_tick:
+        plt.tick_params(labelbottom='off',labelleft='off')
     
+    if xlabel is not None:
+        plt.xlabel(xlabel,fontsize=fontsize)
+    if ylabel is not None:
+        plt.ylabel(ylabel,fontsize=fontsize)
+    if zlabel is not None:
+        cb.set_label(label=zlabel,labelpad=10)
     if title is not None:
         plt.title(title,fontsize=fontsize)
-    
-    plt.xlabel(xlabel,fontsize=fontsize)
-    plt.ylabel(ylabel,fontsize=fontsize)
-    plt.legend(loc='upper right', shadow=True)
+    if label is not None:
+        plt.legend(loc='best')
+        
+    if centers is not None:
+        plt.scatter(centers[:,0],centers[:,1],s=200,marker='*',c=palette[3])
     
     if out_file is not None:
         plt.savefig(out_file)
     if show:
         plt.show()
-    plt.close()
   
 def DOS(list_of_values,label=None,xlabel='$F$',ylabel='$\\rho(F)$',outfile=None,show=True):
     c=sns.color_palette('hls',8)
