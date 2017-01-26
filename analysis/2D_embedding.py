@@ -4,17 +4,17 @@ Created on Jan 14 , 2017
 @author: Alexandre Day
 
 '''
-from manifold_learning.tsne import TSNE
 from sklearn.decomposition import PCA
 import sys
-from manifold_learning import tsne
+from tsne.tsne import TSNE
 sys.path.append("..")
-#import utilities as ut
+import utilities as ut
 import time
 from plots import plotting
 import pickle
 import numpy as np
 np.set_printoptions(suppress=True)
+from matplotlib import pyplot as plt
 
 
 def main():
@@ -60,15 +60,35 @@ def main():
         [fid_all,h_prot]=pickle.load(f)
         
     pca_var=[]
-    pos=5
+    pos=14
     pca=PCA(n_components=40)
     X=np.array(h_prot[pos])
-    print("dt =\t",dt_list[pos])
+    print("dt = %.4f, T = % .2f"%(dt_list[pos],dt_list[pos]*500))
     X=pca.fit_transform(X)
     tsne=TSNE(n_components=2,perplexity=50)
     X=tsne.fit_transform(X)
+    exit()
+    X=np.fromfile('result.dat').reshape(-1,2)
     
-    plotting.density_map(X[:,0],X[:,1],fid_all[pos],title='$t=%.2f$'%(dt_list[pos]*500))
+    optimal_fid=np.max(fid_all[pos])
+    print("Best fidelity: %.4f"%optimal_fid)
+    n_sample=fid_all[0].shape[0]
+    best_fid_pos=np.argsort(fid_all[pos])[int(.95*n_sample):]
+    
+    #Z=fid_all[pos]
+    #fig, ax = plt.subplots()
+
+    #phi_m = linspace(0, 2*pi, 100)
+    #phi_p = linspace(0, 2*pi, 100)
+    #X1,Y1 = np.mgrid(X[best_fid_pos,0], X[best_fid_pos,1])
+
+    #p = ax.pcolor(X1,Y1,fid_all[pos][best_fid_pos],cmap=cm.coolwarm)#,vmin=np.min(Z),vmax=np.max(Z))
+    #cb = fig.colorbar(p)
+    
+    #plt.show()
+    plotting.density_map(X[best_fid_pos,0],X[best_fid_pos,1],fid_all[pos][best_fid_pos],title='$t=%.2f$'%(dt_list[pos]*500))
+    
+    #sns.
     
     #===========================================================================
     # 
