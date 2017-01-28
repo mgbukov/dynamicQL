@@ -87,7 +87,8 @@ def main():
     #plt.show()
     plotting.density_map(X[best_fid_pos,0],X[best_fid_pos,1],fid_all[pos][best_fid_pos],title='$t=%.2f$'%(dt_list[pos]*500))
     
-    #sns.
+    
+    
     
     #===========================================================================
     # 

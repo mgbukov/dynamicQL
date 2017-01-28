@@ -11,14 +11,11 @@ Computes various observables for the LZ problem
 '''
 
 import sys
-sys.path.append("..")
 import numpy as np
-from sklearn.manifold import TSNE
-
+from tsne.tsne import TSNE
 
 def main():
-    
-    print("hello")    
+     
     
 def Ed_Ad_OP(h_protocol,normalize_factor):
     """
