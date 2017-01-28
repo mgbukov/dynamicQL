@@ -74,7 +74,6 @@ def main():
     print("Best fidelity: %.4f"%optimal_fid)
     n_sample=fid_all[0].shape[0]
     best_fid_pos=np.argsort(fid_all[pos])[int(.95*n_sample):]
-    
     #Z=fid_all[pos]
     #fig, ax = plt.subplots()
 
