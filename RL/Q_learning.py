@@ -346,7 +346,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		if (ep+1)%(2*T_expl) == 0:
 			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep+1,np.round(R,5),S_prime[0])
 			print 'best encountered fidelity is {}.'.format(np.round(best_R,5))
-			print 'current inverse exploration tampeature is {}.'.format(np.round(beta_RL,3))
+			#print 'current inverse exploration tampeature is {}.'.format(np.round(beta_RL,3))
 
 	# calculate best protocol and fidelity
 	protocol_best,t_best = best_protocol(best_actions,state_i[0],delta_time)
