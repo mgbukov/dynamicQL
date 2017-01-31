@@ -11,7 +11,7 @@ import seaborn as sns
 sns.set_style("whitegrid")
 import numpy as np
 import matplotlib.pyplot as plt
-import latex
+#import latex
 
 def main():
     '''

@@ -19,7 +19,7 @@ Example of use:
         $python LZ_sim_anneal -h
 '''
 
-import utilities as ut
+import utils as ut
 import sys,os # for running in batch from terminal
 ut.check_sys_arg(sys.argv)
 ut.check_version()
