@@ -1,8 +1,0 @@
-#!/bin/bash
-# This batch file runs 
-python LZ_sim_anneal.py 0 3 'bang-bang8' auto 3000 0.05 400 False > log/out.log &
-python LZ_sim_anneal.py 0 5 'bang-bang8' auto 3000 0.05 400 False > log/out.log &
-python LZ_sim_anneal.py 0 7 'bang-bang8' auto 3000 0.05 400 False > log/out.log &
-python LZ_sim_anneal.py 0 9 'bang-bang8' auto 3000 0.05 400 False > log/out.log &
-python LZ_sim_anneal.py 0 11 'bang-bang8' auto 3000 0.05 400 False > log/out.log &
-python LZ_sim_anneal.py 0 13 'bang-bang8' auto 3000 0.05 400 False > log/out.log &
