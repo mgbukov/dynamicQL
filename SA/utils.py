@@ -111,7 +111,7 @@ def make_file_name(params_SA):
 	
 	extension=".pkl"
 	param_and_type=[
-					['N_time_step','int-3'],
+					['N_time_step','int-4'],
 					['N_quench','int-3'],
 					['Ti','float-2'],
 					['action_set','int-1'],
