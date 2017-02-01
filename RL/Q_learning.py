@@ -2,7 +2,7 @@ import numpy as np
 import numpy.random as random
 
 import Hamiltonian
-import plot_data as plot
+#import plot_data as plot
 from quspin.operators import exp_op
 from quspin.tools.measurements import ent_entropy
 
@@ -125,6 +125,28 @@ def find_feature_inds(tilings,S,theta_inds):
 		theta_inds[_k]=idx[0]+_k*tilings.shape[1]
 	return theta_inds
 
+
+def Unitaries(delta_time,L,J,hz,action_min,var_max,var_min,state_i):
+
+	# define Hamiltonian
+	b=0.0
+	lin_fun = lambda t: b 
+	H = Hamiltonian.Hamiltonian(L,fun=lin_fun,**{'J':J,'hz':hz})
+
+	# number of unitaries
+	n = int((var_max - var_min)/action_min)
+	
+	# preallocate dict
+	expm_dict = {}
+	for i in range(n+1):
+		print(i)
+		# define matrix exponential; will be changed every time b is overwritten
+		b = state_i[0]+i*action_min
+		expm_dict[i] = exp_op(H,a=-1j*delta_time).get_mat()
+		
+	return expm_dict
+
+
 def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field,bang,
 			   L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f,
 			   theta=None,tilings=None,save=False):
@@ -140,6 +162,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 
 	##### physical quantities ######
 
+	"""
 	# define ED Hamiltonian H(t)
 	b=state_i[0]
 	lin_fun = lambda t: b 
@@ -147,6 +170,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	H = Hamiltonian.Hamiltonian(L,fun=lin_fun,**{'J':J,'hz':hz})
 	# define matrix exponential; will be changed every time b is overwritten
 	exp_H=exp_op(H,a=-1j*delta_time)
+	"""
+
 	# preallocate physical state
 	psi = np.zeros_like(psi_i)
 
@@ -160,7 +185,11 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	
 	neg_actions=[-i for i in pos_actions]
 	actions = np.sort(neg_actions + [0.0] + pos_actions)
-	del pos_actions,neg_actions
+	#del pos_actions,neg_actions
+
+	# pre-calculate unitaries
+	expm_dict=Unitaries(delta_time,L,J,hz,min(pos_actions),max(h_field),min(h_field),state_i)
+	
 
 	N_actions = len(actions)
 	
@@ -260,13 +289,14 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			
 			# all physics happens here
 			b = S_prime[0]
-			psi = exp_H.dot(psi)
+			#psi = exp_H.dot(psi)
+			psi=expm_dict[int(np.rint((b - min(h_field))/min(pos_actions)))].dot(psi)
 
 			# assign reward
 			R *= 0.0
 			if t_step == max_t_steps-1:
 				# calculate final fidelity and give it as a reward
-				EGS = H.eigsh(k=1,which='SA',maxiter=1E10,return_eigenvectors=False).squeeze()
+				#EGS = H.eigsh(k=1,which='SA',maxiter=1E10,return_eigenvectors=False).squeeze()
 				R += abs(psi.conj().dot(psi_f))**2 #-(H.matrix_ele(psi,psi).real-EGS) #-ent_entropy(psi,H.basis)['Sent'] #
 				
 
@@ -322,6 +352,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	
 		# if greedy policy completes a full episode and if greedy fidelity is worse than inst one
 		if R-best_R > 1E-12:
+			print("best encountered fidelity is", np.round(R,4) )
 			# update list of best actions
 			best_actions = actions_taken[:]
 			# best reward and fidelity
@@ -435,12 +466,13 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		dataname  =  save_dir + "phys_params_data"+data_params+'.pkl'
 		cPickle.dump(phys_params, open(dataname, "wb" ) )
 
+	"""
 	# create plots
 	plot.plot_rewards(Fidelity_ep,Return,Return_ave,'RL_stats',data_params)
 
 	plot.observables(L,t_best,protocol_best,hx_i,hx_f,J,hz,data_params+'_best')
 	plot.observables(L,t_best,protocol_greedy,hx_i,hx_f,J,hz,data_params+'_greedy')
-
+	"""
 
 
 
