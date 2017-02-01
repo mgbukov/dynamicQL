@@ -1,16 +1,36 @@
 # compliled python code #
 *.pyc
 *.pyf
+# Text files
+*.txt
+test.py
+bh_tsne
+result.dat
+data.dat
+tags
 # cpp libraries
 *.so
 # pure fortran source files #
 *.f90
+# bash files
+*.sh
+
+# log files
+*.log
+# log directory
+log/
+# data files
+data/
+# plot file
+plots/
 # cython source file #
 *.pyx
 # backup files from gedit #
 *~
 # invisible files
 .*
+# except gitignore
+!.gitignore
 # txt and pkl files
 *.txt
 *.pkl
@@ -20,5 +40,8 @@
 build/
 bin/
 dist/
+submit_scripts/
+
+=======
 data/
 log/
