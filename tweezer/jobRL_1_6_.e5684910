@@ -1,0 +1,18 @@
+
+
+Warning: Continuum Analytics has changed the naming scheme of Anaconda. This "anaconda/2.2.0" module references an old version. It is safe to use if you have been using it previously. However, if you are new to this application or interested in future developments, please consider using the "anaconda2" module for python2 or the "anaconda3" for python3 functionality.
+
+Recommended command: "module load anaconda2"
+
+Please contact help@scc.bu.edu with questions.
+
+
+discarding /share/pkg/anaconda/2.2.0/install/bin from PATH
+prepending /usr3/graduate/mbukov/envs/ED/bin to PATH
+Traceback (most recent call last):
+  File "main_tweezer.py", line 2, in <module>
+    from Q_learning import Q_learning
+  File "/project/fheating/RL_project/many_body/dynamicQL/tweezer/Q_learning.py", line 243
+    if ep%2==0:
+    ^
+IndentationError: unexpected indent

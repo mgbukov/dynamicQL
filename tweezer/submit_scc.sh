@@ -11,7 +11,7 @@ do
 
 	echo "#!/bin/bash -login" >> submission.sh
         echo "#$ -P fheating" >> submission.sh #evolve is name of job
-        echo "#$ -N jobRL_${i}_${j}_${k}" >> submission.sh #evolve is name of job
+        echo "#$ -N job_tweeze_${i}_${j}_${k}" >> submission.sh #evolve is name of job
         echo "#$ -l h_rt=12:00:00">> submission.sh #336
         #echo "#$ -pe omp 4">> submission.sh #request more processors
         echo "#$ -m ae" >> submission.sh #a (abort) e(exit)
