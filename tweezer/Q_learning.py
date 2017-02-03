@@ -145,7 +145,7 @@ def tweezers(x,x0,d0):
 
 
 def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field,bang,
-			   L,max_t_steps,delta_time,x,d_tweezer,psi_i,psi_f,
+			   L,max_t_steps,delta_time,x,x0,d_tweezer,psi_i,psi_f,
 			   theta=None,tilings=None,save=False):
 	"""
 	This function applies modified Watkins' Q-Learning for time-dependent states with
@@ -171,7 +171,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	if bang:
 		pos_actions=[8.0]; a_str='_bang';
 	else:
-		pos_actions=[0.1,0.2,0.5]; a_str='_cont';
+		pos_actions=[0.01,0.02,0.1,1.1]; a_str='_cont';
 	
 	neg_actions=[-i for i in pos_actions]
 	actions = np.sort(neg_actions + [0.0] + pos_actions)
@@ -401,8 +401,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	Data_protocol[:,2] = protocol_greedy
 
 	# define parameter-dependent part of file name
-	args = (N,N_episodes,max_t_steps,L) + tuple( truncate([J,hz,hx_i,hx_f] ,2) )
-	data_params = "_N=%s_Nep=%s_T=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s"   %args
+	args = (N,N_episodes,max_t_steps,L) + tuple( truncate([x0,d_tweezer] ,2) )
+	data_params = "_N=%s_Nep=%s_T=%s_L=%s_x0=%s_dtweezer=%s"   %args
 	data_params+=a_str
 
 	### define save directory for data
@@ -411,7 +411,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	str2=str1.split('\\')
 	n=len(str2)
 	my_dir = str2[n-1]
-	# create directory if non-existant
+	# create directory if non-existent
 	save_dir = my_dir+"/data"
 	if not os.path.exists(save_dir):
 	    os.makedirs(save_dir)
@@ -457,13 +457,12 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		phys_params = {"L":L,
 					   "max_t_steps":max_t_steps,
 					   "delta_time":delta_time,
-					   "J":J,
-					   "hz":hz,
-					   "hx_i":hx_i,
-					   "hx_f":hx_f,
+					   "x":x,
+					   "x0":x0,
+					   "d_tweezer":d_tweezer,
 					   "psi_i":psi_i,
 					   "psi_f":psi_f,
-					   }
+					   } 
 		dataname  =  save_dir + "phys_params_data"+data_params+'.pkl'
 		cPickle.dump(phys_params, open(dataname, "wb" ) )
 
