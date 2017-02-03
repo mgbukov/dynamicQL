@@ -12,8 +12,9 @@ tags
 *.so
 # pure fortran source files #
 *.f90
+
 # bash files
-*.sh
+#*.sh
 
 # log files
 *.log
