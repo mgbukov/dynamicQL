@@ -11,7 +11,7 @@ import gc
 
 
 # model parameters
-L=400
+L=40
 x = np.linspace(-1.0,1.0,L)
 x0=-0.55 # initial tweezer position
 d_tweezer=-160.0 # potential depth
@@ -61,7 +61,7 @@ T_expl=20
 m_expl=0.125 # 0.125
 
 RL_params = (N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field,bang)
-physics_params = (L,max_t_steps,delta_time,x,d_tweezer,psi_i,psi_f)
+physics_params = (L,max_t_steps,delta_time,x,x0,d_tweezer,psi_i,psi_f)
 
 
 # initiate learning
