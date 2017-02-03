@@ -19,7 +19,7 @@ do
         #echo "#$ -M mbukov@bu.edu" >> submission.sh
         echo "#$ -m n" >> submission.sh # disable emails
         echo "source activate ED" >> submission.sh # requires conda env called 'ED' with quspin
-        echo "python main_RL.py $i $j $k" >> submission.sh
+        echo "python main_RL.py $i $j" >> submission.sh
         
         qsub submission.sh
         rm submission.sh
