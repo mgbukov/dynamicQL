@@ -251,7 +251,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			avail_inds = np.argwhere((S[0]+np.array(actions)<=h_field[-1])*(S[0]+np.array(actions)>=h_field[0])).squeeze()
 			avail_actions = actions[avail_inds]
 
-			if beta_RL < 20.0:
+			if beta_RL < beta_RL_inf: #20.0
 				if ep%2==0:
 					A_greedy = avail_actions[random.choice(np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
 				else:
@@ -352,7 +352,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	
 		# if greedy policy completes a full episode and if greedy fidelity is worse than inst one
 		if R-best_R > 1E-12:
-			print("best encountered fidelity is", np.round(R,4) )
+			print("best encountered fidelity is {}".format(np.around(R,4)) )
 			# update list of best actions
 			best_actions = actions_taken[:]
 			# best reward and fidelity

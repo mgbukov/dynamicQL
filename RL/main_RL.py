@@ -14,7 +14,7 @@ max_t_steps_vec=np.linspace(5,50,10,dtype=int)
 
 
 # define model params
-L = 4 # system size
+L = 18 # system size
 if L==1:
 	J = 0.0 # required by PBC
 	hz = 1.0
@@ -55,8 +55,8 @@ print "initial and final energies are:", E_i, E_f
 #print "initial entanglement is:", ent_entropy(psi_i,H.basis)['Sent']
 print "overlap btw initial and target state is:", abs(psi_i.dot(psi_f))
 
-max_t_steps = 40 #max_t_steps_vec[int(sys.argv[3])-1] #40 
-delta_time = 0.1 #0.05
+max_t_steps = 80 #max_t_steps_vec[int(sys.argv[3])-1] #40 
+delta_time = 0.05 #0.05
 
 ##### RL params #####
 var0_min, var0_max = [-4.0,4.0]
