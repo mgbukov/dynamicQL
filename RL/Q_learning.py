@@ -11,6 +11,9 @@ import sys
 import os
 import cPickle
 
+# make system update output files regularly
+sys.stdout.flush()
+
 # set pseudorandom generator
 seed = random.randint(0,4294967295)
 random.seed(seed)
@@ -358,15 +361,20 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			# best reward and fidelity
 			best_R = R
 			# learn policy
-			if beta_RL<20.0:
-				theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
-
-		# force-learn best encountered every 100 episodes
-		if ( (ep+1)%(2*T_expl)-T_expl==0 and ep not in [0,N_episodes-1] ) and beta_RL<20.0:
+			#if beta_RL<20.0:
 			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
 
-		#print "beta_RL,R,d_theta:",beta_RL,R, np.max(abs(theta.ravel() - theta_old.ravel() ))
+		# force-learn best encountered every 100 episodes
+		if ( (ep+1)%(2*T_expl)-T_expl==0 and ep not in [0,N_episodes-1] ): # and beta_RL<20.0:
+			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
+		elif (ep//T_expl)%2==1 and abs(R-best_R)>1E-12:
+			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions,ep=ep)
+
+		#"""
+		# check if Q-function converges
+		print ep, "beta_RL,R,d_theta:",beta_RL,R,np.max(abs(theta.ravel() - theta_old.ravel() ))
 		theta_old=theta.copy()
+		#"""
 			
 		# record average return
 		Return_ave[ep] = 1.0/(ep+1)*(R + ep*Return_ave[ep-1])

@@ -23,7 +23,8 @@ sys.stdout.flush()
 # set pseudorandom generator
 seed = random.randint(0,4294967295)
 random.seed(seed)
-#seed=random.seed(4210221767)
+#seed =random.seed(0)
+
 
 print("using seed={}".format(seed))
 
@@ -79,7 +80,8 @@ def greedy_protocol(theta,tilings,actions,hx_i,delta_t,max_t_steps,h_field):
 	
 	# preallocate theta_inds
 	theta_inds_zeros=np.zeros((N_tilings,),dtype=int)
-	
+	ind_dh = np.searchsorted(actions,0.0)
+
 	for t_step in range(max_t_steps):
 
 		avail_inds = np.argwhere((S[0]+np.array(actions)<=h_field[-1])*(S[0]+np.array(actions)>=h_field[0])).squeeze()
@@ -87,17 +89,18 @@ def greedy_protocol(theta,tilings,actions,hx_i,delta_t,max_t_steps,h_field):
 
 		# calculate Q(s,a)
 		theta_inds=find_feature_inds(tilings,S,theta_inds_zeros)
-		Q = np.sum(theta[theta_inds,t_step,:],axis=0)
+		Q = np.sum(theta[theta_inds,ind_dh,t_step,:],axis=0)
 		# find greedy action
 		A_greedy=avail_actions[np.argmax(Q[avail_inds])]
 
 		S[0]+=A_greedy
 		protocol[t_step]=S
+		ind_dh=np.searchsorted(actions,A_greedy)
 
 	return protocol, t
 
 
-def Learn_Policy(state_i,best_actions,R,theta,tilings,actions,ep=None):
+def Learn_Policy(state_i,best_actions,R,theta,tilings,actions):
 
 	N_tilings = tilings.shape[0]
 	N_tiles = tilings.shape[1]
@@ -105,26 +108,31 @@ def Learn_Policy(state_i,best_actions,R,theta,tilings,actions,ep=None):
 	# preallocate theta_inds
 	theta_inds_zeros=np.zeros((N_tilings,),dtype=int)
 
+
 	S = state_i.copy()
+	ind_dh = np.searchsorted(actions,S[1])
 
 	for t_step, A in enumerate(best_actions):
 		# calculate state-action indices
 		indA = np.searchsorted(actions,A)
 		
-		theta_inds=find_feature_inds(tilings,S,theta_inds_zeros)
+		theta_inds=find_feature_inds(tilings,S[0],theta_inds_zeros)
 		
 		# check if max learnt
-		if max(theta[theta_inds,t_step,:].ravel())>R/N_tilings and R>0:
-			Q = np.sum(theta[theta_inds,t_step,:],axis=0)
+		if max(theta[theta_inds,ind_dh,t_step,:].ravel())>R/N_tilings and R>0:
+						
+			Q = np.sum(theta[theta_inds,ind_dh,t_step,:],axis=0)
 			indA_max=np.argmax(Q)
 
 			if max(Q) > 1E-13:
-				theta[theta_inds,t_step,:]*=R/Q[indA_max]
+				theta[theta_inds,ind_dh,t_step,:]*=R/Q[indA_max]
 			
 		# calculate theta function
-		theta[theta_inds,t_step,indA] = (R+1E-2)/(N_tilings)
+		theta[theta_inds,ind_dh,t_step,indA] = (R+1E-2)/(N_tilings)
 		
-		S+=A
+		S[0]+=A
+		S[1]=A
+		ind_dh = indA.copy()
 
 	#print 'force-learned best encountered policy'
 	return theta
@@ -180,7 +188,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	if bang:
 		pos_actions=[8.0]; a_str='_bang';
 	else:
-		pos_actions=[0.02,1.1]; a_str='_cont';
+		pos_actions=[0.01,0.02,0.1,1.1]; a_str='_cont'; #
 	
 	neg_actions=[-i for i in pos_actions]
 	actions = np.sort(neg_actions + [0.0] + pos_actions)
@@ -191,7 +199,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	N_actions = len(actions)
 	
 	if theta is None:
-		theta=np.zeros((N_tiles*N_tilings,max_t_steps,N_actions), dtype=np.float64)
+		theta=np.zeros((N_tiles*N_tilings,N_actions,max_t_steps,N_actions), dtype=np.float64)
 	theta_old=theta.copy()
 	if tilings is None:
 		tilings = np.array([h_field + np.random.uniform(0.0,dh_field,1) for j in xrange(N_tilings)])
@@ -201,7 +209,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	fire_trace = np.ones(N_tilings)
 
 	# pre-allocate usage vector: inverse gradient descent learning rate
-	u0 = 1.0/alpha_0*np.ones((N_tiles*N_tilings,), dtype=np.float64)
+	u0 = 1.0/alpha_0*np.ones((N_tiles*N_tilings,N_actions), dtype=np.float64)
 	u=np.zeros_like(u0)	
 	
 	# preallocate quantities
@@ -215,7 +223,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	R = 0.0 
 	# preallocate theta_inds
 	theta_inds_zeros=np.zeros((N_tilings,),dtype=int)
-
+	
 	# loop over episodes
 	for ep in xrange(N_episodes):
 		# set traces to zero
@@ -228,7 +236,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		
 		# get set of features present in S
 		theta_inds=find_feature_inds(tilings,S[0],theta_inds_zeros)
-		Q = np.sum(theta[theta_inds,0,:],axis=0) # for each action at time t_step=0
+		ind_dh = np.searchsorted(actions,S[1])
+		Q = np.sum(theta[theta_inds,ind_dh,0,:],axis=0) # for each action at time t_step=0
 
 		# preallocate physical quantties
 		psi[:] = psi_i[:] # quantum state at time
@@ -257,7 +266,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 				A_greedy = avail_actions[random.choice(np.argwhere(Q[avail_inds]==np.amax(Q[avail_inds])).ravel() ) ]
 				
 
-			if beta_RL < beta_RL_inf:
+			if beta_RL < 100: #beta_RL_inf:
 				# choose a random action
 				P = np.exp(beta_RL*Q[avail_inds])
 				A = avail_actions[np.searchsorted(np.cumsum(P/np.sum(P)),random.uniform(0.0,1.0))]
@@ -270,7 +279,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 
 			# find the index of A
 			indA = np.searchsorted(actions,A)
-			
+			ind_dh_prime = indA.copy()
+
 			# record action taken
 			actions_taken[t_step]=A
 
@@ -282,13 +292,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			# define new state
 			S_prime = S.copy()
 			S_prime[0] += A
-			"""
-			# calculate new field value 
-			if t_step == max_t_steps-1:
-				S_prime[0] = -0.55
-			"""		
-			
-			
+			S_prime[1] = A
 			
 			# all physics happens here
 			x_tweezer = S_prime[0] # update position of tweezer
@@ -305,58 +309,56 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			R *= 0.0
 			if t_step == max_t_steps-1:
 				# calculate final fidelity and give it as a reward
-				#EGS = H.eigsh(k=1,which='SA',maxiter=1E10,return_eigenvectors=False).squeeze()
 				R += abs(psi.conj().dot(psi_f))**2 #-(H.matrix_ele(psi,psi).real-EGS) #-ent_entropy(psi,H.basis)['Sent'] #
-				
-				#print(R)
-
+				#print("final reward is {}: {}".format(ep,np.around(R,4)) )
 			################################################################################
 			################################################################################
 			################################################################################
 
 			# calculate usage and alpha vectors: alpha_inf = eta
-			u[theta_inds]*=(1.0-eta)
-			u[theta_inds]+=1.0
-			alpha = 1.0/(N_tilings*u[theta_inds])
+			u[theta_inds,ind_dh]*=(1.0-eta)
+			u[theta_inds,ind_dh]+=1.0
+			alpha = 1.0/(N_tilings*u[theta_inds,ind_dh])
 			
 			# Q learning update rule; GD error in time t
 			delta_t = R - Q[indA] # error in gradient descent
 			# TO
-			Q_old = theta[theta_inds,t_step,indA].sum()
+			Q_old = theta[theta_inds,ind_dh,t_step,indA].sum()
 			
 			# update traces
-			e[theta_inds,t_step,indA] = alpha*fire_trace
+			e[theta_inds,ind_dh,t_step,indA] = alpha*fire_trace
 
 			# check if S_prime is terminal or went out of grid
 			if t_step == max_t_steps-1: 
 				# update theta
 				theta += delta_t*e
 				# GD error in field h
-				delta_h = Q_old - theta[theta_inds,t_step,indA].sum()
-				theta[theta_inds,t_step,indA] += alpha*delta_h
+				delta_h = Q_old - theta[theta_inds,ind_dh,t_step,indA].sum()
+				theta[theta_inds,ind_dh,t_step,indA] += alpha*delta_h
 				# go to next episode
 				break
 
 			# get set of features present in S_prime
-			theta_inds_prime=find_feature_inds(tilings,S_prime,theta_inds_zeros)
+			theta_inds_prime=find_feature_inds(tilings,S_prime[0],theta_inds_zeros)
 
 			# t-dependent Watkin's Q learning
-			Q = np.sum(theta[theta_inds_prime,t_step+1,:],axis=0)
+			Q = np.sum(theta[theta_inds_prime,ind_dh_prime,t_step+1,:],axis=0)
 
 			# update theta
 			delta_t += np.max(Q)
 			theta += delta_t*e
 
 			# GD error in field h
-			delta_h = Q_old - theta[theta_inds,t_step,indA].sum()
-			theta[theta_inds,t_step,indA] += alpha*delta_h
+			delta_h = Q_old - theta[theta_inds,ind_dh,t_step,indA].sum()
+			theta[theta_inds,ind_dh,t_step,indA] += alpha*delta_h
 
 			# update traces
-			e[theta_inds,t_step,indA] -= alpha*e[theta_inds,t_step,indA].sum()
+			e[theta_inds,ind_dh,t_step,indA] -= alpha*e[theta_inds,ind_dh,t_step,indA].sum()
 			e *= lmbda
-
+			
 			################################
 			# S <- S_prime
+			ind_dh = ind_dh_prime.copy()
 			S[:] = S_prime[:]
 			theta_inds[:]=theta_inds_prime[:]
 	
@@ -371,20 +373,18 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			#if beta_RL<20.0:
 			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
 
-		# force-learn best encountered every 40 episodes
+		# force-learn best encountered every 100 episodes
 		if ( (ep+1)%(2*T_expl)-T_expl==0 and ep not in [0,N_episodes-1] ):# and beta_RL<20.0:
-			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions,ep=ep)
+			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
 		elif (ep//T_expl)%2==1 and abs(R-best_R)>1E-12:
 			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions,ep=ep)
 
-
 		#"""
 		# check if Q-function converges
-		print ep, "beta_RL,R,d_theta:",beta_RL,R,np.max(abs(theta.ravel() - theta_old.ravel() ))
+		print ep, "beta_RL,R,d_theta:",beta_RL,R, np.max(abs(theta.ravel() - theta_old.ravel() ))
 		theta_old=theta.copy()
 		#"""
 
-			
 		# record average return
 		Return_ave[ep] = 1.0/(ep+1)*(R + ep*Return_ave[ep-1])
 		Return[ep] = R
@@ -392,7 +392,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 
 
 		if (ep+1)%(2*T_expl) == 0:
-			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep+1,np.round(R,5),S_prime[0])
+			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep,np.round(R,5),S_prime[0])
 			print 'best encountered fidelity is {}.'.format(np.round(best_R,5))
 			#print 'current inverse exploration tampeature is {}.'.format(np.round(beta_RL,3))
 			
@@ -400,7 +400,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			protocol_best,t_best = best_protocol(best_actions,state_i[0],delta_time)
 			protocol_greedy,t_greedy = greedy_protocol(theta,tilings,actions,state_i[0],delta_time,max_t_steps,h_field)
 			
-			print np.around(protocol_best,3)
+			print protocol_best
 			#print protocol_greedy
 
 	# save data
