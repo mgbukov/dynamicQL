@@ -14,7 +14,7 @@ max_t_steps_vec=np.linspace(5,50,10,dtype=int)
 
 
 # define model params
-L = 18 # system size
+L = 16 # system size
 if L==1:
 	J = 0.0 # required by PBC
 	hz = 1.0

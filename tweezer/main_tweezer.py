@@ -11,7 +11,7 @@ import gc
 
 
 # model parameters
-L=40
+L=400
 x = np.linspace(-1.0,1.0,L)
 x0=-0.55 # initial tweezer position
 d_tweezer=-160.0 # potential depth
