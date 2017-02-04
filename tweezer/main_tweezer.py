@@ -25,7 +25,7 @@ psi_i,psi_f = tweezer_hamiltonian.target_states(H_kin,x,x0,d_tweezer)
 
 print "overlap btw initial and target state is:", abs(psi_i.dot(psi_f))
 
-max_t_steps = 120 #max_t_steps_vec[int(sys.argv[3])-1] #40 
+max_t_steps = 60 #120 #max_t_steps_vec[int(sys.argv[3])-1] #40 
 delta_time = 1.0/200.0
 
 ##### RL params #####
@@ -41,6 +41,7 @@ dh_field = h_field[1]-h_field[0]
 ########
 # define RL  hyper params
 state_i = np.array([x0])
+#state_i = np.array([x0,0])
 
 # realisation number
 N=int(sys.argv[2])-1
