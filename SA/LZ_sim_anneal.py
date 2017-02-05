@@ -494,7 +494,7 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 class custom_protocol():
-    def __init__(self,J=1.236,L=1,hz=1.0,hx_init_state=-1.0,hx_target_state=1.0,
+    def __init__(self,J=-1.0,L=1,hz=1.0,hx_init_state=-1.0,hx_target_state=1.0,
                     delta_t=0.05,hx_i=-4.,hx_max=4.,action_set_=[-8.,0.,8.],
                     option='standard'):
         
