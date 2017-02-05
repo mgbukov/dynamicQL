@@ -26,5 +26,5 @@ Finally, for more details on the meaning of those parameters (from the command l
 ```
 python LZ_sim_anneal.py -h
 ```
-More details are given in the file LZ_sim_anneal.py
+More details are given in the file ```LZ_sim_anneal.py```
 
