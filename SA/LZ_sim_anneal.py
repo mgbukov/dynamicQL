@@ -71,12 +71,12 @@ def main():
     """
     #----------------------------------------
     # DEFAULT PARAMETERS
-    L = 1 # system size
-    J = 1.0/0.809 # zz interaction
-    hz = 1.0 #0.9045/0.809 #1.0 # hz field
-    hx_i = -4.0# -1.0 # initial hx coupling
-    hx_initial_state= -1.0 # initial state
-    hx_final_state = 1.0 #+1.0 # final hx coupling
+    L = 16 # system size
+    J = -1.0  # zz interaction
+    hz = 1.0  #0.9045/0.809 #1.0 # hz field
+    hx_i = -4.0 # -1.0 # initial hx coupling
+    hx_initial_state= -2.0 # initial state
+    hx_final_state = 2.0 #+1.0 # final hx coupling
     act_set_name='bang-bang8'
     Ti=0.04 # initial temperature (for annealing)
     
@@ -96,17 +96,17 @@ def main():
     
     #----------------------------------------
     
-    print("-------------------- > Parameters < --------------------")
-    print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx(t=0) \t\t %.3f\nhx_max \t\t\t %.3f "%(L,J,hz,hx_i,hx_max))
-    print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state,hx_final_state))
-    print("N_quench \t\t %i\ndelta_t \t\t %.2f\nN_restart \t\t %i"%(N_quench,delta_t,N_restart))
     
     if len(sys.argv)>1:
         """ 
             if len(sys.argv) > 1 : run from command line -- check command line for parameters 
         """        
         N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart,verbose,act_set_name=ut.read_command_line_arg(sys.argv,all_action_sets)
-        
+
+    print("-------------------- > Parameters < --------------------")
+    print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx(t=0) \t\t %.3f\nhx_max \t\t\t %.3f "%(L,J,hz,hx_i,hx_max))
+    print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state,hx_final_state))
+    print("N_quench \t\t %i\ndelta_t \t\t %.2f\nN_restart \t\t %i"%(N_quench,delta_t,N_restart))
     print("N_time_step \t\t %i"%N_time_step)
     print("Total_time \t\t %.2f"%(N_time_step*delta_t))
     print("Output file \t\t %s"%('data/'+outfile_name))
@@ -129,6 +129,7 @@ def main():
     hx_discrete[0]=hx_final_state # just a trick to get final state
     _, psi_target = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=0
+    print("Initial overlap is:\t%.3f"%(abs(np.sum(np.conj(psi_i)*psi_target))**2))
 
     #===========================================================================
     # if FIX_NUMBER_FID_EVAL:
@@ -219,8 +220,8 @@ def precompute_expmatrix(h_set,H,delta_t):
     hx_dis_init=hx_discrete[0]
     for h in h_set:
         hx_discrete[0]=h
-        matrix_dict[h]=expm(H.todense(time=0)*-1j*delta_t)
-        
+        matrix_dict[h]=np.asarray(exp_op(H,a=-1j*delta_t).get_mat().todense())
+
     hx_discrete[0]=hx_dis_init # resetting to it's original value
     
 def fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
@@ -234,7 +235,7 @@ def fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
     psi_evolve=psi_i.copy()
     for t in range(N_time_step):
         psi_evolve = matrix_dict[hx_discrete[t]].dot(psi_evolve)
-    
+
     return abs(np.sum(np.conj(psi_evolve)*psi_target))**2
 
 
@@ -512,6 +513,8 @@ class custom_protocol():
         _, self.psi_i = self.H.eigsh(time=0,k=1,which='SA')
         hx_discrete[0]=hx_target_state # just a trick to get final state
         _, self.psi_target = self.H.eigsh(time=0,k=1,which='SA')
+
+        print("--> Overlap between initial and target state %.4f"%(abs(np.sum(np.conj(self.psi_i)*self.psi_target))**2))
         
         if option is 'fast':
             h_set=compute_h_set(hx_i,hx_max)
