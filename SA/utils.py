@@ -15,7 +15,7 @@ def check_sys_arg(argv):
 	"""
 	n_par=11
 	message_1="""Expecting %s parameters from command line: 
-	L, hxIS, hxFS, N_quench, N_time_step, action_set_name, outfile_name, max_fid_eval, delta_t, N_restart, verbose"""%n_par
+	L, hxIS, hxFS, N_quench, N_time_step, action_set_name, outfile_name, delta_t, N_restart, verbose"""%n_par
 	message_2=""" 
 -- All parameters (including private) -- 
 
@@ -30,7 +30,6 @@ def check_sys_arg(argv):
 	N_time_step: number of time steps
 	action_set: array of possible actions
 	outfile_name: file where data is being dumped (via pickle) 
-	max_fid_eval: maximum number of fidelity evaluations
 	delta_t: time scale
 	N_restart: number of restart for the annealing
 	verbose: If you want the program to print to screen the progress
@@ -39,7 +38,7 @@ def check_sys_arg(argv):
 	FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations
 	RL_CONSTRAINT: use reinforcement learning constraints or not
 """
-	example="python LZ_sim_anneal.py 8 -2. 2. 30 20 bang-bang8 out.txt 3000 0.05 100 False"
+	example="python LZ_sim_anneal.py 8 -2. 2. 30 20 bang-bang8 out.txt 0.05 100 False"
 	
 	
 	if len(argv)>1:
@@ -75,7 +74,7 @@ def read_command_line_arg(argv,all_action_sets):
 		Tuple of parsed command line. Last element is the action set name.
 	"""
 	
-	_, L, hxIS, hxFS, N_quench, N_time_step, action_set_name, outfile_name, max_fid_eval, delta_t, N_restart, verbose = argv
+	_, L, hxIS, hxFS, N_quench, N_time_step, action_set_name, outfile_name, delta_t, N_restart, verbose = argv
 	L=int(L)
 	hxFS=float(hxFS)
 	hxIS=float(hxIS)
@@ -83,11 +82,10 @@ def read_command_line_arg(argv,all_action_sets):
 	N_time_step=int(N_time_step)
 	assert action_set_name in all_action_sets.keys(),"Wrong action set label, expecting one of the following: "+str(list(all_action_sets.keys()))
 	action_set=all_action_sets[action_set_name]
-	max_fid_eval=int(max_fid_eval)
 	delta_t=float(delta_t)
 	N_restart=int(N_restart)
 	verbose=(verbose=="True")
-	return L, hxIS, hxFS, N_quench, N_time_step, action_set, outfile_name, max_fid_eval, delta_t, N_restart, verbose, action_set_name
+	return L, hxIS, hxFS, N_quench, N_time_step, action_set, outfile_name, delta_t, N_restart, verbose, action_set_name
 
 def f_to_str(number,prec=2):
 	s=("%."+str(prec)+"f")%number
