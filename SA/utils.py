@@ -13,7 +13,7 @@ def check_sys_arg(argv):
 	Purpose:
     	Check command line arguments, (user might need help or has given wrong number of arguments)
 	"""
-	n_par=11
+	n_par=10
 	message_1="""Expecting %s parameters from command line: 
 	L, hxIS, hxFS, N_quench, N_time_step, action_set_name, outfile_name, delta_t, N_restart, verbose"""%n_par
 	message_2=""" 

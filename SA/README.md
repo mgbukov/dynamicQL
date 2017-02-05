@@ -10,7 +10,9 @@ Non-standard packages:
 
 # To run #
 
-Clone or download this repository, then run the following command :
+- Clone or download this repository. 
+- Make sure you have a directory called ```data/``` where you want to run the code
+- Then run the following command :
 ```
 python LZ_sim_anneal.py
 ```
