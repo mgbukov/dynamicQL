@@ -12,8 +12,10 @@ Non-standard packages:
 
 Clone or download this repository, then run the following command :
 ```
-python LZ_sim_anneal.py 0 80 'bang-bang8' auto 3000 0.05 200 True
+python LZ_sim_anneal.py 8 -2. 2. 30 20 bang-bang8 out.txt 3000 0.05 100 False
 ```
+This will run simulated annealing for 8 sites, from hx=-2. to h=2.0 state with 30 quenches and 20 time setps. The output file is out.txt and dt=0.05, with 100 restart. Verbose is set to false.
+
 For help use:
 ```
 python LZ_sim_anneal.py -h
