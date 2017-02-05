@@ -71,15 +71,15 @@ def main():
     """
     #----------------------------------------
     # DEFAULT PARAMETERS
-    L = 16 # system size
     J = -1.0  # zz interaction
     hz = 1.0  #0.9045/0.809 #1.0 # hz field
     hx_i = -4.0 # -1.0 # initial hx coupling
-    hx_initial_state= -2.0 # initial state
-    hx_final_state = 2.0 #+1.0 # final hx coupling
     act_set_name='bang-bang8'
     Ti=0.04 # initial temperature (for annealing)
     
+    L = 16 # system size
+    hx_initial_state= -2.0 # initial state
+    hx_final_state = 2.0 #+1.0 # final hx coupling
     N_quench=5
     N_time_step=20
     outfile_name='first_test.pkl'
@@ -101,7 +101,7 @@ def main():
         """ 
             if len(sys.argv) > 1 : run from command line -- check command line for parameters 
         """        
-        N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart,verbose,act_set_name=ut.read_command_line_arg(sys.argv,all_action_sets)
+        L, hx_initial_state, hx_final_state, N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart,verbose,act_set_name=ut.read_command_line_arg(sys.argv,all_action_sets)
 
     print("-------------------- > Parameters < --------------------")
     print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx(t=0) \t\t %.3f\nhx_max \t\t\t %.3f "%(L,J,hz,hx_i,hx_max))
@@ -110,10 +110,8 @@ def main():
     print("N_time_step \t\t %i"%N_time_step)
     print("Total_time \t\t %.2f"%(N_time_step*delta_t))
     print("Output file \t\t %s"%('data/'+outfile_name))
-    #print("max_fid_eval (%s) \t %i"%(str(FIX_NUMBER_FID_EVAL),max_fid_eval))
     print("Action_set \t <- \t %s"%np.round(action_set,3))
     print("# of possible actions \t %i"%len(action_set))
-    #print("Fixing no of fid eval \t %s"%str(FIX_NUMBER_FID_EVAL))
     print("Using RL constraints \t %s"%str(RL_CONSTRAINT))
     print("Fidelity MODE \t %s"%('fast' if fidelity_fast else 'standard'))
 
@@ -130,14 +128,6 @@ def main():
     _, psi_target = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=0
     print("Initial overlap is:\t%.3f"%(abs(np.sum(np.conj(psi_i)*psi_target))**2))
-
-    #===========================================================================
-    # if FIX_NUMBER_FID_EVAL:
-    #     # Determines the number of quenches needed to anneal w/o exceeding the max number of fidelity evaluations.
-    #     N_quench=(max_fid_eval-5*sweep_size)//sweep_size
-    #     assert N_quench >= 0
-    #     print("N_quench (FIX)\t\t%i"%N_quench)
-    #===========================================================================
 
     sweep_size=N_time_step*len(action_set)
     
