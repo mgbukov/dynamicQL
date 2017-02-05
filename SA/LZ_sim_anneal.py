@@ -176,6 +176,7 @@ def main():
         print("Saved iteration --> %i to %s"%(it,'data/%s'%outfile_name))
         print("Iteration run time --> %.2f s"%(time.time()-start_time))
     
+    print("\n Thank you and goodbye !")
     
 def Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option='standard'):
     """
