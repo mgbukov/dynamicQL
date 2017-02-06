@@ -13,6 +13,13 @@ import gc
 # make system update output files regularly
 sys.stdout.flush()
 
+### define save directory for data
+# read in local directory path
+str1=os.getcwd()
+str2=str1.split('\\')
+n=len(str2)
+my_dir = str2[n-1]
+
 max_t_steps_vec=np.linspace(5,50,10,dtype=int)
 
 
@@ -60,7 +67,7 @@ print "initial and final energies are:", E_i, E_f
 print "overlap btw initial and target state is:", abs(psi_i.dot(psi_f)**2)
 
 
-max_t_steps = 60 #max_t_steps_vec[int(sys.argv[3])-1] #40 
+max_t_steps = 120 #max_t_steps_vec[int(sys.argv[3])-1] #40 
 delta_time = 0.05 #0.05
 
 ##### RL params #####
@@ -97,6 +104,14 @@ m_expl=0.125 # 0.125
 
 RL_params = (N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field,bang)
 physics_params = (L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f)
+
+
+
+##### pre-calculate unitaries
+if bang==0 and not os.path.isfile(my_dir+"/unitaries/unitaries_cont"+'.pkl'):
+	Hamiltonian.Unitaries(delta_time,L,J,hz,0.1,var0_max,var0_min,state_i,save=True,save_str='_cont')
+elif bang==1 and not os.path.isfile(my_dir+"/unitaries/unitaries_bang"+'.pkl'):
+	Hamiltonian.Unitaries(delta_time,L,J,hz,8.0,var0_max,var0_min,state_i,save=True,save_str='_bang')
 
 
 # initiate learning

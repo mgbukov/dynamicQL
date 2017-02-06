@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.random as random
 
-import Hamiltonian
+import Hamiltonian 
 #import plot_data as plot
 from quspin.operators import exp_op
 from quspin.tools.measurements import ent_entropy
@@ -129,26 +129,6 @@ def find_feature_inds(tilings,S,theta_inds):
 	return theta_inds
 
 
-def Unitaries(delta_time,L,J,hz,action_min,var_max,var_min,state_i):
-
-	# define Hamiltonian
-	b=0.0
-	lin_fun = lambda t: b 
-	H = Hamiltonian.Hamiltonian(L,fun=lin_fun,**{'J':J,'hz':hz})
-
-	# number of unitaries
-	n = int((var_max - var_min)/action_min)
-	
-	# preallocate dict
-	expm_dict = {}
-	for i in range(n+1):
-		print(i)
-		# define matrix exponential; will be changed every time b is overwritten
-		b = state_i[0]+i*action_min
-		expm_dict[i] = exp_op(H,a=-1j*delta_time).get_mat()
-		
-	return expm_dict
-
 
 def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_expl,N_tilings,N_tiles,state_i,h_field,dh_field,bang,
 			   L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f,
@@ -161,6 +141,16 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	2nd row: physics arguments
 	3rd row: optional arguments
 	"""
+
+
+	### define save directory for data
+	# read in local directory path
+	str1=os.getcwd()
+	str2=str1.split('\\')
+	n=len(str2)
+	my_dir = str2[n-1]
+
+
 	######################################################################
 
 	##### physical quantities ######
@@ -183,16 +173,18 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	# define actions
 	if bang:
 		pos_actions=[8.0]; a_str='_bang';
+		exp_dict_dataname = my_dir+"/unitaries/unitaries_bang"+'.pkl'
 	else:
 		pos_actions=[0.1,0.2,0.5,1.0,2.0,4.0,8.0]; a_str='_cont';
+		exp_dict_dataname = my_dir+"/unitaries/unitaries_cont"+'.pkl'
 	
 	neg_actions=[-i for i in pos_actions]
 	actions = np.sort(neg_actions + [0.0] + pos_actions)
 	#del pos_actions,neg_actions
 
 	# pre-calculate unitaries
-	expm_dict=Unitaries(delta_time,L,J,hz,min(pos_actions),max(h_field),min(h_field),state_i)
-	
+	#expm_dict=Hamiltonian.Unitaries(delta_time,L,J,hz,min(pos_actions),max(h_field),min(h_field),state_i)
+	expm_dict=cPickle.load(open( exp_dict_dataname, "rb" ))
 
 	N_actions = len(actions)
 	
@@ -412,13 +404,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	data_params = "_N=%s_Nep=%s_T=%s_L=%s_J=%s_hz=%s_hxi=%s_hxf=%s"   %args
 	data_params+=a_str
 
-	### define save directory for data
-	# read in local directory path
-	str1=os.getcwd()
-	str2=str1.split('\\')
-	n=len(str2)
-	my_dir = str2[n-1]
-	# create directory if non-existant
+	
+	# create  save directory if non-existant
 	save_dir = my_dir+"/data"
 	if not os.path.exists(save_dir):
 	    os.makedirs(save_dir)
@@ -474,13 +461,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		dataname  =  save_dir + "phys_params_data"+data_params+'.pkl'
 		cPickle.dump(phys_params, open(dataname, "wb" ) )
 
-	"""
-	# create plots
-	plot.plot_rewards(Fidelity_ep,Return,Return_ave,'RL_stats',data_params)
-
-	plot.observables(L,t_best,protocol_best,hx_i,hx_f,J,hz,data_params+'_best')
-	plot.observables(L,t_best,protocol_greedy,hx_i,hx_f,J,hz,data_params+'_greedy')
-	"""
+	
 
 
 
