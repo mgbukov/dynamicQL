@@ -11,7 +11,7 @@ import gc
 
 
 # model parameters
-L=200
+L=400
 x = np.linspace(-1.0,1.0,L)
 x0=-0.55 # initial tweezer position
 d_tweezer=-160.0 # potential depth
@@ -25,7 +25,7 @@ psi_i,psi_f = tweezer_hamiltonian.target_states(H_kin,x,x0,d_tweezer)
 
 print "overlap btw initial and target state is:", abs(psi_i.dot(psi_f))
 
-max_t_steps = 60 #120 #max_t_steps_vec[int(sys.argv[3])-1] #40 
+max_t_steps = 80 #60 #max_t_steps_vec[int(sys.argv[3])-1] #40 
 delta_time = 1.0/200.0
 
 ##### RL params #####

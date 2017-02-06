@@ -51,8 +51,8 @@ def explore_beta(t,m,b,T,beta_RL_const=1000.0):
 	"""
 	if (t//T)%2==1:
 		return beta_RL_const
-	elif (float(t)/40).is_integer():
-		return 15.0
+	#elif (float(t)/40).is_integer():
+	#	return 15.0
 	else:
 		return b + m/2.0*(float(t)/T - (t//T)/2.0) 
 	
@@ -180,7 +180,11 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	if bang:
 		pos_actions=[1.1]; a_str='_bang';
 	else:
+<<<<<<< HEAD
+		pos_actions=[0.01,0.02,1.1]; a_str='_cont';
+=======
 		pos_actions=[0.01,0.02,1.0,1.1,1.2]; a_str='_cont';
+>>>>>>> 05fe06716efa94f47b99c7777c8dbb67842b798b
 	
 	neg_actions=[-i for i in pos_actions]
 	actions = np.sort(neg_actions + [0.0] + pos_actions)
