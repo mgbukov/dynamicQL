@@ -20,7 +20,7 @@ def Hamiltonian(L,J,hz,fun=None,fun_args=[]):
 	static = [["zz",zz_int],["z",z_field]]
 	dynamic = [["x",x_field,fun,fun_args]]
 
-	kwargs = {'dtype':np.float64,'basis':basis,'check_symm':False,'check_herm':False}
+	kwargs = {'dtype':np.float64,'basis':basis,'check_symm':False,'check_herm':False,'check_pcon':False}
 	H = hamiltonian(static,dynamic,**kwargs)
 
 	return H
