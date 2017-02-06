@@ -10,6 +10,9 @@ import sys
 import os
 import gc
 
+# make system update output files regularly
+sys.stdout.flush()
+
 max_t_steps_vec=np.linspace(5,50,10,dtype=int)
 
 
@@ -55,8 +58,8 @@ print "initial and final energies are:", E_i, E_f
 #print "initial entanglement is:", ent_entropy(psi_i,H.basis)['Sent']
 print "overlap btw initial and target state is:", abs(psi_i.dot(psi_f))
 
-max_t_steps = 100 #max_t_steps_vec[int(sys.argv[3])-1] #40 
-delta_time = 0.1 #0.05
+max_t_steps = 120 #max_t_steps_vec[int(sys.argv[3])-1] #40 
+delta_time = 0.05 #0.05
 
 ##### RL params #####
 var0_min, var0_max = [-4.0,4.0]
