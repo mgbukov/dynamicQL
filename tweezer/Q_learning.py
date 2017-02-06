@@ -21,9 +21,9 @@ import cPickle
 sys.stdout.flush()
 
 # set pseudorandom generator
-seed = random.randint(0,4294967295)
-random.seed(seed)
-#seed=random.seed(4210221767)
+#seed = random.randint(0,4294967295)
+#random.seed(seed)
+seed=random.seed(2219567281)
 
 print("using seed={}".format(seed))
 
@@ -178,9 +178,13 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 
 	# define actions
 	if bang:
-		pos_actions=[8.0]; a_str='_bang';
+		pos_actions=[1.1]; a_str='_bang';
 	else:
+<<<<<<< HEAD
 		pos_actions=[0.01,0.02,1.1]; a_str='_cont';
+=======
+		pos_actions=[0.01,0.02,1.0,1.1,1.2]; a_str='_cont';
+>>>>>>> 05fe06716efa94f47b99c7777c8dbb67842b798b
 	
 	neg_actions=[-i for i in pos_actions]
 	actions = np.sort(neg_actions + [0.0] + pos_actions)
@@ -268,6 +272,10 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			else:
 				A = A_greedy
 
+			# quench to final Hamiltonian at last time step
+			if t_step == max_t_steps-1:
+				A = x0 - S[0]
+
 			# find the index of A
 			indA = np.searchsorted(actions,A)
 			
@@ -282,13 +290,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			# define new state
 			S_prime = S.copy()
 			S_prime[0] += A
-			"""
-			# calculate new field value 
-			if t_step == max_t_steps-1:
-				S_prime[0] = -0.55
-			"""		
-			
-			
+
 			
 			# all physics happens here
 			x_tweezer = S_prime[0] # update position of tweezer
@@ -305,10 +307,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			R *= 0.0
 			if t_step == max_t_steps-1:
 				# calculate final fidelity and give it as a reward
-				#EGS = H.eigsh(k=1,which='SA',maxiter=1E10,return_eigenvectors=False).squeeze()
 				R += abs(psi.conj().dot(psi_f))**2 #-(H.matrix_ele(psi,psi).real-EGS) #-ent_entropy(psi,H.basis)['Sent'] #
-				
-				#print(R)
+
 
 			################################################################################
 			################################################################################
