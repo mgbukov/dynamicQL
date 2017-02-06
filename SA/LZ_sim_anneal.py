@@ -59,7 +59,6 @@ def main():
         N_time_step: number of time steps
         action_set: array of possible actions
         outfile_name: file where data is being dumped (via pickle) 
-        max_fid_eval: maximum number of fidelity evaluations
         delta_t: time scale
         N_restart: number of restart for the annealing
         verbose: If you want the program to print to screen the progress
@@ -71,22 +70,21 @@ def main():
     """
     #----------------------------------------
     # DEFAULT PARAMETERS
-    L = 1 # system size
-    J = 1.0/0.809 # zz interaction
-    hz = 1.0 #0.9045/0.809 #1.0 # hz field
-    hx_i = -4.0# -1.0 # initial hx coupling
-    hx_initial_state= -1.0 # initial state
-    hx_final_state = 1.0 #+1.0 # final hx coupling
+    J = -1.0  # zz interaction
+    hz = 1.0  #0.9045/0.809 #1.0 # hz field
+    hx_i = -4.0 # -1.0 # initial hx coupling
     act_set_name='bang-bang8'
     Ti=0.04 # initial temperature (for annealing)
     
-    N_quench=5
-    N_time_step=20
+    L = 10 # system size
+    hx_initial_state= -2.0 # initial state
+    hx_final_state = 2.0 #+1.0 # final hx coupling
+    N_quench=10
+    N_time_step=40
     outfile_name='first_test.pkl'
     action_set=all_action_sets['bang-bang8']
-    max_fid_eval=3000
     delta_t=0.05
-    N_restart=5
+    N_restart=4
     
     hx_max=4
     h_set=compute_h_set(hx_i,hx_max)
@@ -96,26 +94,24 @@ def main():
     
     #----------------------------------------
     
-    print("-------------------- > Parameters < --------------------")
-    print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx(t=0) \t\t %.3f\nhx_max \t\t\t %.3f "%(L,J,hz,hx_i,hx_max))
-    print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state,hx_final_state))
-    print("N_quench \t\t %i\ndelta_t \t\t %.2f\nN_restart \t\t %i"%(N_quench,delta_t,N_restart))
     
     if len(sys.argv)>1:
         """ 
             if len(sys.argv) > 1 : run from command line -- check command line for parameters 
         """        
-        N_quench,N_time_step,action_set,outfile_name,max_fid_eval,delta_t,N_restart,verbose,act_set_name=ut.read_command_line_arg(sys.argv,all_action_sets)
-        
+        L, hx_initial_state, hx_final_state, N_quench,N_time_step,action_set,outfile_name,delta_t,N_restart,verbose,act_set_name=ut.read_command_line_arg(sys.argv,all_action_sets)
+
+    print("-------------------- > Parameters < --------------------")
+    print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx(t=0) \t\t %.3f\nhx_max \t\t\t %.3f "%(L,J,hz,hx_i,hx_max))
+    print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state,hx_final_state))
+    print("N_quench \t\t %i\ndelta_t \t\t %.2f\nN_restart \t\t %i"%(N_quench,delta_t,N_restart))
     print("N_time_step \t\t %i"%N_time_step)
     print("Total_time \t\t %.2f"%(N_time_step*delta_t))
     print("Output file \t\t %s"%('data/'+outfile_name))
-    #print("max_fid_eval (%s) \t %i"%(str(FIX_NUMBER_FID_EVAL),max_fid_eval))
     print("Action_set \t <- \t %s"%np.round(action_set,3))
     print("# of possible actions \t %i"%len(action_set))
-    #print("Fixing no of fid eval \t %s"%str(FIX_NUMBER_FID_EVAL))
     print("Using RL constraints \t %s"%str(RL_CONSTRAINT))
-    print("Fidelity MODE \t %s"%('fast' if fidelity_fast else 'standard'))
+    print("Fidelity MODE \t\t %s"%('fast' if fidelity_fast else 'standard'))
 
     param={'J':J,'hz':hz,'hx':hx_i} # Hamiltonian kwargs 
     hx_discrete=[0]*N_time_step # dynamical part at every time step (initiaze to zero everywhere)
@@ -129,14 +125,7 @@ def main():
     hx_discrete[0]=hx_final_state # just a trick to get final state
     _, psi_target = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=0
-
-    #===========================================================================
-    # if FIX_NUMBER_FID_EVAL:
-    #     # Determines the number of quenches needed to anneal w/o exceeding the max number of fidelity evaluations.
-    #     N_quench=(max_fid_eval-5*sweep_size)//sweep_size
-    #     assert N_quench >= 0
-    #     print("N_quench (FIX)\t\t%i"%N_quench)
-    #===========================================================================
+    print("Initial overlap is \t %.5f"%(abs(np.sum(np.conj(psi_i)*psi_target))**2))
 
     sweep_size=N_time_step*len(action_set)
     
@@ -151,8 +140,10 @@ def main():
             }
     
     if param_SA['fidelity_fast'] :
-        print("Precomputing evolution matrices ...")
+        print("\nPrecomputing evolution matrices ...")
+        start=time.time()
         precompute_expmatrix(h_set,H,delta_t)
+        print("Done in %.4f seconds"%(time.time()-start))
         
     if outfile_name=="auto": outfile_name=ut.make_file_name(param_SA)
     
@@ -185,6 +176,7 @@ def main():
         print("Saved iteration --> %i to %s"%(it,'data/%s'%outfile_name))
         print("Iteration run time --> %.2f s"%(time.time()-start_time))
     
+    print("\n Thank you and goodbye !")
     
 def Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option='standard'):
     """
@@ -219,8 +211,8 @@ def precompute_expmatrix(h_set,H,delta_t):
     hx_dis_init=hx_discrete[0]
     for h in h_set:
         hx_discrete[0]=h
-        matrix_dict[h]=expm(H.todense(time=0)*-1j*delta_t)
-        
+        matrix_dict[h]=np.asarray(exp_op(H,a=-1j*delta_t).get_mat().todense())
+
     hx_discrete[0]=hx_dis_init # resetting to it's original value
     
 def fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
@@ -234,7 +226,7 @@ def fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
     psi_evolve=psi_i.copy()
     for t in range(N_time_step):
         psi_evolve = matrix_dict[hx_discrete[t]].dot(psi_evolve)
-    
+
     return abs(np.sum(np.conj(psi_evolve)*psi_target))**2
 
 
@@ -443,7 +435,7 @@ def simulate_anneal(params):
         step+=1.0
         T=Ti*(1.0-step/N_quench)
     
-    print("SGD: Performing up to 5 sweeps (1 sweep=%i evals) at zero-temperature"%sweep_size)
+    print("\n[SGD] : Performing up to 5 sweeps (1 sweep=%i evals) at zero-temperature"%sweep_size)
     
     n_iter_without_progress=0
     propose_update=np.arange(N_time_step)
@@ -477,11 +469,12 @@ def simulate_anneal(params):
             old_hx_discrete=new_hx_discrete
             old_action_protocol=new_action_protocol
             old_fid=new_fid
+        
         if _%10 == 0:
-            '{:>8} {:>8} {:>8}'
-            print('{:<25} {:<25} {:<20}'.format("Zero T iteration # %i"%_,"Best fidelity: %.4f"%best_fid,"Fidelity count: %i"%count_fid_eval))
-        if n_iter_without_progress > N_time_step-1: print("Reached local minima with probability 1");break;
-    print("~~ Done ~~")
+            print("Current temperature: %.4f\tBest fidelity: %.4f\tFidelity count: %i"%(T,best_fid,count_fid_eval))
+
+        if n_iter_without_progress > N_time_step-1: break
+    print("=====> DONE <=====")
     
     enablePrint()
     return count_fid_eval,best_fid,best_action_protocol,best_hx_discrete
@@ -493,7 +486,7 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 class custom_protocol():
-    def __init__(self,J=1.236,L=1,hz=1.0,hx_init_state=-1.0,hx_target_state=1.0,
+    def __init__(self,J=-1.0,L=1,hz=1.0,hx_init_state=-1.0,hx_target_state=1.0,
                     delta_t=0.05,hx_i=-4.,hx_max=4.,action_set_=[-8.,0.,8.],
                     option='standard'):
         
@@ -512,6 +505,8 @@ class custom_protocol():
         _, self.psi_i = self.H.eigsh(time=0,k=1,which='SA')
         hx_discrete[0]=hx_target_state # just a trick to get final state
         _, self.psi_target = self.H.eigsh(time=0,k=1,which='SA')
+
+        print("--> Overlap between initial and target state %.4f"%(abs(np.sum(np.conj(self.psi_i)*self.psi_target))**2))
         
         if option is 'fast':
             h_set=compute_h_set(hx_i,hx_max)
@@ -527,8 +522,6 @@ class custom_protocol():
             return Fidelity(self.psi_i,self.H,N_time_step,self.delta_t,self.psi_target,option='fast')    
         else:
             assert False,'Wrong option, use either fast or standard'
-        
-        
 # Run main program !
 if __name__ == "__main__":
     main()
