@@ -1,3 +1,6 @@
+# job files
+job*
+
 # compliled python code #
 *.pyc
 *.pyf
@@ -23,6 +26,10 @@ tags
 log/
 # data files
 data/
+
+# unitaries pkl files
+unitaries/
+
 # plot file
 plots/
 # cython source file #
