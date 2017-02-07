@@ -71,7 +71,7 @@ def main():
     """
     #----------------------------------------
     # DEFAULT PARAMETERS
-    L = 16 # system size
+    L = 4 # system size
     J = -1.0  # zz interaction
     hz = 1.0  #0.9045/0.809 #1.0 # hz field
     hx_i = -4.0 # -1.0 # initial hx coupling
