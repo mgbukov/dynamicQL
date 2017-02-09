@@ -1,6 +1,6 @@
 # job files
 job*
-
+j_*
 # compliled python code #
 *.pyc
 *.pyf
