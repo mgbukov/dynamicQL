@@ -28,7 +28,7 @@ log/
 data/
 
 # unitaries pkl files
-unitaries/
+*.dat
 
 # plot file
 plots/
