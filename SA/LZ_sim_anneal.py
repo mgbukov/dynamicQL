@@ -223,7 +223,7 @@ def precompute_expmatrix(h_set,H,delta_t,L=2):
         for h in h_set:
             hx_discrete[0]=h
             matrix_dict[h]=np.asarray(exp_op(H,a=-1j*delta_t).get_mat().todense())
-
+        
         hx_discrete[0]=hx_dis_init # resetting to it's original value
         with open(file_name,"wb") as f:
             pickle.dump(matrix_dict,f)
@@ -523,7 +523,7 @@ class custom_protocol():
         
         if option is 'fast':
             h_set=compute_h_set(hx_i,hx_max)
-            precompute_expmatrix(h_set,self.H,delta_t,L=param['L'])
+            precompute_expmatrix(h_set,self.H,delta_t,L=L)
         
     def evaluate_protocol_fidelity(self,hx_protocol): 
         global hx_discrete       
@@ -535,6 +535,8 @@ class custom_protocol():
             return Fidelity(self.psi_i,self.H,N_time_step,self.delta_t,self.psi_target,option='fast')    
         else:
             assert False,'Wrong option, use either fast or standard'
+
+
 # Run main program !
 if __name__ == "__main__":
     main()
