@@ -142,7 +142,7 @@ def main():
     if param_SA['fidelity_fast'] :
         print("\nPrecomputing evolution matrices ...")
         start=time.time()
-        precompute_expmatrix(h_set,H,delta_t)
+        precompute_expmatrix(h_set,H,delta_t,L=param_SA['L'])
         print("Done in %.4f seconds"%(time.time()-start))
         
     if outfile_name=="auto": outfile_name=ut.make_file_name(param_SA)
@@ -200,20 +200,33 @@ def compute_h_set(hx_i,hx_max):
     tmp=np.array([hx_i+a for a in action_set])
     return tmp[(tmp < abs(hx_max)+0.0001) & (tmp > -abs(hx_max)-0.0001)]
     
-def precompute_expmatrix(h_set,H,delta_t):
+def precompute_expmatrix(h_set,H,delta_t,L=2):
     """
+
     Purpose:
-        Precomputes the evolution matrix and stores them in a global dictionary        
-    """    
+        Precomputes the evolution matrix and stores them in a global dictionary
+        If unitary.dat is available, reads the matrices from this file
+
+    """
+
+    import os.path
     from scipy.linalg import expm
     global matrix_dict
-    matrix_dict={}
-    hx_dis_init=hx_discrete[0]
-    for h in h_set:
-        hx_discrete[0]=h
-        matrix_dict[h]=np.asarray(exp_op(H,a=-1j*delta_t).get_mat().todense())
+    file_name="unitaries/unitary_L%i.dat"%L
 
-    hx_discrete[0]=hx_dis_init # resetting to it's original value
+    if os.path.isfile(file_name):
+        with open(file_name,"rb") as f:
+            matrix_dict=pickle.load(f)
+    else:
+        matrix_dict={}
+        hx_dis_init=hx_discrete[0]
+        for h in h_set:
+            hx_discrete[0]=h
+            matrix_dict[h]=np.asarray(exp_op(H,a=-1j*delta_t).get_mat().todense())
+
+        hx_discrete[0]=hx_dis_init # resetting to it's original value
+        with open(file_name,"wb") as f:
+            pickle.dump(matrix_dict,f)
     
 def fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
     """
@@ -510,7 +523,7 @@ class custom_protocol():
         
         if option is 'fast':
             h_set=compute_h_set(hx_i,hx_max)
-            precompute_expmatrix(h_set,self.H,delta_t)
+            precompute_expmatrix(h_set,self.H,delta_t,L=param['L'])
         
     def evaluate_protocol_fidelity(self,hx_protocol): 
         global hx_discrete       
