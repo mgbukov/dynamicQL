@@ -14,8 +14,10 @@ import cPickle
 def Hamiltonian(L,J,hz,fun=None,fun_args=[]):
 	######## define physics
 	basis = spin_basis_1d(L=L,kblock=0,pblock=1,pauli=False) #
-			
+	
+
 	zz_int =[[J,i,(i+1)%L] for i in range(L)]
+
 	if L==1:
 		x_field=[[1.0,i] for i in range(L)]
 		z_field=[[hz,i] for i in range(L)]
@@ -64,7 +66,7 @@ def Unitaries(delta_time,L,J,hz,action_min,var_max,var_min,state_i,save=False,sa
 		save_dir="unitaries/"
 
 		# save file
-		dataname  = save_dir + "unitaries"+save_str+'.pkl'
+		dataname  = save_dir + "unitaries_L={}".format(L)+save_str+'.pkl'
 		cPickle.dump(expm_dict, open(dataname, "wb" ) )
 
 	else:

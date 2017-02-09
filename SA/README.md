@@ -20,7 +20,7 @@ This will run the code with the default parameters. You can also try the followi
 ```
 python LZ_sim_anneal.py 8 -2. 2. 30 20 bang-bang8 out.txt 0.05 100 False
 ```
-This will run simulated annealing for 8 sites, from hx=-2. to h=2.0 state with 30 quenches and 20 time setps. The output file is out.txt and dt=0.05, with 100 restart. Verbose is set to false.
+This will run simulated annealing for 8 sites, from hx=-2. to h=2.0 state with 30 quenches and 20 time steps. The output file is out.txt and dt=0.05, with 100 restart. Verbose is set to false.
 
 Finally, for more details on the meaning of those parameters (from the command line) use:
 ```
