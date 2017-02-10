@@ -101,7 +101,8 @@ def MB_observables(psi,times,protocol,pos_actions,h_field,L,J=-1.0,hx_i=-2.0,hx_
 
     if L<2:
     	print("function only analyses manybody chains! Exiting...")
-    	exit()
+    	return [],[],[],[],[]
+    	
     # read in local directory path
     str1=os.getcwd()
     str2=str1.split('\\')
