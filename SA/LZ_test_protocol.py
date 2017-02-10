@@ -13,13 +13,16 @@ import time
 import numpy as np
 import sys
 
-L=16
-hx_tmp=list([-4.,-4.,-4.,4.,4.,4.,4.,4.,-4.,4.,4.])
+L=10
+hx_tmp=list([ 4.,-4.,4.,4.,4.,-4., -4., -4.,  4., -4., -4.,  4., -4., -4.,  4.,  4., -4.,  4.,
+ -4.,  4., -4.,  4., -4.,  4., -4., -4.,  4., -4.,  4.,  4.,  4.,  4.,  4.,  4., -4., -4.,
+ -4.,  4., -4., -4.,])
+
 action_set=[-8.,0.,8.]
 
 custom_prot=LZ.custom_protocol(
     L=L, hz=1.0, hx_init_state=-2.0, hx_target_state=2.0,
-    delta_t=0.05,hx_i=-4.,hx_max=4.,action_set_=[-8.,0.,8.],
+    delta_t=0.05, hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.],
     option='fast'
 )
 print(custom_prot.evaluate_protocol_fidelity(hx_tmp))

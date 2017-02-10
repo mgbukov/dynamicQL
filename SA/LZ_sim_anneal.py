@@ -29,6 +29,7 @@ import pickle
 import Hamiltonian_alex as Hamiltonian
 from quspin.operators import exp_op
 import time
+from analysis.compute_observable import MB_observables
 
 np.set_printoptions(precision=4)
     
@@ -142,7 +143,7 @@ def main():
     if param_SA['fidelity_fast'] :
         print("\nPrecomputing evolution matrices ...")
         start=time.time()
-        precompute_expmatrix(h_set,H,delta_t,L=param_SA['L'])
+        precompute_expmatrix(param_SA, h_set, H)
         print("Done in %.4f seconds"%(time.time()-start))
         
     if outfile_name=="auto": outfile_name=ut.make_file_name(param_SA)
@@ -161,13 +162,16 @@ def main():
         start_time=time.time()
     
         count_fid_eval,best_fid,best_action_protocol,best_hx_discrete=simulate_anneal(param_SA)
-        result=count_fid_eval,best_fid,best_action_protocol,best_hx_discrete
+    
+        result=[count_fid_eval,best_fid,best_action_protocol,best_hx_discrete]
         print("\n----------> RESULT FOR ANNEALING NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%count_fid_eval)
         print("Best fidelity \t\t\t%.4f"%best_fid)
         print("Best action_protocol\t\t",best_action_protocol)
         print("Best hx_protocol\t\t",best_hx_discrete)
-        
+
+        _,E,delta_E,Sd,Sent = MB_observables(best_hx_discrete, param_SA, matrix_dict, fin_vals=True)
+        result = result + [E, delta_E, Sd, Sent]
         all_results.append(result)
         
         with open('data/%s'%outfile_name,'wb') as pkl_file:
@@ -200,7 +204,7 @@ def compute_h_set(hx_i,hx_max):
     tmp=np.array([hx_i+a for a in action_set])
     return tmp[(tmp < abs(hx_max)+0.0001) & (tmp > -abs(hx_max)-0.0001)]
     
-def precompute_expmatrix(h_set,H,delta_t,L=2):
+def precompute_expmatrix(param_SA, h_set, H):
     """
 
     Purpose:
@@ -209,21 +213,42 @@ def precompute_expmatrix(h_set,H,delta_t,L=2):
 
     """
 
+    L=param_SA['L']
+    J=param_SA['J']
+    hz=param_SA['hz']
+    hx_final_state=param_SA['hx_final_state']
+    delta_t=param_SA['delta_t']
+
     import os.path
     from scipy.linalg import expm
     global matrix_dict
     file_name="unitaries/unitary_L%i.dat"%L
+    file_eigenvector="unitaries/eigenvector_FS_L%i.dat"%L
 
     if os.path.isfile(file_name):
         with open(file_name,"rb") as f:
             matrix_dict=pickle.load(f)
+            f.close()
+        with open(file_eigenvector,"rb") as f:
+             param_SA['V_target']=pickle.load(f)
     else:
         matrix_dict={}
         hx_dis_init=hx_discrete[0]
         for h in h_set:
-            hx_discrete[0]=h
+            hx_discrete[0]=h #  fix it later !
             matrix_dict[h]=np.asarray(exp_op(H,a=-1j*delta_t).get_mat().todense())
-        
+
+        # define matrix exponential
+        # calculate final basis
+
+        hx_discrete[0]=hx_final_state
+        _,V_target=H.eigh()
+        param_SA['V_target']=V_target
+
+        with open(file_eigenvector,"wb") as f:
+            pickle.dump(V_target,f)
+            f.close()
+
         hx_discrete[0]=hx_dis_init # resetting to it's original value
         with open(file_name,"wb") as f:
             pickle.dump(matrix_dict,f)
@@ -510,6 +535,7 @@ class custom_protocol():
         self.option=option
         self.delta_t=delta_t
         param={'J':J,'hz':hz,'hx':hx_init_state} # Hamiltonian kwargs 
+        param_SA={'J':J, 'hz':hz, 'L':L, 'delta_t':delta_t, 'hx_final_state':hx_target_state}
         hx_discrete=[0] # dynamical part at every time step (initiaze to zero everywhere)
         # full system hamiltonian
         self.H,_ = Hamiltonian.Hamiltonian(L,fct=hx_vs_t,**param)
@@ -519,11 +545,13 @@ class custom_protocol():
         hx_discrete[0]=hx_target_state # just a trick to get final state
         _, self.psi_target = self.H.eigsh(time=0,k=1,which='SA')
 
+        param_SA['hx_target_state']=self.psi_target
+
         print("--> Overlap between initial and target state %.4f"%(abs(np.sum(np.conj(self.psi_i)*self.psi_target))**2))
         
         if option is 'fast':
-            h_set=compute_h_set(hx_i,hx_max)
-            precompute_expmatrix(h_set,self.H,delta_t,L=L)
+            h_set=compute_h_set(hx_i, hx_max)
+            precompute_expmatrix(param_SA, h_set, self.H)
         
     def evaluate_protocol_fidelity(self,hx_protocol): 
         global hx_discrete       

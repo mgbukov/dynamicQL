@@ -12,11 +12,11 @@ Computes various observables for the LZ problem
 
 import sys
 import numpy as np
-from tsne.tsne import TSNE
+from quspin.tools.measurements import ent_entropy
 
 def main():
-     
-    
+    print("hello")
+
 def Ed_Ad_OP(h_protocol,normalize_factor):
     """
     Purpose:
@@ -86,6 +86,74 @@ def run_tsne(h_protocol):
               init='random', verbose=1, random_state=None, method='exact', angle=0.5)
     
     return tsne.fit_transform(h_protocol)
-    
+
+def MB_observables(protocol, param_SA, matrix_dict, fin_vals=False):
+
+    global hx_discrete
+    """
+    this function returns instantaneous observalbes during ramp 
+    OR 
+    when fin_vals=True only the final values at the end of the ramp
+    ----------------
+    observables:
+    ----------------
+    Fidelity
+    E: energy above instantaneous GS
+    delta_E: energy fluctuations
+    Sd: diagonal entropy
+    Sent: entanglement entropy
+    """
+
+    # calculate final basis
+    V_target=param_SA['V_target']
+    hx_i=param_SA['hx_initial_state']
+    hx_f=param_SA['hx_final_state']
+    J=param_SA['J']
+    L=param_SA['L']
+    hz=param_SA['hz']
+    H=param_SA['H']
+
+    # calculate initial state
+    psi=param_SA['psi_i']
+    psif=param_SA['psi_target'].squeeze()
+
+
+    psi=psi.squeeze()
+    # define Sent subsystem
+    subsys=[i for i in range(L//2)]
+
+    # preallocate variables
+    Fidelity,E,delta_E,Sd,Sent=([],[],[],[],[])
+
+    i=0
+    hx_discrete=protocol
+    while True:
+        # instantaneous fidelity
+        Fidelity.append( abs(psi.conj().dot(V_target[:,0]))**2 )
+        # excess energy above inst energy
+        EGS = H.eigsh(k=1, which='SA', maxiter=1E10, return_eigenvectors=False)
+        E.append( H.matrix_ele(psi,psi).real/L - EGS/L )
+        # inst energy density
+        delta_E.append( np.sqrt( (H(time=0)*H).matrix_ele(psi,psi) - H.matrix_ele(psi,psi)**2).real/L )
+        # diagonal entropy in target basis
+        pn = abs( V_target.conj().T.dot(psi) )**2.0 + np.finfo(psi[0].dtype).eps
+        Sd.append( -pn.dot(np.log(pn))/L)
+        # entanglement entropy
+        Sent.append( ent_entropy(psi,H.basis,chain_subsys=subsys)['Sent'] )
+        
+        if i == len(protocol)-1:
+            break
+        else:
+            # go to next step
+            b=hx_discrete[i] # --> induces a change in H
+            psi=matrix_dict[b].dot(psi)
+            i+=1
+            
+    if fin_vals:
+        return Fidelity[-1],E[-1],delta_E[-1],Sd[-1],Sent[-1]
+    else:
+        return Fidelity,E,delta_E,Sd,Sent
+
+
 if __name__=="__main__":
     main()
