@@ -1,6 +1,6 @@
 # job files
 job*
-
+j_*
 # compliled python code #
 *.pyc
 *.pyf
@@ -8,6 +8,7 @@ job*
 *.txt
 test.py
 bh_tsne
+submit_scc.sh
 result.dat
 data.dat
 tags
@@ -27,7 +28,7 @@ log/
 data/
 
 # unitaries pkl files
-unitaries/
+*.dat
 
 # plot file
 plots/

@@ -16,6 +16,7 @@ sys.stdout.flush()
 
 # set pseudorandom generator
 seed = random.randint(0,4294967295)
+#seed=1
 random.seed(seed)
 
 
@@ -173,10 +174,10 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	# define actions
 	if bang:
 		pos_actions=[8.0]; a_str='_bang';
-		exp_dict_dataname = my_dir+"/unitaries/unitaries_bang"+'.pkl'
+		exp_dict_dataname = my_dir+"/unitaries/unitaries_L={}_bang".format(L)+'.pkl'
 	else:
 		pos_actions=[0.1,0.2,0.5,1.0,2.0,4.0,8.0]; a_str='_cont';
-		exp_dict_dataname = my_dir+"/unitaries/unitaries_cont"+'.pkl'
+		exp_dict_dataname = my_dir+"/unitaries/unitaries_L={}_cont".format(L)+'.pkl'
 	
 	neg_actions=[-i for i in pos_actions]
 	actions = np.sort(neg_actions + [0.0] + pos_actions)
@@ -383,10 +384,15 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	protocol_best,t_best = best_protocol(best_actions,state_i[0],delta_time)
 	protocol_greedy,t_greedy = greedy_protocol(theta,tilings,actions,state_i[0],delta_time,max_t_steps,h_field)
 			
-			#print protocol_best
-			#print protocol_greedy
 
-	# save data
+	obs_best = Hamiltonian.MB_observables(psi_i,t_best,protocol_best,pos_actions,h_field,
+														L,J=J,hx_i=hx_i,hx_f=hx_f,hz=hz,
+														fin_vals=False,bang=bang)
+	
+	Data_obs_best = np.asarray( ( np.append(t_best, t_best[-1]+delta_time) , )+obs_best).T
+
+
+	##### save data
 	Data_fid = np.zeros((N_episodes,3))
 	
 	Data_fid[:,0] = Fidelity_ep
@@ -418,6 +424,9 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		# as txt format
 		dataname  = save_dir + "RL_data"+data_params+'.txt'
 		np.savetxt(dataname,Data_fid)
+
+		dataname  = save_dir + "obs_data_best"+data_params+'.txt'
+		np.savetxt(dataname,Data_obs)
 
 		dataname  = save_dir + "protocol_data"+data_params+'.txt'
 		np.savetxt(dataname,Data_protocol)

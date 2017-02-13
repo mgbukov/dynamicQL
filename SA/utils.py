@@ -157,11 +157,15 @@ def split_data(result_all,verbose=True):
 	hx_protocols=np.empty((N_sample,N_time_step),dtype=np.float32)
 	count_fid_eval=np.empty((N_sample,),dtype=np.int32)
 	best_fid=np.empty((N_sample,),dtype=np.float32)
-	
+	E=np.empty((N_sample,),dtype=np.float32)
+	delta_E=np.empty((N_sample,),dtype=np.float32)
+	Sd=np.empty((N_sample,),dtype=np.float32)
+	Sent=np.empty((N_sample,),dtype=np.float32)
+
 	for result,i in zip(result_all,range(N_sample)):
-		count_fid_eval[i],best_fid[i],action_protocols[i],hx_protocols[i]=result    
-	
-	return count_fid_eval,best_fid,action_protocols,hx_protocols
+		count_fid_eval[i],best_fid[i],action_protocols[i],hx_protocols[i], E[i], delta_E[i], Sd[i], Sent[i] = result 
+
+	return count_fid_eval,best_fid,action_protocols,hx_protocols, E, delta_E, Sd, Sent
 
 def print_files(params_SA,root): 
 	print("hello")
@@ -181,14 +185,18 @@ def gather_data(params_SA,root):
 		with open(file_name,'rb') as f:
 			[_,result_all]=pickle.load(f)
 	
-		n_fid,fid,a_prot,h_prot=split_data(result_all,verbose=False)
+		n_fid, fid, a_prot, h_prot, E, delta_E, Sd, Sent=split_data(result_all,verbose=False)
 	
 		parsed_results={
-					"n_fid":n_fid,
-					"fid":fid,
-					"action_protocol":a_prot,
-					"h_protocol":h_prot,
-					}
+					"n_fid" : n_fid,
+					"fid" : fid,
+					"action_protocol" : a_prot,
+					"h_protocol" : h_prot,
+					"E" : E,
+					"delta_E" : delta_E,
+					"Sd" : Sd,
+					"Sent" : Sent
+		}
 		return parsed_results
 		
 def check_version():

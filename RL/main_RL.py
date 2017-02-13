@@ -24,7 +24,7 @@ max_t_steps_vec=np.linspace(5,50,10,dtype=int)
 
 
 # define model params
-L = 4 # system size
+L = 2 # system size
 if L==1:
 	J = 0.0 # required by PBC
 	hz = 1.0
@@ -42,6 +42,7 @@ lin_fun = lambda t: b
 # define Hamiltonian
 H_params = {'J':J,'hz':hz}
 H = Hamiltonian.Hamiltonian(L,fun=lin_fun,**H_params)
+
 
 # calculate initial state
 if L==1:
@@ -65,7 +66,6 @@ print "number of states is:", H.Ns
 print "initial and final energies are:", E_i, E_f
 #print "initial entanglement is:", ent_entropy(psi_i,H.basis)['Sent']
 print "overlap btw initial and target state is:", abs(psi_i.dot(psi_f)**2)
-
 
 max_t_steps = 120 #max_t_steps_vec[int(sys.argv[3])-1] #40 
 delta_time = 0.05 #0.05
@@ -108,11 +108,12 @@ physics_params = (L,max_t_steps,delta_time,J,hz,hx_i,hx_f,psi_i,psi_f)
 
 
 ##### pre-calculate unitaries
-if bang==0 and not os.path.isfile(my_dir+"/unitaries/unitaries_cont"+'.pkl'):
+if bang==0 and not os.path.isfile(my_dir+"/unitaries/unitaries_L={}_cont".format(L)+'.pkl'):
 	Hamiltonian.Unitaries(delta_time,L,J,hz,0.1,var0_max,var0_min,state_i,save=True,save_str='_cont')
-elif bang==1 and not os.path.isfile(my_dir+"/unitaries/unitaries_bang"+'.pkl'):
+elif bang==1 and not os.path.isfile(my_dir+"/unitaries/unitaries_L={}_bang".format(L)+'.pkl'):
 	Hamiltonian.Unitaries(delta_time,L,J,hz,8.0,var0_max,var0_min,state_i,save=True,save_str='_bang')
 
+#exit()
 
 # initiate learning
 Q_learning(*(RL_params+physics_params),save=True)
