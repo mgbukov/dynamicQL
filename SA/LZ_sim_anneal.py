@@ -153,11 +153,18 @@ def main():
                 'hx_initial_state','hx_final_state','L','J','hz','action_set'
                 ]
     
-    dict_to_save_parameters=dict(zip(to_save_par,[param_SA[p] for p in to_save_par]))
+    file_content=ut.read_current_results('data/%s'%outfile_name)
     
-    all_results=[]
+    # Read current data if it exists
+    if file_content :
+        dict_to_save_parameters, all_results = file_content
+        N_current_restart = len(all_results)
+    else :
+        dict_to_save_parameters = dict(zip(to_save_par,[param_SA[p] for p in to_save_par]))
+        all_results=[]
+        N_current_restart = 0
     
-    for it in range(N_restart):
+    for it in range(N_current_restart, N_restart):
         print("\n\n-----------> Starting new iteration <-----------")
         start_time=time.time()
     
@@ -171,10 +178,11 @@ def main():
         print("Best hx_protocol\t\t",best_hx_discrete)
 
         _,E,delta_E,Sd,Sent = MB_observables(best_hx_discrete, param_SA, matrix_dict, fin_vals=True)
-        result = result + [E, delta_E, Sd, Sent]
+        result = result + [E, delta_E, Sd, Sent] # Appending Energy, Energy fluctuations, Diag. entropy, Ent. entropy
         all_results.append(result)
         
         with open('data/%s'%outfile_name,'wb') as pkl_file:
+            ## Here read first then save, stop if reached quota
             pickle.dump([dict_to_save_parameters,all_results],pkl_file);pkl_file.close()
             
         print("Saved iteration --> %i to %s"%(it,'data/%s'%outfile_name))
