@@ -131,7 +131,7 @@ def MB_observables(protocol, param_SA, matrix_dict, fin_vals=False):
         # instantaneous fidelity
         Fidelity.append( abs(psi.conj().dot(V_target[:,0]))**2 )
         # excess energy above inst energy
-        EGS = H.eigsh(k=1, which='SA', maxiter=1E10, return_eigenvectors=False)
+        EGS = H.eigsh(k=1, which='SA', maxiter=1E10, return_eigenvectors=False)[0]
         E.append( H.matrix_ele(psi,psi).real/L - EGS/L )
         # inst energy density
         delta_E.append( np.sqrt( (H(time=0)*H).matrix_ele(psi,psi) - H.matrix_ele(psi,psi)**2).real/L )

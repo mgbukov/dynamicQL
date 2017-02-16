@@ -113,6 +113,7 @@ if bang==0 and not os.path.isfile(my_dir+"/unitaries/unitaries_L={}_cont".format
 elif bang==1 and not os.path.isfile(my_dir+"/unitaries/unitaries_L={}_bang".format(L)+'.pkl'):
 	Hamiltonian.Unitaries(delta_time,L,J,hz,8.0,var0_max,var0_min,state_i,save=True,save_str='_bang')
 
+#exit()
 
 # initiate learning
 Q_learning(*(RL_params+physics_params),save=True)
