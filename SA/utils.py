@@ -220,12 +220,12 @@ def default_parameters():
 	return param
 			
 
-def read_current_results(filename):
-
-
-	
+def read_current_results(file_name):
+	"""
+		Read current data in filename
+	"""
 	if os.path.isfile(file_name):
-		with open(filename,'rb') as pkl_file:
+		with open(file_name,'rb') as pkl_file:
 			file_content=pickle.load(pkl_file) # file_content = [dict_par,all_results]
 			pkl_file.close()
 		return file_content

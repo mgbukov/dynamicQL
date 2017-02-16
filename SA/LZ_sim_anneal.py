@@ -159,6 +159,7 @@ def main():
     if file_content :
         dict_to_save_parameters, all_results = file_content
         N_current_restart = len(all_results)
+        print("Data with %i samples available !" % N_current_restart) 
     else :
         dict_to_save_parameters = dict(zip(to_save_par,[param_SA[p] for p in to_save_par]))
         all_results=[]
