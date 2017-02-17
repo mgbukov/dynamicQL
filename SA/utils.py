@@ -6,6 +6,8 @@ Created on Jan 2 , 2017
 '''
 #from lib2to3.fixer_util import Number
 import numpy as np
+import os.path
+import pickle
 
 def check_sys_arg(argv):
 	import sys
@@ -167,17 +169,11 @@ def split_data(result_all,verbose=True):
 
 	return count_fid_eval,best_fid,action_protocols,hx_protocols, E, delta_E, Sd, Sent
 
-def print_files(params_SA,root): 
-	print("hello")
-
-
 def gather_data(params_SA,root):
 	"""
 	Purpose:
 		Gather data produced by LZ_sim_anneal in nice format (dictionary, mapping param_values to the corresponding result)
 	"""	
-	import pickle
-	import os.path
 	
 	file_name=root+make_file_name(params_SA)
 	
@@ -185,7 +181,7 @@ def gather_data(params_SA,root):
 		with open(file_name,'rb') as f:
 			[_,result_all]=pickle.load(f)
 	
-		n_fid, fid, a_prot, h_prot, E, delta_E, Sd, Sent=split_data(result_all,verbose=False)
+		n_fid, fid, a_prot, h_prot, E, delta_E, Sd, Sent = split_data(result_all,verbose=False)
 	
 		parsed_results={
 					"n_fid" : n_fid,
@@ -224,3 +220,12 @@ def default_parameters():
 	return param
 			
 
+def read_current_results(file_name):
+	"""
+		Read current data in filename
+	"""
+	if os.path.isfile(file_name):
+		with open(file_name,'rb') as pkl_file:
+			file_content=pickle.load(pkl_file) # file_content = [dict_par,all_results]
+			pkl_file.close()
+		return file_content
