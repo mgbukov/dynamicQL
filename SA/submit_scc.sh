@@ -1,14 +1,14 @@
 #!bin/bash
 
 dt=0.001
-L=2
-for nstep in $(seq 4500 5 6000) # of total ramp times
+L=12
+for nstep in $(seq 565 5 2000) # of total ramp times
 do
 #dt=$(bc <<< "scale=8;$T/$nstep")
 echo "#!/bin/bash -login" >> submission.sh
 echo "#$ -P fheating" >> submission.sh #evolve is name of job
 echo "#$ -N j_L_${L}_${nstep}" >> submission.sh #evolve is name of job
-echo "#$ -l h_rt=72:00:00">> submission.sh #336
+echo "#$ -l h_rt=36:00:00">> submission.sh #336
 #echo "#$ -pe omp 4">> submission.sh #request more processors
 echo "#$ -m ae" >> submission.sh #a (abort) e(exit)
 #echo "#$-l mem_per_core=4G" >> submission.sh # more memory
