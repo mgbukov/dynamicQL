@@ -165,6 +165,7 @@ def main():
         all_results=[]
         N_current_restart = 0
     
+    #print(N_current_restart," ",N_restart)
     for it in range(N_current_restart, N_restart):
         print("\n\n-----------> Starting new iteration <-----------")
         start_time=time.time()
