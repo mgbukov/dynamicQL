@@ -150,6 +150,48 @@ def make_file_name(params_SA):
 	
 	return file_name
 
+def make_unitary_file_name(params_SA):
+	"""
+	Purpose:
+		Given the simulation parameters, produces a file name that contains the information about all the simulation parameters needed
+		to reproduce the simulation results. Floats are converted to string where the dot "." is converted to "p" and the minus sign
+		"-" is converted to "m"
+	Return:
+		String representing a file name (extension is always .pkl)
+	"""
+	
+	extension=".pkl"
+	param_and_type=[
+					['action_set','int-1'],
+					['delta_t','float-4'],
+					['hx_i','float-2'],
+					['L','int-2'],
+					['J','float-2'],
+					['hz','float-2']
+	]
+	n_param=len(param_and_type)
+	param_value=[0]*n_param
+	
+	for i,p in zip(range(n_param),param_and_type):
+		param_name,cast_type=p
+		if cast_type=='bool':
+			param_value[i]=str(int(params_SA[param_name]))
+		else:
+			tmp=cast_type.split('-')
+			if tmp[0]=='float':
+				param_value[i]=f_to_str(params_SA[param_name],prec=int(tmp[1]))
+			elif tmp[0] == 'int':
+				param_value[i]=i_to_str(params_SA[param_name],prec=int(tmp[1]))
+			else:
+				print(tmp)
+				assert False,"Wrong cast-type format"
+	
+	file_name_composition=["SA","as-%s","deltaT-%s","hxI-%s","L-%s","J-%s","hz-%s"]
+	file_name="_".join(file_name_composition)+extension
+	file_name=file_name%tuple(param_value)
+	
+	return file_name
+
 def split_data(result_all,verbose=True):
 	N_time_step=len(result_all[0][2])
 	N_sample=len(result_all)

@@ -231,8 +231,8 @@ def precompute_expmatrix(param_SA, h_set, H):
     import os.path
     from scipy.linalg import expm
     global matrix_dict
-    file_name=ut.make_file_name(param_SA).replace("SA","unitaries/unitary")
-    file_eigenvector=ut.make_file_name(param_SA).replace("SA","unitaries/eigenvector_FS")
+    file_name=ut.make_unitary_file_name(param_SA).replace("SA","unitaries/unitary")
+    file_eigenvector=ut.make_unitary_file_name(param_SA).replace("SA","unitaries/eigenvector_FS")
 
     if os.path.isfile(file_name):
         with open(file_name,"rb") as f:
