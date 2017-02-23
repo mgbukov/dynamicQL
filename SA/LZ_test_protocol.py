@@ -26,14 +26,20 @@ hx_tmp=[[4,-4][np.random.randint(2)] for i in range(160)]
 #plt.step(np.linspace(0,1.6,160),hx_tmp)
 #plt.show()
 
-action_set=[-8.,0.,8.]
+#action_set=[-8.,0.,8.]
+
+L=4
 
 custom_prot=LZ.custom_protocol(
-    L=L, hz=1.0, hx_init_state=-2.0, hx_target_state=2.0,
+    J=-1.0,
+    L=L, hz=1.12, hx_init_state=-2.0, hx_target_state=2.0,
     delta_t=0.01, hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.],
-    option='fast'
+    option='standard'
 )
 
+print(custom_prot.compute_eig(0.853))
+
+exit()
 #print(custom_prot.evaluate_protocol_fidelity(hx_tmp))
 #exit()
 

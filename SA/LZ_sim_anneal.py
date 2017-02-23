@@ -545,7 +545,7 @@ class custom_protocol():
         self.option=option
         self.delta_t=delta_t
         param={'J':J,'hz':hz,'hx':hx_init_state} # Hamiltonian kwargs 
-        param_SA={'J':J, 'hz':hz, 'L':L, 'delta_t':delta_t, 'hx_final_state':hx_target_state}
+        param_SA={'J':J, 'hz': hz, 'L': L, 'delta_t': delta_t, 'hx_final_state':hx_target_state}
         hx_discrete=[0] # dynamical part at every time step (initiaze to zero everywhere)
         # full system hamiltonian
         self.H,_ = Hamiltonian.Hamiltonian(L,fct=hx_vs_t,**param)
@@ -573,8 +573,13 @@ class custom_protocol():
             return Fidelity(self.psi_i,self.H,N_time_step,self.delta_t,self.psi_target,option='fast')    
         else:
             assert False,'Wrong option, use either fast or standard'
-
-
+    
+    def compute_eig(self,hx):
+        global hx_discrete  
+        hx_discrete[0]=hx # just a trick to get initial state
+        E_i, psi_i = self.H.eigsh(time=0,k=1,which='SA')
+        return E_i, psi_i
+    
 # Run main program !
 if __name__ == "__main__":
     main()
