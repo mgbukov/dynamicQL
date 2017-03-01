@@ -423,6 +423,7 @@ def simulate_anneal(params):
     # Simulated annealing parameters
     T=params['Ti']
     Ti=T
+    eta=1e-14
     N_quench=params['N_quench']
     RL_constraint=params['RL_CONSTRAINT']
     step=0.0
@@ -504,7 +505,7 @@ def simulate_anneal(params):
         n_iter_without_progress+=1
         propose_update_pos+=1
         
-        if new_fid > best_fid:# Record best encountered !
+        if abs(new_fid - best_fid) > eta: # Record best encountered *** if diff is greater than machine precision, accept the move !
             n_iter_without_progress=0
             propose_update_pos=0
             np.random.shuffle(propose_update)
