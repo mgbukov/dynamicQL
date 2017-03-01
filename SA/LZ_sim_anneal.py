@@ -501,25 +501,25 @@ def simulate_anneal(params):
         hx_discrete=new_hx_discrete
         new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option=option_fidelity)
         
-        count_fid_eval+=1
-        n_iter_without_progress+=1
-        propose_update_pos+=1
+        count_fid_eval += 1
+        n_iter_without_progress += 1
+        propose_update_pos += 1
         
         dF1 = new_fid - best_fid
         # accept move is greater than some threshold and positive !
-        if ( abs(dF1) > eta ) & ( dF1 > 0 ): # Record best encountered.
-            n_iter_without_progress=0
-            propose_update_pos=0
+        if ( abs(dF1) > eta ) & ( dF1 > 0 ) : # Record best encountered.
+            n_iter_without_progress = 0
+            propose_update_pos = 0
             np.random.shuffle(propose_update)
-            best_fid=new_fid
-            best_action_protocol=new_action_protocol
-            best_hx_discrete=new_hx_discrete
+            best_fid = new_fid
+            best_action_protocol = new_action_protocol
+            best_hx_discrete = new_hx_discrete
             
-        dF=(new_fid-old_fid)
-        if ( abs(dF) > eta ) & (dF > 0):
-            old_hx_discrete=new_hx_discrete
-            old_action_protocol=new_action_protocol
-            old_fid=new_fid
+        dF = (new_fid-old_fid)
+        if ( abs(dF) > eta ) & (dF > 0) :
+            old_hx_discrete = new_hx_discrete
+            old_action_protocol = new_action_protocol
+            old_fid = new_fid
         
         if _%10 == 0:
             print("Current temperature: %.4f\tBest fidelity: %.4f\tFidelity count: %i"%(T,best_fid,count_fid_eval))
