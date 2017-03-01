@@ -505,7 +505,9 @@ def simulate_anneal(params):
         n_iter_without_progress+=1
         propose_update_pos+=1
         
-        if abs(new_fid - best_fid) > eta: # Record best encountered *** if diff is greater than machine precision, accept the move !
+        dF1 = new_fid - best_fid
+        # accept move is greater than some threshold and positive !
+        if ( abs(dF1) > eta ) & ( dF1 > 0 ): # Record best encountered.
             n_iter_without_progress=0
             propose_update_pos=0
             np.random.shuffle(propose_update)
@@ -514,7 +516,7 @@ def simulate_anneal(params):
             best_hx_discrete=new_hx_discrete
             
         dF=(new_fid-old_fid)
-        if dF>0:
+        if ( abs(dF) > eta ) & (dF > 0):
             old_hx_discrete=new_hx_discrete
             old_action_protocol=new_action_protocol
             old_fid=new_fid
