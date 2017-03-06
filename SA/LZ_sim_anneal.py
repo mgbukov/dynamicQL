@@ -543,12 +543,12 @@ def simulate_anneal(params):
     for _ in range(5*sweep_size): ## Perform greedy sweeps (zero-temperature):
         
         rand_pos=propose_update[propose_update_pos]
-        new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,
-                                                                   hx_i,N_time_step,RL_constraint=RL_constraint,
-                                                                   rand_pos=rand_pos,symmetrize=symmetrize)
+        new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol, old_hx_discrete,
+                                                                   hx_i,N_time_step, RL_constraint=RL_constraint,
+                                                                   rand_pos=rand_pos, symmetrize=symmetrize)
 
         hx_discrete=new_hx_discrete
-        new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option=option_fidelity)
+        new_fid=Fidelity(psi_i, H, N_time_step, delta_t, psi_target, option=option_fidelity)
         
         count_fid_eval += 1
         n_iter_without_progress += 1
