@@ -12,8 +12,8 @@ import LZ_sim_anneal as LZ
 import time
 import numpy as np
 import sys
-from matplotlib import pyplot as plt
-import plotting
+#from matplotlib import pyplot as plt
+#import plotting
 import pickle
 
 def main():
@@ -25,8 +25,6 @@ def main():
         delta_t=dt, hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.],
         option='fast'
     )
-
-
     #with open("long-ass-SA.pkl",'rb') as f:
     #    [fid_best, hx_tmp, fid_best_list, hx_tmp_list]=pickle.load(f)
     #symmetrize(hx_tmp,left_unchanged=True)
@@ -84,7 +82,7 @@ def main():
         #title = "$m=%i$, $\Gamma=%.4f$, $F=%.12f$,\n $L=%i$, $dt=%.4f$, $T=%.3f$"%(m,Gamma,fid_test,L,dt,dt*n_step),
         #show = True
         #)
-    with open("long-ass-SA.pkl",'wb') as f:
+    '''with open("long-ass-SA.pkl",'wb') as f:
         pickle.dump([fid_best, hx_tmp, fid_best_list, hx_tmp_list],f)
 
     plotting.protocol_ising_2D_map(hx_tmp_list)
@@ -102,7 +100,7 @@ def main():
     symmetrize(hx_tmp_cp,left_unchanged=False)
     fid_symm_2=custom_prot.evaluate_protocol_fidelity(hx_tmp_cp)
     print(fid_symm_2)
-    exit()
+    exit()'''
 
 
     '''m = 2
@@ -111,20 +109,21 @@ def main():
         fid_list_2.append(fid_best)
         hx_tmp_list_2.append(fid_best)
     '''
-    print("fid",fid_list)
+    '''print("fid",fid_list)
     print("fid 2",fid_list_2)
     with open("out_fid.pkl","wb") as f:
         pickle.dump([fid_list,hx_tmp_list,fid_list_2,hx_tmp_list_2])
-    
+    '''
     #for i in range(10):
     #    fid_best, hx_tmp, fid_best_list = SD_symmetrized(n_step, custom_prot, n_refuse_max=10000, n_eval_max = 100000, init_random = True)
     
     #plotting.protocol(np.arange(0.0,n_step)*dt, hx_tmp, show=True)
 
 
-    exit()
+    '''exit()
     for n_step in range(20,1601,20):
         SD_symmetrized(n_step, custom_prot, n_refuse_max=10000, n_eval_max = 200000, init_random = True)
+    '''
 
 def check_symmetry(hx_tmp):
     n_step = len(hx_tmp)
