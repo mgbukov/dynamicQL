@@ -1,7 +1,7 @@
 '''
 Created on Nov 7, 2016
 
-@author: robertday
+@author: alexday
 
 Purpose:
     Plotting functions for the different quantities of interest    
@@ -10,11 +10,11 @@ Purpose:
 import seaborn as sns
 import numpy as np
 import os
-os.environ["PATH"] += ':/usr/local/texlive/2015/bin/x86_64-darwin'
+#os.environ["PATH"] += ':/usr/local/texlive/2015/bin/x86_64-darwin'
 import matplotlib.pyplot as plt
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
-plt.tick_params(labelsize=16)
+#plt.rc('font', family='serif')
+#plt.tick_params(labelsize=16)
 
 #import latex
 
@@ -100,7 +100,6 @@ def compare_protocols(Data,strg,save_name,save_dir):
     # avoids x axis label being cut off
     plt.tight_layout()
 
-    
 
     save_str = strg+save_name+'.pdf'
     plt.savefig(save_dir+save_str)
@@ -123,7 +122,6 @@ def protocol(time_slice,protocol_array,title=None,out_file=None,labels=None,show
     n_curve=len(protocols)
     palette = np.array(sns.color_palette('hls',n_curve))
     fontsize=15
-    
     ext_ts=np.hstack((time_slice,time_slice[-1]+time_slice[1]-time_slice[0]))
     
     if labels is not None:
@@ -153,13 +151,27 @@ def protocol(time_slice,protocol_array,title=None,out_file=None,labels=None,show
         
     # avoids x axis label being cut off
     plt.tight_layout()
-
     if out_file is not None:
         plt.savefig(out_file)
     if show:
         plt.show()
     plt.close()
-    
+
+def protocol_ising_2D_map(protocol_list, show=True):
+    sns.set_style("whitegrid", {'axes.grid' : False})
+    hx=np.vstack(protocol_list)
+    # Z is your data set
+    N = len(hx)
+    G = np.zeros((N,hx.shape[1],3))
+
+    # Where we set the RGB for each pixel
+    G[hx > 0] = [1,1,1]
+    G[hx < 0] = [0,0,0]
+    fig=plt.imshow(G,interpolation='nearest',aspect='auto')
+    if show is True:
+        plt.show()
+
+
 def observable(xarray,yarray,title=None,out_file=None,
                xlim=None,ylim=None,
                ylabel=None,xlabel=None,linewidth=1,
@@ -211,7 +223,6 @@ def observable(xarray,yarray,title=None,out_file=None,
 
     # avoids x axis label being cut off
     plt.tight_layout()
-
 
     if out_file is not None:
         plt.savefig(out_file)

@@ -571,7 +571,7 @@ def simulate_anneal(params):
             old_fid = new_fid
         
         if _%10 == 0:
-            print("Current temperature: %.4f\tBest fidelity: %.4f\tFidelity count: %i"%(T,best_fid,count_fid_eval))
+            print("Current temperature: %.5f\tBest fidelity: %.6f\tCurrent fidelity:%.6f\tFidelity count: %i"%(T, best_fid, old_fid, count_fid_eval))
 
         if n_iter_without_progress > N_time_step-1: break
     print("=====> DONE <=====")

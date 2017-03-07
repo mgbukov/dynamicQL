@@ -14,131 +14,117 @@ import numpy as np
 import sys
 from matplotlib import pyplot as plt
 import plotting
+import pickle
 
 def main():
     L=6
+    dt = 0.01
     custom_prot=LZ.custom_protocol(
         J=-1.0,
         L=L, hz=1.0, hx_init_state=-2.0, hx_target_state=2.0,
-        delta_t=0.0025, hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.],
+        delta_t=dt, hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.],
         option='fast'
     )
 
-    hx_list=[]
-    fid_list=[]
-    symm_list=[]
-    
-    n_step_list=[1300,100,150,200,300,400,450,500,550,600,650,700,800]
-    for nstep in n_step_list:
-        m = 8
-        print(nstep)
-        fid_best, hx_tmp, fid_best_list = SD(nstep, m, custom_prot, n_refuse_max=10000, n_random_restart=1, n_eval_max = 200000, init_random = True)
-        print(fid_best,'\t',check_symmetry(hx_tmp))
-        #print(check_symmetry(hx_tmp))
-        hx_list.append(hx_tmp)
-        fid_list.append(fid_best)
-        symm_list.append(check_symmetry(hx_tmp))
-        plotting.protocol(np.array(range(len(hx_tmp)))*0.0025,hx_tmp,
-        title="$m=%i$, $L=%i$, $nstep=%i$, $T=%.3f$, $F=%.6f$"%(m,L,nstep,nstep*0.0025,fid_best),
-        show=False, out_file="m=0_nstep=%i.pdf"%nstep)
-        fid_best_list=np.array(fid_best_list)
-        exit()
 
-    plt.scatter(np.array(n_step_list)*0.0025, fid_list)
-    plt.scatter(np.array(n_step_list)*0.0025, symm_list)
-    plt.show()
-    exit()
-    m=0
-    fid_res = []
-
-    symm_res = []
-    for t in range(50,1050,50):
-        print(t)
-        fid_best, hx_tmp = SD(t, m, custom_prot, n_refuse_max=5000, n_random_restart=1)
-        fid_res.append(fid_best)
-        symm_res.append(check_symmetry(hx_tmp))
-    
-    plt.scatter(range(50,1050,50),fid_res)
-    plt.scatter(range(50,1050,50),symm_res)
-
-    m=2
-    fid_res = []
-    symm_res = []
-    for t in range(50,1050,50):
-        print(t)
-        fid_best, hx_tmp = SD(t, m, custom_prot, n_refuse_max=5000, n_random_restart=1)
-        fid_res.append(fid_best)
-        symm_res.append(check_symmetry(hx_tmp))
-
-    plt.scatter(range(50,1050,50),fid_res)
-    plt.scatter(range(50,1050,50),symm_res)
-
-    plt.show()
-
-
-    exit()
-    # --------->  
-    mag_vs_fid=[]
-
-    m = 0
-    fid_best, hx_tmp = SD(650, m, custom_prot, n_refuse_max=5000, n_random_restart=1)
-    print(custom_prot.evaluate_protocol_fidelity(hx_tmp))
-    print("symm:",check_symmetry(hx_tmp))
-
-    m = 2
-    fid_best, hx_tmp = SD(650, m, custom_prot, n_refuse_max=5000, n_random_restart=1)
-    print(custom_prot.evaluate_protocol_fidelity(hx_tmp))
-    print("fid, symm, m= ",fid_best,'\t',check_symmetry(hx_tmp),'\t',m)
-
-    m = 0
-    fid_best, hx_tmp = SD(800, m, custom_prot, n_refuse_max=5000, n_random_restart=1)
-    print(custom_prot.evaluate_protocol_fidelity(hx_tmp))
-    print("symm:",check_symmetry(hx_tmp))
-
-    m = 2
-    fid_best, hx_tmp = SD(800, m, custom_prot, n_refuse_max=5000, n_random_restart=1)
-    print(custom_prot.evaluate_protocol_fidelity(hx_tmp))
-    print("fid, symm, m= ",fid_best,'\t',check_symmetry(hx_tmp),'\t',m)
-    
-    exit()
-
-    #plotting.protocol(range(len(hx_tmp)),hx_tmp)
+    #with open("long-ass-SA.pkl",'rb') as f:
+    #    [fid_best, hx_tmp, fid_best_list, hx_tmp_list]=pickle.load(f)
+    #symmetrize(hx_tmp,left_unchanged=True)
+    #print(custom_prot.evaluate_protocol_fidelity(hx_tmp))
+    #plotting.protocol(np.arange(0.,250)*dt, hx_tmp)
     #exit()
-    #print(np.sum(hx_tmp)/4)
+    #print(check_symmetry(hx_tmp))
+    #exit()
+    #hx_tmp=[-4,4,-4,4,4,4]
+    #print(custom_prot.evaluate_protocol_fidelity(hx_tmp))
     #exit()
 
+    #x = (250 - 2*(t1+t2)) //2
+    #print(2*x+2*t1+2*t2)
+    '''for t1 in range(5,50):
+        for t2 in range(5,50):
+            x = (250 - 2*(t1+t2)) //2
+            if (2*x+2*t1+2*t2 == 250) & (x > -1):
+                rad = [[-4,4][np.random.randint(2)] for i in range(2*x)]
+                hx_tmp=np.array([4]*t1+[-4]*t2 + rad +[4]*t2+[-4]*t1)
+                #print(2*x+2*t1+2*t2,hx_tmp.shape,'\t',t1,t2)
+                #print(hx_tmp.shape)
+                fid = custom_prot.evaluate_protocol_fidelity(hx_tmp)
+                if fid > fid_best:
+                    fid_best = fid
+                    hx_best = hx_tmp
+                    t=[t1,t2]'''
 
-    for m in [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28]:
+    #print(custom_prot.evaluate_protocol_fidelity(hx_tmp))
+    #exit()
+    #np.random.seed(0)
+    #fid_best, hx_tmp, fid_best_list = SD_symmetrized(n_step, custom_prot, n_refuse_max=10000, n_eval_max = 10000, init_random = True)
+    #fid_best, hx_tmp, fid_best_list = SD_symmetrized(n_step, custom_prot, n_refuse_max=10000, n_eval_max = 200000, init_random = True)
 
-        fid_best, hx_tmp = SD(650, m, custom_prot, n_refuse_max=10000, n_random_restart=1) # no need for restart ?
-        mag_vs_fid.append([m,fid_best])
-        print("Mag,best = %i, %.6f"%(m,fid_best))
+    for n_step in range(10,400,10):
+    
+        fid_list = []
+        fid_list_2 = []
+        hx_tmp_list = []
+        hx_tmp_list_2 = []
+        
+        m = 0
+        Ti=1e-3
+        N_quench = 20000
+        fid_best, hx_tmp, fid_best_list, hx_tmp_list = SA(Ti, N_quench, n_step, m, custom_prot, n_refuse_max = 20000, n_eval_max = 20000, init_random = True)
+        with open("nstep-%i_m-0_L-6_dt-0p0100.pkl"%n_step,'wb') as f:
+            pickle.dump([fid_best, hx_tmp, fid_best_list, hx_tmp_list],f)
+            f.close()
+    exit()
+        #fid_best, hx_tmp, fid_best_list, hx_tmp_list = SD(n_step, m, custom_prot, n_refuse_max=50000, n_eval_max = 400000, init_random = True)
+        #print("Obtained fid: \t %.14f"%custom_prot.evaluate_protocol_fidelity(hx_tmp))
+        #Gamma = check_symmetry(hx_tmp)
+        #fid_test = custom_prot.evaluate_protocol_fidelity(hx_tmp)
+        #plotting.protocol(np.arange(0.,n_step)*dt, hx_tmp, 
+        #title = "$m=%i$, $\Gamma=%.4f$, $F=%.12f$,\n $L=%i$, $dt=%.4f$, $T=%.3f$"%(m,Gamma,fid_test,L,dt,dt*n_step),
+        #show = True
+        #)
+    with open("long-ass-SA.pkl",'wb') as f:
+        pickle.dump([fid_best, hx_tmp, fid_best_list, hx_tmp_list],f)
 
-    mag_vs_fid=np.array(mag_vs_fid)
-    plt.scatter(mag_vs_fid[:,0], mag_vs_fid[:,1])
+    plotting.protocol_ising_2D_map(hx_tmp_list)
+
+    fid_best_list=np.array(fid_best_list)
+    plt.scatter(fid_best_list[:,0],fid_best_list[:,1])
     plt.show()
-
-    #print(np.sum(hx_tmp))
-
-    #plotting.protocol(range(150), hx_tmp)
-
-    print(" -------- ")
     exit()
 
-'''mag_list=[0,2,4,6,8,10,12,14,16,18,20,22]
-best_fid=[]
-for magnetization in mag_list:
-    print(magnetization)
-    fid=[]
-    N_step=200
-    n_up = int((magnetization + N_step) / 2)
-    hx_tmp=np.array([4]*n_up + [-4]*(N_step-n_up)) # anneal this ! 
-    for i in range(4000):
-        #hx_tmp=[[-4,4][np.random.randint(2)] for i in range(N_step)]
-        np.random.shuffle(hx_tmp)
-        fid.append(custom_prot.evaluate_protocol_fidelity(hx_tmp))
-        #np.random.shuffle(hx_tmp)
-    best_fid.append(np.mean(fid))'''
+    
+    hx_tmp_cp=np.copy(hx_tmp)
+    symmetrize(hx_tmp,left_unchanged=True)
+    fid_symm_1=custom_prot.evaluate_protocol_fidelity(hx_tmp)
+    print(fid_symm_1)
+    symmetrize(hx_tmp_cp,left_unchanged=False)
+    fid_symm_2=custom_prot.evaluate_protocol_fidelity(hx_tmp_cp)
+    print(fid_symm_2)
+    exit()
+
+
+    '''m = 2
+    for i in range(10):
+        fid_best, hx_tmp, fid_best_list = SD(n_step, m, custom_prot, n_refuse_max=10000, n_eval_max = 200000, init_random = True)
+        fid_list_2.append(fid_best)
+        hx_tmp_list_2.append(fid_best)
+    '''
+    print("fid",fid_list)
+    print("fid 2",fid_list_2)
+    with open("out_fid.pkl","wb") as f:
+        pickle.dump([fid_list,hx_tmp_list,fid_list_2,hx_tmp_list_2])
+    
+    #for i in range(10):
+    #    fid_best, hx_tmp, fid_best_list = SD_symmetrized(n_step, custom_prot, n_refuse_max=10000, n_eval_max = 100000, init_random = True)
+    
+    #plotting.protocol(np.arange(0.0,n_step)*dt, hx_tmp, show=True)
+
+
+    exit()
+    for n_step in range(20,1601,20):
+        SD_symmetrized(n_step, custom_prot, n_refuse_max=10000, n_eval_max = 200000, init_random = True)
 
 def check_symmetry(hx_tmp):
     n_step = len(hx_tmp)
@@ -151,34 +137,46 @@ def swap(hx,x1,x2):
     hx[x2] = hx[x1]
     hx[x1] = tmp
 
-def SD(N_step, sector, custom_prot_obj, n_refuse_max=10, n_random_restart=50, n_eval_max = 10000, init_random = True, LR_symm=False):
+def SD(N_step, sector, custom_prot_obj, n_refuse_max=100, n_eval_max = 10000, init_random = True, init_state=None):
+    """
+    Stochastic descent in a particular magnetization sector
+    """
+    check_exhaus = True
     system = custom_prot_obj
     # perform random permutation
     n_up = int( (N_step + sector) / 2)
-    
     fid_best = -10.
 
-    for i in range(n_random_restart): # random restarts
-        hx_tmp=np.array([4]*n_up + [-4]*(N_step-n_up)) # initialize sector
-        if init_random is True:
-            np.random.shuffle(hx_tmp)
-        
-        fid_old = system.evaluate_protocol_fidelity(hx_tmp)
-        n_refuse = 0
-        n_tot_eval = 0
-        fid_best_list=[]
+    hx_tmp = np.array([4]*n_up + [-4]*(N_step-n_up)) # initialize sector
 
+    if init_random is True:
+        np.random.shuffle(hx_tmp)
+    if init_state is not None:
+        hx_tmp = init_state
+
+    fid_old = system.evaluate_protocol_fidelity(hx_tmp)
+    n_refuse = 0
+    n_tot_eval = 0
+    fid_best_list=[]
+    hx_tmp_list=[]
+    fid_best = system.evaluate_protocol_fidelity(hx_tmp)
+    hx_tmp_best = np.copy(hx_tmp)
+
+    if check_exhaus is False:
+        print("-> Stochastic descent !")
         while True:
 
             x1 = np.random.randint(N_step)
             x2 = np.random.randint(N_step)
             swap(hx_tmp,x1,x2)
+
             fid_new = system.evaluate_protocol_fidelity(hx_tmp)
             n_tot_eval += 1
             if n_tot_eval > n_eval_max:
                 break
             if n_tot_eval % 1000 == 0:
-                print(n_tot_eval,'\t',fid_best)
+                hx_tmp_list.append(hx_tmp_best)
+                print(n_tot_eval,'\t\t',"%.14f"%fid_best,'\t',"%.5f"%check_symmetry(hx_tmp_best))
 
             if fid_new > fid_best :
                 fid_best_list.append([n_tot_eval,fid_new])
@@ -194,7 +192,180 @@ def SD(N_step, sector, custom_prot_obj, n_refuse_max=10, n_random_restart=50, n_
             
             if n_refuse > n_refuse_max: # number of random permutations refused before considering this is a local minima !
                 break
+
+    if check_exhaus is True:
+        import itertools
+        print("-> Exhaustive stochastic descent !")
+        is_minima = True
+        for _ in range(400):
+            x1_ar = np.arange(N_step)
+            x2_ar = np.arange(N_step)
+            np.random.shuffle(x1_ar)
+            np.random.shuffle(x2_ar)
+            
+            for x1,x2 in itertools.product(x1_ar,x2_ar):
+                swap(hx_tmp,x1,x2)
+                fid_new = system.evaluate_protocol_fidelity(hx_tmp)
+                n_tot_eval +=1
+                if fid_new > fid_best :
+                    fid_best_list.append([n_tot_eval,fid_new])
+                    hx_tmp_list.append(hx_tmp_best)
+                    fid_best = fid_new
+                    print(_,'\t',n_tot_eval,'\t\t\t',"%.14f"%fid_best,'\t',"%.5f"%check_symmetry(hx_tmp_best)) 
+                    hx_tmp_best = np.copy(hx_tmp)
+                    is_minima = False
+                    break
+                swap(hx_tmp,x1,x2)
+
+            if is_minima :
+                print("minima reached !")
+                print(_,'\t',n_tot_eval,'\t\t',"%.14f"%fid_best,'\t',"%.5f"%check_symmetry(hx_tmp_best))
+                break
+            else:
+                is_minima = True
+
+    return fid_best, hx_tmp_best, fid_best_list, hx_tmp_list
+
+def SA(Ti, N_quench, N_step, sector, custom_prot_obj, n_refuse_max=100, n_eval_max = 10000, init_random = True):
+    """
+    Simulated annealing in a particular magnetization sector
+    """
+
+    system = custom_prot_obj
+    # perform random permutation
+    n_up = int( (N_step + sector) / 2)
+    fid_best = -10.
+
+    hx_tmp = np.array([4]*n_up + [-4]*(N_step-n_up)) # initialize sector
+
+    if init_random is True:
+        np.random.shuffle(hx_tmp)
+
+    fid_old = system.evaluate_protocol_fidelity(hx_tmp)
+    n_refuse = 0
+    n_tot_eval = 0
+    fid_best_list=[]
+    hx_tmp_list=[]
+    T=Ti
+    step = 0.
+    while T > 0.:
+
+        beta = 1./T
+        x1 = np.random.randint(N_step)
+        x2 = np.random.randint(N_step)
+        swap(hx_tmp,x1,x2)
+        fid_new = system.evaluate_protocol_fidelity(hx_tmp)
+        n_tot_eval += 1
+        
+        if fid_new > fid_best :
+            fid_best_list.append([n_tot_eval,fid_new])
+            fid_best = fid_new 
+            hx_tmp_best = np.copy(hx_tmp)
+
+        dF = fid_new - fid_old
+        if dF > 0 : # accept move
+            n_refuse = 0
+            fid_old = fid_new
+        elif np.random.random() < np.exp(beta*dF): # accept move with temperature
+            n_refuse = 0
+            fid_old = fid_new
+        else: # revert move (reject !)
+            swap(hx_tmp,x1,x2)
+            n_refuse +=1
+        
+        step+=1.
+        T = Ti*(1.-step/N_quench)
+
+        if n_tot_eval % 1000 == 0:
+            hx_tmp_list.append(hx_tmp_best)
+            print(n_tot_eval,'\t\t',"%.14f"%fid_best,'\t',"%.5f"%check_symmetry(hx_tmp))
+        if n_tot_eval > n_eval_max:
+            break
+        if n_refuse > n_refuse_max: # number of random permutations refused before considering this is a local minima !
+            break
+
+    fid_best, hx_tmp_best, fid_best_list, hx_tmp_list= SD(N_step, sector, custom_prot_obj, n_refuse_max=n_refuse_max, n_eval_max = n_eval_max,init_state=hx_tmp_best)
+    
+    return fid_best, hx_tmp_best, fid_best_list, hx_tmp_list
+
+
+############ -> Symmetrized sector !  ---------------------------------##################################
+
+def symmetrize(hx,left_unchanged=True):
+    n_step_half = len(hx) // 2
+    if left_unchanged is True:
+        for i in range(n_step_half) :
+            hx[-(i+1)] = - hx[i]
+    else:
+        for i in range(n_step_half) :
+            hx[i] = -hx[-(i+1)]
+
+def swap_symmetrize(hx,x1,x2):    
+    tmp = hx[x2]
+    hx[x2] = hx[x1]
+    hx[x1] = tmp
+
+    # resymmetrize !
+    hx[-(x2+1)] = - hx[x2]
+    hx[-(x1+1)] = - hx[x1]
+
+def swap_symmetrize_2(hx,x1,x2):
+    hx[x1] *= -1
+    hx[-(x1+1)] = - hx[x1]
+
+
+def SD_symmetrized(n_step, custom_prot_obj, n_refuse_max=100, n_eval_max = 10000, init_random = True):
+    """
+    Stochastic descent in a symmetric sector -> implies that m = 0 here 
+    """
+    assert n_step % 2 ==0, "Need an even number of steps !"
+
+    system = custom_prot_obj
+    n_half = n_step // 2  
+    if init_random is True:
+        hx_tmp = np.random.choice([-4,4],size=n_step)
+    else:
+        hx_tmp=np.array([4]*n_half + [-4]*n_half) # initialize with ONE bang
+    
+    symmetrize(hx_tmp) # symmetrizes the state
+    assert np.sum(hx_tmp) < 1.e-6, "Error -> should be zero !"
+
+    fid_old = system.evaluate_protocol_fidelity(hx_tmp)
+    fid_best = -10.
+    n_refuse = 0
+    n_tot_eval = 0
+    fid_best_list=[]
+
+    while True:
+
+        x1 = np.random.randint(n_half)
+        x2 = np.random.randint(n_half)
+        swap_symmetrize_2(hx_tmp,x1,x2)
+        fid_new = system.evaluate_protocol_fidelity(hx_tmp)
+        n_tot_eval += 1
+
+        if n_tot_eval > n_eval_max:
+            break
+        if n_tot_eval % 1000 == 0:
+            print(n_tot_eval,'\t',fid_best)
+
+        if fid_new > fid_best :
+            fid_best_list.append([n_tot_eval,fid_new])
+            fid_best = fid_new 
+            hx_tmp_best = np.copy(hx_tmp)
+
+        if fid_new > fid_old : # accept move
+            n_refuse = 0
+            fid_old = fid_new
+        else: # reject move
+            swap_symmetrize_2(hx_tmp,x1,x2) # swap back
+            n_refuse +=1
+        
+        if n_refuse > n_refuse_max: # number of random permutations refused before considering this is a local minima !
+            break
+
     return fid_best, hx_tmp, fid_best_list
+
 
 if __name__ == "__main__" :
     main()
