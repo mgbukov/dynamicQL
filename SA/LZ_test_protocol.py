@@ -72,7 +72,7 @@ def main():
         Ti=1e-3
         N_quench = 20000
         fid_best, hx_tmp, fid_best_list, hx_tmp_list = SA(Ti, N_quench, n_step, m, custom_prot, n_refuse_max = 20000, n_eval_max = 20000, init_random = True)
-        with open("nstep-%i_m-0_L-6_dt-0p0100.pkl"%n_step,'wb') as f:
+        with open("data/nstep-%i_m-0_L-6_dt-0p0100.pkl"%n_step,'wb') as f:
             pickle.dump([fid_best, hx_tmp, fid_best_list, hx_tmp_list],f)
             f.close()
     exit()
