@@ -37,8 +37,12 @@ def main():
     file_name = make_file_name(param, root= "data/")
     print("running : ",file_name)
 
+    if L == 1:
+        div = 2.
+    else:
+        div = 1.
     custom_prot=LZ.custom_protocol(
-        J=-1.0, hz=1.0, hx_init_state=-2.0, hx_target_state=2.0,
+        J=-1.0, hz=1.0, hx_init_state=-2.0/div, hx_target_state=2.0/div,
         L=L, delta_t=dt, 
         hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.], option='fast')
 
