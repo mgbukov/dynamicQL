@@ -34,7 +34,7 @@ def main():
         n_sample = 1
 
     param = {'L' : L, 'dt': dt, 'n_step': n_step, 'm': m}
-    file_name = make_file_name(param)
+    file_name = make_file_name(param, root= "data/")
     print("running : ",file_name)
 
     custom_prot=LZ.custom_protocol(
