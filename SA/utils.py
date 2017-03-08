@@ -15,9 +15,9 @@ def check_sys_arg(argv):
 	Purpose:
     	Check command line arguments, (user might need help or has given wrong number of arguments)
 	"""
-	n_par=10
+	n_par=11
 	message_1="""Expecting %s parameters from command line: 
-	L, hxIS, hxFS, N_quench, N_time_step, action_set_name, outfile_name, delta_t, N_restart, verbose"""%n_par
+	L, hxIS, hxFS, N_quench, N_time_step, action_set_name, outfile_name, delta_t, N_restart, verbose, symmetrize"""%n_par
 	message_2=""" 
 -- All parameters (including private) -- 
 
@@ -40,7 +40,7 @@ def check_sys_arg(argv):
 	FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations
 	RL_CONSTRAINT: use reinforcement learning constraints or not
 """
-	example="python LZ_sim_anneal.py 8 -2. 2. 30 20 bang-bang8 out.txt 0.05 100 False"
+	example="python LZ_sim_anneal.py 8 -2. 2. 30 20 bang-bang8 out.txt 0.05 100 False False"
 	
 	
 	if len(argv)>1:
@@ -76,18 +76,19 @@ def read_command_line_arg(argv,all_action_sets):
 		Tuple of parsed command line. Last element is the action set name.
 	"""
 	
-	_, L, hxIS, hxFS, N_quench, N_time_step, action_set_name, outfile_name, delta_t, N_restart, verbose = argv
-	L=int(L)
-	hxFS=float(hxFS)
-	hxIS=float(hxIS)
-	N_quench=int(N_quench)
-	N_time_step=int(N_time_step)
+	_, L, hxIS, hxFS, N_quench, N_time_step, action_set_name, outfile_name, delta_t, N_restart, verbose, symm = argv
+	L = int(L)
+	hxFS = float(hxFS)
+	hxIS = float(hxIS)
+	N_quench = int(N_quench)
+	N_time_step = int(N_time_step)
 	assert action_set_name in all_action_sets.keys(),"Wrong action set label, expecting one of the following: "+str(list(all_action_sets.keys()))
-	action_set=all_action_sets[action_set_name]
-	delta_t=float(delta_t)
-	N_restart=int(N_restart)
-	verbose=(verbose=="True")
-	return L, hxIS, hxFS, N_quench, N_time_step, action_set, outfile_name, delta_t, N_restart, verbose, action_set_name
+	action_set = all_action_sets[action_set_name]
+	delta_t = float(delta_t)
+	N_restart = int(N_restart)
+	verbose = (verbose == "True")
+	symm = (symm == "True")
+	return L, hxIS, hxFS, N_quench, N_time_step, action_set, outfile_name, delta_t, N_restart, verbose, action_set_name, symm
 
 def f_to_str(number,prec=2):
 	s=("%."+str(prec)+"f")%number
@@ -113,6 +114,8 @@ def make_file_name(params_SA):
 	"""
 	
 	extension=".pkl"
+	#print(params_SA)
+	#exit()
 	param_and_type=[
 					['N_time_step','int-4'],
 					['N_quench','int-3'],
@@ -125,8 +128,9 @@ def make_file_name(params_SA):
 					['RL_CONSTRAINT','bool'],
 					['L','int-2'],
 					['J','float-2'],
-					['hz','float-2']
-					]
+					['hz','float-2'],
+					['symmetrize','bool']
+	]
 	n_param=len(param_and_type)
 	param_value=[0]*n_param
 	
@@ -144,7 +148,8 @@ def make_file_name(params_SA):
 				print(tmp)
 				assert False,"Wrong cast-type format"
 	
-	file_name_composition=["SA","nStep-%s","nQuench-%s","Ti-%s","as-%s","hxIS-%s","hxFS-%s","deltaT-%s","hxI-%s","RL-%s","L-%s","J-%s","hz-%s"]
+	file_name_composition=["SA","nStep-%s","nQuench-%s","Ti-%s","as-%s","hxIS-%s","hxFS-%s","deltaT-%s","hxI-%s",
+							"RL-%s","L-%s","J-%s","hz-%s","symm-%s"]
 	file_name="_".join(file_name_composition)+extension
 	file_name=file_name%tuple(param_value)
 	

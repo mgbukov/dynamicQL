@@ -11,7 +11,7 @@ def Hamiltonian(L,J,hz,hx,fct=None):
 	
 	#basis = spin_basis_1d(L=L,pauli=False)
 	if L>1:
-		basis = spin_basis_1d(L=L,kblock=0,pblock=1,pauli=False)
+		basis = spin_basis_1d(L=L,pauli=False,kblock=0,pblock=1)
 	else:
 		basis = spin_basis_1d(L=L,pauli=False)
 
