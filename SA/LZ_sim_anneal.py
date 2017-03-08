@@ -21,7 +21,6 @@ Example of use:
 
 import utils as ut
 import sys,os # for running in batch from terminal
-ut.check_sys_arg(sys.argv)
 ut.check_version()
 
 import numpy as np
@@ -34,6 +33,8 @@ from analysis.compute_observable import MB_observables
 np.set_printoptions(precision=4)
     
 def main():
+    
+    ut.check_sys_arg(sys.argv)
         
     global action_set,hx_discrete,hx_max#,FIX_NUMBER_FID_EVAL
     
