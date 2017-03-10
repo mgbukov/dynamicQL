@@ -36,7 +36,7 @@ def main():
     file_name = make_file_name(param, root= "data/")
 
     custom_prot=LZ.custom_protocol(
-        J=-1.0,
+        J=1.0,
         L=L, hz=1.0, hx_init_state=-2.0, hx_target_state=2.0,
         delta_t=dt, hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.],
         option='fast'

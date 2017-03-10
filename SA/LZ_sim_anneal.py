@@ -12,8 +12,8 @@ Example of use:
         $python LZ_sim_anneal
         
     2. Run with optional parameters: 30 quenches, 20 times steps, action_set, outfile, max number of fidelity evaluations,
-    time_scale, number of restarts, verbose:
-        $python LZ_sim_anneal.py 30 20 bang-bang8 out.txt 3000 0.05 100 False
+    time_scale, number of restarts, verbose, symmetrize_protocol:
+        $python LZ_sim_anneal.py 30 20 bang-bang8 out.txt 3000 0.05 100 False True
         
     3. Get some help
         $python LZ_sim_anneal -h
@@ -64,6 +64,7 @@ def main():
         delta_t: time scale
         N_restart: number of restart for the annealing
         verbose: If you want the program to print to screen the progress
+        symmetrize_protocol: Wether or not to work in the symmetrized sector of protocols
         
         hx_max : maximum hx field (the annealer can go between -hx_max and hx_max
         FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations (deprecated)
@@ -72,7 +73,7 @@ def main():
     """
     #----------------------------------------
     # DEFAULT PARAMETERS
-    J = -1.0  # zz interaction
+    J = 1.0  # zz interaction
     hz = 1.0  #0.9045/0.809 #1.0 # hz field
     hx_i = -4.0 # -1.0 # initial hx coupling
     act_set_name='bang-bang8'
@@ -87,13 +88,13 @@ def main():
     action_set=all_action_sets['bang-bang8']
     delta_t=0.05
     N_restart=4
+    symmetrize_protocol=True
     
     hx_max=4
     h_set=compute_h_set(hx_i,hx_max)
     RL_CONSTRAINT=True 
     verbose=True
     fidelity_fast=True
-    symmetrize_protocol=True
     
     #----------------------------------------
     

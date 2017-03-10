@@ -6,7 +6,7 @@ Created on Mar 8 , 2017
 Purpose:
 
     This module is for perforing exhaustive search of 
-    fidelities
+    fidelities with parallel threads
 
 '''
 
@@ -55,10 +55,16 @@ def main():
     for i in range(hx_int[0], hx_int[1]): # long loop !
         fid_array[count] = custom_prot.evaluate_protocol_fidelity( b2(i,n_step) )
         count += 1
+    
+    best_hx = np.argmax(fid_array)
+    best_fid = np.max(fid_array)
 
     with open(file_name,"wb") as f:
         pickle.dump(fid_array, f)
-
+        f.close()
+    with open("best"+file_name,"wb") as f:
+        pickle.dump([best_hx,best_fid],f)
+        
 
 def b2(n10,w=10):
     x = np.array(list(np.binary_repr(n10, width=w)),dtype=np.float)

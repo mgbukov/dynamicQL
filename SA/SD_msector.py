@@ -42,7 +42,7 @@ def main():
     else:
         div = 1.
     custom_prot=LZ.custom_protocol(
-        J=-1.0, hz=1.0, hx_init_state=-2.0/div, hx_target_state=2.0/div,
+        J=1.0, hz=1.0, hx_init_state=-2.0/div, hx_target_state=2.0/div,
         L=L, delta_t=dt, 
         hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.], option='fast')
 
