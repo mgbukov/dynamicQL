@@ -10,22 +10,17 @@ import numpy as np
 def Hamiltonian(L,J,hz,hx,fct=None):
 	
 	#basis = spin_basis_1d(L=L,pauli=False)
-	if L>1:
-		basis = spin_basis_1d(L=L,pauli=False,kblock=0,pblock=1)
-	else:
-		basis = spin_basis_1d(L=L,pauli=False)
-
 	fct_arg=[]		
-	zz_int =[[J,i,(i+1)%L] for i in range(L)] # Has periodic boundary conditions
 	ones=[[-1,i] for i in range(L)]
 	z_field=[[-hz,i] for i in range(L)]
 
 	if L>1:
+		basis = spin_basis_1d(L=L,pauli=False,kblock=0,pblock=1)
+		zz_int =[[-J,i,(i+1)%L] for i in range(L)] # Has periodic boundary conditions
 		static = [["zz",zz_int], ["z",z_field]]
 	else:
-		z_field=[[hz,i] for i in range(L)]  # for 2LS 
+		basis = spin_basis_1d(L=L,pauli=False)
 		static = [["z", z_field]]
-		ones=[[1,i] for i in range(L)] # for 2LS 
 		
 	dynamic = [["x",ones,fct,fct_arg]]
 	
