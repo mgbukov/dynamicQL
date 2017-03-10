@@ -36,7 +36,7 @@ def main():
     hx_int = [n_elements*interval_slice, n_elements*(interval_slice+1)]
 
     param = {'L' : L, 'T': T, 'n_step': n_step, 'slice': interval_slice}
-    file_name = make_file_name(param, root= "data/")
+    file_name = make_file_name(param, root= "ES/data/")
     print(file_name)
 
     if L == 1:
@@ -46,7 +46,7 @@ def main():
 
     dt = T / n_step
     custom_prot=LZ.custom_protocol(
-        J=-1.0, hz=1.0, hx_init_state=-2.0/div, hx_target_state=2.0/div,
+        J=1.0, hz=1.0, hx_init_state=-2.0/div, hx_target_state=2.0/div,
         L=L, delta_t=dt, 
         hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.], option='fast')
 
@@ -62,7 +62,9 @@ def main():
     with open(file_name,"wb") as f:
         pickle.dump(fid_array, f)
         f.close()
-    with open("best"+file_name,"wb") as f:
+
+    file_name = make_file_name(param, root= "ES/data/",prefix="best_")
+    with open(file_name,"wb") as f:
         pickle.dump([best_hx,best_fid],f)
         
 
@@ -72,7 +74,7 @@ def b2(n10,w=10):
     x[x < 0.5] = -4.
     return x
 
-def make_file_name(param, root="",ext=".pkl"):
+def make_file_name(param, root="",ext=".pkl",prefix=""):
     key_format = {
         'L':'{:0>2}',
         'T':'{:.3f}',
@@ -81,7 +83,7 @@ def make_file_name(param, root="",ext=".pkl"):
     }
 
     f = [k+"-"+key_format[k].format(param[k]) for k in sorted(key_format)]
-    return root+'ES_'+"_".join(f)+ext
+    return root+prefix+'ES_'+"_".join(f)+ext
 
 
 if __name__ == "__main__":
