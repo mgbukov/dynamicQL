@@ -59,7 +59,7 @@ def main():
     best_hx = np.argmax(fid_array)
     best_fid = np.max(fid_array)
 
-    with open(file_name,"wb") as f:
+    with open(file_name,"wb") as f:   
         pickle.dump(fid_array, f)
         f.close()
 

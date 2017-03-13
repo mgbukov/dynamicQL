@@ -56,8 +56,8 @@ def main():
         #sample_result.append([fid_best, hx_tmp, fid_best_list, hx_tmp_list])
         sample_result.append([fid_best, hx_tmp])
     
-    #with open(file_name,'wb') as f:
-    #    pickle.dump(sample_result,f)
+    with open(file_name,'wb') as f:
+        pickle.dump(sample_result,f)
 
     #fid_best_list=np.array(fid_best_list)
     #plt.scatter(fid_best_list[:,0],fid_best_list[:,1])
