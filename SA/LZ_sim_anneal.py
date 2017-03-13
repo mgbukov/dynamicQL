@@ -189,7 +189,7 @@ def main():
         print("\n\n-----------> Starting new iteration <-----------")
         start_time=time.time()
     
-        count_fid_eval,best_fid,best_action_protocol,best_hx_discrete=simulate_anneal(param_SA)
+        count_fid_eval,best_fid,best_action_protocol,best_hx_discrete = simulate_anneal(param_SA)
     
         result=[count_fid_eval,best_fid,best_action_protocol,best_hx_discrete]
         print("\n----------> RESULT FOR ANNEALING NO %i <-------------"%(it+1))

@@ -17,7 +17,6 @@ def main():
 
     tot_number_interval = 32
     n_elements = 2**n_step // tot_number_interval
-    #hx_int = [n_elements*interval_slice, n_elements*(interval_slice+1)]
 
     all_data=[]
     for interval_slice in range(tot_number_interval):

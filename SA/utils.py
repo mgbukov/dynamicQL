@@ -255,15 +255,16 @@ def default_parameters():
 		   'N_quench':0,
 		   'Ti':0.04,
 		   'action_set':0,
-		   'hx_initial_state':-1.0,
-		   'hx_final_state':1.0,
+		   'hx_initial_state':-2.0,
+		   'hx_final_state':2.0,
 			'delta_t':0.01,
 			'hx_i':-4.0,
 			'RL_CONSTRAINT':True,
 			'L':1,
-			'J':1.24,
-			'hz':1.0
-			}
+			'J':1.00,
+			'hz':1.0,
+			'symmetrize':True
+	}
 	return param
 			
 

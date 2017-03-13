@@ -53,19 +53,19 @@ def main():
 
     for _ in range(n_sample):
         fid_best, hx_tmp, fid_best_list, hx_tmp_list = SA(Ti, N_quench, n_step, m, custom_prot, init_random = True, info = True)
-        sample_result.append([fid_best, hx_tmp, fid_best_list, hx_tmp_list])
+        #sample_result.append([fid_best, hx_tmp, fid_best_list, hx_tmp_list])
+        sample_result.append([fid_best, hx_tmp])
     
-    with open(file_name,'wb') as f:
-        pickle.dump(sample_result,f)
+    #with open(file_name,'wb') as f:
+    #    pickle.dump(sample_result,f)
 
-    exit()
-    fid_best_list=np.array(fid_best_list)
-    plt.scatter(fid_best_list[:,0],fid_best_list[:,1])
-    plt.show()
+    #fid_best_list=np.array(fid_best_list)
+    #plt.scatter(fid_best_list[:,0],fid_best_list[:,1])
+    #plt.show()
 
-    Gamma=gamma(hx_tmp)
-    plotting.protocol(np.arange(0.,n_step)*dt, hx_tmp, 
-        title = "$m=%i$, $\Gamma=%.4f$, $F=%.12f$,\n $L=%i$, $dt=%.4f$, $T=%.3f$"%(m,Gamma,fid_best,L,dt,dt*n_step))
+    #Gamma=gamma(hx_tmp)
+    #plotting.protocol(np.arange(0.,n_step)*dt, hx_tmp, 
+    #    title = "$m=%i$, $\Gamma=%.4f$, $F=%.12f$,\n $L=%i$, $dt=%.4f$, $T=%.3f$"%(m,Gamma,fid_best,L,dt,dt*n_step))
 
 def gamma(hx_tmp):
     n_step = len(hx_tmp)

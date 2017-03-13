@@ -45,6 +45,20 @@ def main():
     choice = 2
     count = -1
     palette = np.array(sns.color_palette('hls',10))
+    n_step = 330
+    dt=0.01
+    param = {'L' : L, 'dt': dt, 'n_step': n_step, 'm': m}
+    file_name = make_file_name(param, root= "data/")
+    with open(file_name,'rb') as f:
+        data=pickle.load(f)
+    #print(data[4][0])
+    #print(data[4][1])
+    #print(gamma(data[4][1]))
+    plotting.protocol(range(330),data[4][1])
+    exit()
+    for d in data:
+        print(d[0],'\t',gamma(d[1]))
+    exit()
 
     for m in [0]:
         count+=1
@@ -82,9 +96,9 @@ def main():
                 print(np.mean(eval_times),'\t\t', np.std(eval_times))
                 print(min(symm_all),'\t\t', np.mean(symm_all))
                 print("\n")
-                best_fid_all.append(np.log(1-max(fid_all)))
+                best_fid_all.append(np.max(fid_all))
                 mean_time_all.append(np.mean(eval_times))
-                gamma_all.append(np.mean(symm_all))
+                gamma_all.append(np.min(symm_all))
 
         if choice == 0:
             plt.plot(np.array(n_step_all)*dt,best_fid_all, c=palette[count],label='$m=%i$'%m)
