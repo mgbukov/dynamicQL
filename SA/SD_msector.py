@@ -37,12 +37,8 @@ def main():
     file_name = make_file_name(param, root= "data/")
     print("running : ",file_name)
 
-    if L == 1:
-        div = 2.
-    else:
-        div = 1.
     custom_prot=LZ.custom_protocol(
-        J=1.0, hz=1.0, hx_init_state=-2.0/div, hx_target_state=2.0/div,
+        J=1.0, hz=1.0, hx_init_state=-2.0, hx_target_state=2.0,
         L=L, delta_t=dt, 
         hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.], option='fast')
 
@@ -57,7 +53,7 @@ def main():
         sample_result.append([fid_best, hx_tmp])
     
     with open(file_name,'wb') as f:
-        pickle.dump(sample_result,f)
+        pickle.dump(sample_result, f)
 
     #fid_best_list=np.array(fid_best_list)
     #plt.scatter(fid_best_list[:,0],fid_best_list[:,1])
@@ -95,6 +91,7 @@ def SD(N_step, sector, custom_prot_obj, init_random = True, init_state=None, max
         hx_tmp = init_state
 
     fid_best = system.evaluate_protocol_fidelity(hx_tmp)
+    hx_tmp_best = hx_tmp
     
     n_tot_eval = n_tot_eval
     fid_best_list=[]
