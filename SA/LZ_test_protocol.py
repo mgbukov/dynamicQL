@@ -42,7 +42,7 @@ def main():
         option='fast'
     )
 
-    choice = 2
+    choice = 1
     count = -1
     palette = np.array(sns.color_palette('hls',10))
     n_step = 330
@@ -54,11 +54,11 @@ def main():
     #print(data[4][0])
     #print(data[4][1])
     #print(gamma(data[4][1]))
-    plotting.protocol(range(330),data[4][1])
-    exit()
-    for d in data:
-        print(d[0],'\t',gamma(d[1]))
-    exit()
+    #plotting.protocol(range(330),data[4][1])
+    #exit()
+    #for d in data:
+    #    print(d[0],'\t',gamma(d[1]))
+    #exit()
 
     for m in [0]:
         count+=1
@@ -97,7 +97,7 @@ def main():
                 print(min(symm_all),'\t\t', np.mean(symm_all))
                 print("\n")
                 best_fid_all.append(np.max(fid_all))
-                mean_time_all.append(np.mean(eval_times))
+                mean_time_all.append(np.max(eval_times))
                 gamma_all.append(np.min(symm_all))
 
         if choice == 0:
