@@ -127,7 +127,7 @@ def SD(N_step, sector, custom_prot_obj, init_random = True, init_state=None, max
                     g1 = 0 if hx_tmp[x1]*hx_tmp[-(x1+1)] < 0 else 1
                     g2 = 0 if hx_tmp[x2]*hx_tmp[-(x2+1)] < 0 else 1
                     swap(hx_tmp,x1,x2)
-                    out_str = "{0:<6}{1:<9}{2:<20.14f}{3:<10.5f}{4:10}{5:10}".format(_,n_tot_eval,fid_best, gamma(hx_tmp_best),g1,g2)
+                    out_str = "{0:<6}{1:<9}{2:<20.14f}{3:<10.5f}{4:10}{5:10}".format(_,n_tot_eval,fid_best, gamma(hx_tmp_best), g1, g2)
                     print(out_str)
                 break
             else: # reject move
@@ -135,7 +135,7 @@ def SD(N_step, sector, custom_prot_obj, init_random = True, init_state=None, max
             
         if count == n_permutation - 1 :
             print("--> Minima reached !")
-            out_str = "{0:<6}{1:<9}{2:<20.14f}{3:<10.5f}{4:10}{5:10}".format(_,n_tot_eval,fid_best, gamma(hx_tmp_best),g1,g2)
+            out_str = "{0:<6}{1:<9}{2:<20.14f}{3:<10.5f}".format(_,n_tot_eval,fid_best, gamma(hx_tmp_best))
             print(out_str)
             break
 
