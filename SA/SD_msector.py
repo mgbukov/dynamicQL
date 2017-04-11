@@ -50,7 +50,7 @@ def main():
     for _ in range(n_sample):
         fid_best, hx_tmp, fid_best_list, hx_tmp_list = SA(Ti, N_quench, n_step, m, custom_prot, init_random = True, info = True)
         #sample_result.append([fid_best, hx_tmp, fid_best_list, hx_tmp_list])
-        sample_result.append([fid_best, hx_tmp])
+        sample_result.append([fid_best, hx_tmp]) # only dumped at the end !
     
     with open(file_name,'wb') as f:
         pickle.dump(sample_result, f)

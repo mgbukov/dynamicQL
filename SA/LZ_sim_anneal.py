@@ -289,6 +289,8 @@ def fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
     """   
     
     psi_evolve=psi_i.copy()
+    #print(np.shape(psi_evolve))
+    #print(np.shape(matrix_dict[-4.]))
     for t in range(N_time_step):
         psi_evolve = matrix_dict[hx_discrete[t]].dot(psi_evolve)
 
