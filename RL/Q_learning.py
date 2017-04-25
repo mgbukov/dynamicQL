@@ -207,8 +207,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	Return_ave = np.zeros((N_episodes,),dtype=np.float64)
 	Return = np.zeros_like(Return_ave)
 	Fidelity_ep = np.zeros_like(Return_ave)
-	protocol_ep = np.zeros_like((len(Return_ave),max_t_steps))
-
+	protocol_ep = np.zeros((Fidelity_ep.shape[0],max_t_steps),)
+	
 	# initialise best fidelity
 	best_R = -1.0 # best encountered fidelity
 	# initialise reward
@@ -374,8 +374,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		Return_ave[ep] = 1.0/(ep+1)*(R + ep*Return_ave[ep-1])
 		Return[ep] = R
 		Fidelity_ep[ep] = R
-		protocol_ep[ep,:] = best_protocol(actions_taken,state_i[0],delta_time)
-
+		protocol_ep[ep,:] = best_protocol(actions_taken,state_i[0],delta_time)[0].astype(int)
+		
 
 		if (ep+1)%(2*T_expl) == 0:
 			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep+1,np.round(R,5),S_prime[0])
