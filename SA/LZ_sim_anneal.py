@@ -72,7 +72,7 @@ def main():
     """
     #----------------------------------------
     # DEFAULT PARAMETERS
-    J = -1.0  # zz interaction
+    J =  1.0  # zz interaction
     hz = 1.0  #0.9045/0.809 #1.0 # hz field
     hx_i = -4.0 # -1.0 # initial hx coupling
     act_set_name='bang-bang8'
