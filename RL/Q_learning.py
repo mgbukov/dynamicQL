@@ -426,7 +426,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		np.savetxt(dataname,Data_fid)
 
 		dataname  = save_dir + "obs_data_best"+data_params+'.txt'
-		np.savetxt(dataname,Data_obs)
+		np.savetxt(dataname,Data_obs_best)
 
 		dataname  = save_dir + "protocol_data"+data_params+'.txt'
 		np.savetxt(dataname,Data_protocol)
