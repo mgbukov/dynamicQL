@@ -12,8 +12,8 @@ Example of use:
         $python LZ_sim_anneal
         
     2. Run with optional parameters: 30 quenches, 20 times steps, action_set, outfile, max number of fidelity evaluations,
-    time_scale, number of restarts, verbose:
-        $python LZ_sim_anneal.py 30 20 bang-bang8 out.txt 3000 0.05 100 False
+    time_scale, number of restarts, verbose, symmetrize_protocol:
+        $python LZ_sim_anneal.py 30 20 bang-bang8 out.txt 3000 0.05 100 False True
         
     3. Get some help
         $python LZ_sim_anneal -h
@@ -64,6 +64,7 @@ def main():
         delta_t: time scale
         N_restart: number of restart for the annealing
         verbose: If you want the program to print to screen the progress
+        symmetrize_protocol: Wether or not to work in the symmetrized sector of protocols
         
         hx_max : maximum hx field (the annealer can go between -hx_max and hx_max
         FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations (deprecated)
@@ -72,7 +73,7 @@ def main():
     """
     #----------------------------------------
     # DEFAULT PARAMETERS
-    J =  1.0  # zz interaction
+    J = 1.0  # zz interaction
     hz = 1.0  #0.9045/0.809 #1.0 # hz field
     hx_i = -4.0 # -1.0 # initial hx coupling
     act_set_name='bang-bang8'
@@ -87,13 +88,13 @@ def main():
     action_set=all_action_sets['bang-bang8']
     delta_t=0.05
     N_restart=4
+    symmetrize_protocol=True
     
     hx_max=4
     h_set=compute_h_set(hx_i,hx_max)
     RL_CONSTRAINT=True 
     verbose=True
     fidelity_fast=True
-    symmetrize_protocol=True
     
     #----------------------------------------
     
@@ -144,11 +145,9 @@ def main():
     _, psi_target = H.eigsh(time=0,k=1,which='SA')
     hx_discrete[0]=0
     print("Initial overlap is \t %.5f"%(abs(np.sum(np.conj(psi_i)*psi_target))**2))
-
-    sweep_size=N_time_step*len(action_set)
     
     # simulated annealing kwargs:
-    param_SA={'Ti':Ti,'sweep_size':sweep_size,
+    param_SA={'Ti':Ti,
               'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
               'delta_t':delta_t,'psi_target':psi_target,
               'hx_i':hx_i,'N_quench':N_quench,'RL_CONSTRAINT':RL_CONSTRAINT,
@@ -165,7 +164,7 @@ def main():
         
     if outfile_name=="auto": outfile_name=ut.make_file_name(param_SA)
     
-    to_save_par=['Ti','sweep_size','psi_i','N_time_step',
+    to_save_par=['Ti','psi_i','N_time_step',
                 'delta_t','psi_target','hx_i','N_quench','RL_CONSTRAINT',
                 'hx_initial_state','hx_final_state','L','J','hz','action_set',
                 'symmetrize'
@@ -188,13 +187,12 @@ def main():
         print("\n\n-----------> Starting new iteration <-----------")
         start_time=time.time()
     
-        count_fid_eval,best_fid,best_action_protocol,best_hx_discrete=simulate_anneal(param_SA)
+        count_fid_eval,best_fid,best_action_protocol,best_hx_discrete = simulate_anneal(param_SA)
     
         result=[count_fid_eval,best_fid,best_action_protocol,best_hx_discrete]
         print("\n----------> RESULT FOR ANNEALING NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%count_fid_eval)
         print("Best fidelity \t\t\t%.4f"%best_fid)
-        print("Best action_protocol\t\t",best_action_protocol)
         print("Best hx_protocol\t\t",best_hx_discrete)
 
         if L > 1:  
@@ -291,6 +289,8 @@ def fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
     """   
     
     psi_evolve=psi_i.copy()
+    #print(np.shape(psi_evolve))
+    #print(np.shape(matrix_dict[-4.]))
     for t in range(N_time_step):
         psi_evolve = matrix_dict[hx_discrete[t]].dot(psi_evolve)
 
@@ -413,7 +413,6 @@ def propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step,
     tmp=[]
     count=0
 
-    # w/o RL constraints
     while True:
         if RL_constraint:
             aset=avail_action_RL(rand_pos,old_action_protocol,old_hx_discrete,hx_i)
@@ -468,86 +467,91 @@ def simulate_anneal(params):
     enablePrint() if params['verbose'] else blockPrint()
     
     # Simulated annealing parameters
-    T=params['Ti']
-    Ti=T
-    eta=1e-14
-    N_quench=params['N_quench']
+    T = params['Ti']
+    Ti = T
+    eta = 1e-14
+    N_quench = params['N_quench']
 
-    RL_constraint=params['RL_CONSTRAINT']
-    step=0.0
-    sweep_size=params['sweep_size']
-    beta=1./T
+    RL_constraint = params['RL_CONSTRAINT']
+    step = 0.0
+    beta = 1./T
     option_fidelity = ('fast' if params['fidelity_fast'] else 'standard')
 
     # Fidelity calculation parameters
-    psi_i=params['psi_i']
-    H=params['H']
-    N_time_step=params['N_time_step']
-    delta_t=params['delta_t']
-    psi_target=params['psi_target']
-    hx_i=params['hx_i']
-    symmetrize=params['symmetrize']
+    psi_i = params['psi_i']
+    H = params['H']
+    N_time_step = params['N_time_step']
+    delta_t = params['delta_t']
+    psi_target = params['psi_target']
+    hx_i = params['hx_i']
+    symmetrize = params['symmetrize']
     
+    max_iter_zero_T = 20 * N_time_step * len(action_set) # very-high probability of not reaching this threshold ...
+
     # Initializing variables
     action_protocol,hx_discrete=random_trajectory(hx_i,N_time_step,symmetrize=symmetrize)
     
-    best_action_protocol=action_protocol
-    best_hx_discrete=hx_discrete
-    best_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option=option_fidelity)
+    best_action_protocol = action_protocol
+    best_hx_discrete = hx_discrete
+    best_fid = Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option=option_fidelity)
     
-    old_hx_discrete=best_hx_discrete
-    old_action_protocol=best_action_protocol
-    old_fid=best_fid
+    old_hx_discrete = best_hx_discrete
+    old_action_protocol = best_action_protocol
+    old_fid = best_fid
     
     count_fid_eval=0
-    if N_quench > 0 : print("[SA] : Quenching to zero temperature in %i steps"%N_quench);
+
+    if N_quench > 0 : 
+        print("[SA] : Quenching to zero temperature in %i steps"%N_quench)
+
     while T>1E-6:
-        if N_quench==0:break
+        # Simulated annealing
+        if N_quench == 0:
+            break
     
-        print("Current temperature: %.4f\tBest fidelity: %.4f\tFidelity count: %i"%(T,best_fid,count_fid_eval))
-        
-        beta=1./T
-        for _ in range(sweep_size):
-            new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step,
+        beta = 1./T
+
+        new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol,old_hx_discrete,hx_i,N_time_step,
                                                                         RL_constraint=RL_constraint,symmetrize=symmetrize)
-            hx_discrete=new_hx_discrete
+        hx_discrete = new_hx_discrete
             
-            new_fid=Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option=option_fidelity)
-            count_fid_eval+=1
+        new_fid = Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option=option_fidelity)
+        count_fid_eval+=1
             
-            if new_fid > best_fid: # Record best encountered !
-                best_fid=new_fid
-                best_action_protocol=new_action_protocol
-                best_hx_discrete=new_hx_discrete
+        if new_fid > best_fid: # Record best encountered !
+            print("Current temperature: %.5f\tBest fidelity: %.6f\tCurrent fidelity:%.6f\tFidelity count: %i"%(T, best_fid, old_fid, count_fid_eval))
+            best_fid=new_fid
+            best_action_protocol=new_action_protocol
+            best_hx_discrete=new_hx_discrete
             
-            dF=(new_fid-old_fid)
+        dF = (new_fid-old_fid)
             
-            if dF>0:
-                old_hx_discrete=new_hx_discrete
-                old_action_protocol=new_action_protocol
-                old_fid=new_fid           
-            elif np.random.uniform() < np.exp(beta*dF):
-                old_hx_discrete=new_hx_discrete
-                old_action_protocol=new_action_protocol
-                old_fid=new_fid
+        if dF > 0:
+            old_hx_discrete=new_hx_discrete
+            old_action_protocol=new_action_protocol
+            old_fid=new_fid           
+        elif np.random.uniform() < np.exp(beta*dF):
+            old_hx_discrete=new_hx_discrete
+            old_action_protocol=new_action_protocol
+            old_fid=new_fid
         
-        step+=1.0
-        T=Ti*(1.0-step/N_quench)
+        step += 1.0
+        T = Ti * (1.0-step/N_quench)
     
-    print("\n[SGD] : Performing up to 5 sweeps (1 sweep=%i evals) at zero-temperature"%sweep_size)
+    print("\n[SD] : Performing zero-temperature annealing")
     
-    n_iter_without_progress=0
+    n_iter_without_progress = 0
     propose_update=np.arange(N_time_step)
     np.random.shuffle(propose_update)
-    propose_update_pos=0
+    propose_update_pos = 0
     
-    for _ in range(5*sweep_size): ## Perform greedy sweeps (zero-temperature):
+    for _ in range(max_iter_zero_T):
+        # Stochastic descent
         
         rand_pos=propose_update[propose_update_pos]
         new_action_protocol,new_hx_discrete=propose_new_trajectory(old_action_protocol, old_hx_discrete,
                                                                    hx_i,N_time_step, RL_constraint=RL_constraint,
                                                                    rand_pos=rand_pos, symmetrize=symmetrize)
-
         hx_discrete=new_hx_discrete
         new_fid=Fidelity(psi_i, H, N_time_step, delta_t, psi_target, option=option_fidelity)
         
@@ -555,9 +559,11 @@ def simulate_anneal(params):
         n_iter_without_progress += 1
         propose_update_pos += 1
         
-        dF1 = new_fid - best_fid
-        # accept move is greater than some threshold and positive ---> 
-        if ( abs(dF1) > eta ) & ( dF1 > 0 ) : # Record best encountered.
+        dF = new_fid - old_fid
+        if ( abs(dF) > eta ) & (dF > 0) :
+
+            print("Current temperature: %.5f\tBest fidelity: %.6f\tCurrent fidelity:%.6f\tFidelity count: %i"%(T, best_fid, old_fid, count_fid_eval))
+            
             n_iter_without_progress = 0
             propose_update_pos = 0
             np.random.shuffle(propose_update)
@@ -565,16 +571,13 @@ def simulate_anneal(params):
             best_action_protocol = new_action_protocol
             best_hx_discrete = new_hx_discrete
             
-        dF = (new_fid-old_fid)
-        if ( abs(dF) > eta ) & (dF > 0) :
             old_hx_discrete = new_hx_discrete
             old_action_protocol = new_action_protocol
             old_fid = new_fid
-        
-        if _%10 == 0:
-            print("Current temperature: %.5f\tBest fidelity: %.6f\tCurrent fidelity:%.6f\tFidelity count: %i"%(T, best_fid, old_fid, count_fid_eval))
 
-        if n_iter_without_progress > N_time_step-1: break
+        if n_iter_without_progress > N_time_step-1: 
+                break
+
     print("=====> DONE <=====")
     
     enablePrint()

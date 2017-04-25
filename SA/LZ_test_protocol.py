@@ -15,6 +15,9 @@ import sys
 from matplotlib import pyplot as plt
 import plotting
 import pickle
+import os.path
+import seaborn as sns
+from SD_msector import make_file_name
 
 def b2(n10,w=10):
     x = np.array(list(np.binary_repr(n10, width=w)),dtype=np.int)
@@ -23,15 +26,112 @@ def b2(n10,w=10):
     return x
 
 def main():
+
     L=6
     dt = 0.005
+    m = 0
+    n_step = 100
+
+    param = {'L' : L, 'dt': dt, 'n_step': n_step, 'm': m}
+    file_name = make_file_name(param, root= "data/")
+
     custom_prot=LZ.custom_protocol(
-        J=-1.0,
+        J=1.0,
         L=L, hz=1.0, hx_init_state=-2.0, hx_target_state=2.0,
         delta_t=dt, hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.],
         option='fast'
     )
 
+    choice = 1
+    count = -1
+    palette = np.array(sns.color_palette('hls',10))
+    n_step = 330
+    dt=0.01
+    param = {'L' : L, 'dt': dt, 'n_step': n_step, 'm': m}
+    file_name = make_file_name(param, root= "data/")
+    with open(file_name,'rb') as f:
+        data=pickle.load(f)
+    #print(data[4][0])
+    #print(data[4][1])
+    #print(gamma(data[4][1]))
+    #plotting.protocol(range(330),data[4][1])
+    #exit()
+    #for d in data:
+    #    print(d[0],'\t',gamma(d[1]))
+    #exit()
+
+    for m in [0]:
+        count+=1
+        best_fid_all = []
+        mean_time_all = []
+        gamma_all = []        
+        n_step_all = []
+
+        for n_step in np.arange(10,401,10):
+            L = 6
+            dt = 0.01
+            #m = 2
+            #n_step = 100
+
+            param = {'L' : L, 'dt': dt, 'n_step': n_step, 'm': m}
+            file_name = make_file_name(param, root= "data/")
+
+            if os.path.exists(file_name):
+                n_step_all.append(n_step)
+                with open(file_name,'rb') as f:
+                    result = pickle.load(f)
+                
+                eval_times = []
+                symm_all = []
+                fid_all = []
+
+                for sample in result :
+                    [fid_best, hx_tmp, fid_best_list, hx_tmp_list] = sample
+                    eval_times.append(fid_best_list[-1][0])
+                    symm_all.append(gamma(hx_tmp))
+                    fid_all.append(fid_best)
+            
+                print(" n = %i "%n_step)
+                print(max(fid_all),'\t\t', np.mean(fid_all))
+                print(np.mean(eval_times),'\t\t', np.std(eval_times))
+                print(min(symm_all),'\t\t', np.mean(symm_all))
+                print("\n")
+                best_fid_all.append(np.max(fid_all))
+                mean_time_all.append(np.max(eval_times))
+                gamma_all.append(np.min(symm_all))
+
+        if choice == 0:
+            plt.plot(np.array(n_step_all)*dt,best_fid_all, c=palette[count],label='$m=%i$'%m)
+        elif choice == 1:
+            plt.plot(np.array(n_step_all)*dt,mean_time_all, marker='o',label='$m=%i$'%m)
+        elif choice == 2:
+            plt.plot(np.array(n_step_all)*dt,gamma_all, marker='o',label='$m=%i$'%m)
+    
+    title = "$m=%i$, $L=%i$, $dt=%.4f$"%(m, L, dt)
+    plt.legend(loc='best')
+    plt.title(title)
+    plt.tight_layout()
+
+    if choice == 0:
+        plt.xlabel('$T$')
+        plt.ylabel("$F$")     
+    if choice == 1:
+        plt.ylabel("\# of fid. eval")
+        plt.xlabel("$T$")
+    if choice == 2:
+        plt.ylabel("$\Gamma$")
+        plt.xlabel("$T$")
+        
+    plt.show()
+        
+    
+
+
+    
+    
+    
+    
+    exit()
     #with open("long-ass-SA.pkl",'rb') as f:
     #    [fid_best, hx_tmp, fid_best_list, hx_tmp_list]=pickle.load(f)
     #symmetrize(hx_tmp,left_unchanged=True)
