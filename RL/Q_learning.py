@@ -207,6 +207,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	Return_ave = np.zeros((N_episodes,),dtype=np.float64)
 	Return = np.zeros_like(Return_ave)
 	Fidelity_ep = np.zeros_like(Return_ave)
+	protocol_ep = np.zeros_like((len(Return_ave),max_t_steps))
 
 	# initialise best fidelity
 	best_R = -1.0 # best encountered fidelity
@@ -373,6 +374,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		Return_ave[ep] = 1.0/(ep+1)*(R + ep*Return_ave[ep-1])
 		Return[ep] = R
 		Fidelity_ep[ep] = R
+		protocol_ep[ep,:] = best_protocol(actions_taken,state_i[0],delta_time)
 
 
 		if (ep+1)%(2*T_expl) == 0:
@@ -424,6 +426,9 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		# as txt format
 		dataname  = save_dir + "RL_data"+data_params+'.txt'
 		np.savetxt(dataname,Data_fid)
+
+		dataname  = save_dir + "RL_protocols"+data_params+'.txt'
+		np.savetxt(dataname,protocol_ep)
 
 		dataname  = save_dir + "obs_data_best"+data_params+'.txt'
 		np.savetxt(dataname,Data_obs_best)
