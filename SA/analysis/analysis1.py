@@ -10,29 +10,40 @@ import pickle
 from matplotlib import pyplot as plt
 import pandas
 import sys
-import utilities as ut
 import compute_observable
-from utilities import make_file_name
 sys.path.append("..")
-from plots import plotting
+import utils as ut
+import plotting
 import seaborn as sns
 from sklearn.decomposition import PCA
 
 def main():
-    param={'N_time_step':10,
+    param={'N_time_step':100,
            'N_quench':0,
            'Ti':0.04,
-           'action_set':2,
-           'hx_initial_state':-1.0,
-           'hx_final_state':1.0,
-            'delta_t':0.01,
+           'action_set':0,
+           'hx_initial_state':-2.0,
+           'hx_final_state':2.0,
+            'delta_t':0.001,
             'hx_i':-4.0,
             'RL_CONSTRAINT':True,
-            'L':1,
-            'J':1.24,
-            'hz':1.0
-            }
- 
+            'L':6,
+            'J':1.00,
+            'hz':1.0,
+            'symmetrize':False
+    }
+    file_name=ut.make_file_name(param)
+    res = ut.gather_data(param,"../data/")
+    print(compute_observable.Ed_Ad_OP(res['h_protocol'],4))
+    plotting.protocol(range(100),res['h_protocol'][0])
+    #plotting.protocol(range(100),res['h_protocol'][1])
+    #print(res['fid'])
+
+    #print(res.keys())
+    
+    print(file_name)
+    #with open('
+    exit()
     import os
     
     

@@ -6,6 +6,7 @@ j_*
 *.pyf
 # Text files
 *.txt
+*.pdf
 test.py
 bh_tsne
 submit_scc.sh

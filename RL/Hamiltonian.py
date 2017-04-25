@@ -17,14 +17,10 @@ def Hamiltonian(L,J,hz,fun=None,fun_args=[]):
 	basis = spin_basis_1d(L=L,kblock=0,pblock=1,pauli=False) #
 	
 
-	zz_int =[[J,i,(i+1)%L] for i in range(L)]
+	zz_int =[[-J,i,(i+1)%L] for i in range(L)]
 
-	if L==1:
-		x_field=[[1.0,i] for i in range(L)]
-		z_field=[[hz,i] for i in range(L)]
-	else:
-		x_field=[[-1.0,i] for i in range(L)]
-		z_field=[[-hz,i] for i in range(L)]
+	x_field=[[-1.0,i] for i in range(L)]
+	z_field=[[-hz,i] for i in range(L)]
 
 	static = [["zz",zz_int],["z",z_field]]
 	dynamic = [["x",x_field,fun,fun_args]]
@@ -82,7 +78,7 @@ def Unitaries(delta_time,L,J,hz,action_min,var_max,var_min,state_i,save=False,sa
 
 
 
-def MB_observables(psi,times,protocol,pos_actions,h_field,L,J=-1.0,hx_i=-2.0,hx_f=2.0,hz=1.0,fin_vals=False,bang=True):
+def MB_observables(psi,times,protocol,pos_actions,h_field,L,J=1.0,hx_i=-2.0,hx_f=2.0,hz=1.0,fin_vals=False,bang=True):
 
     """
     this function returns instantaneous observalbes during ramp 
@@ -99,9 +95,6 @@ def MB_observables(psi,times,protocol,pos_actions,h_field,L,J=-1.0,hx_i=-2.0,hx_
     """
 
 
-    if L<2:
-    	print("function only analyses manybody chains! Exiting...")
-    	return [],[],[],[],[]
     	
     # read in local directory path
     str1=os.getcwd()
@@ -118,8 +111,8 @@ def MB_observables(psi,times,protocol,pos_actions,h_field,L,J=-1.0,hx_i=-2.0,hx_
     	exp_dict_dataname = my_dir+"/unitaries/unitaries_L={}_bang".format(L)+'.pkl'
     	V_target_dataname = my_dir+"/unitaries/target_basis_L={}_bang".format(L)+'.pkl'
     else:
-		exp_dict_dataname = my_dir+"/unitaries/unitaries_L={}_cont".format(L)+'.pkl'
-		V_target_datanema = my_dir+"/unitaries/target_basis_L={}_cont".format(L)+'.pkl'
+	exp_dict_dataname = my_dir+"/unitaries/unitaries_L={}_cont".format(L)+'.pkl'
+	V_target_dataname = my_dir+"/unitaries/target_basis_L={}_cont".format(L)+'.pkl'
 
 	
 	
@@ -153,7 +146,10 @@ def MB_observables(psi,times,protocol,pos_actions,h_field,L,J=-1.0,hx_i=-2.0,hx_
         pn = abs( V_target.conj().T.dot(psi) )**2.0 + np.finfo(psi[0].dtype).eps
         Sd.append( -pn.dot(np.log(pn))/L )
         # entanglement entropy
-        Sent.append( ent_entropy(psi,H.basis,chain_subsys=subsys)['Sent'] )
+	if L==1:
+		Sent.append(0.0)
+	else:
+        	Sent.append( ent_entropy(psi,H.basis,chain_subsys=subsys)['Sent'] )
         
 
         if i == len(protocol):

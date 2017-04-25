@@ -20,21 +20,18 @@ str2=str1.split('\\')
 n=len(str2)
 my_dir = str2[n-1]
 
-max_t_steps_vec=np.linspace(5,50,10,dtype=int)
+max_t_steps_vec=np.array([4,10,14,20,30,40,50,60,70,80])   #np.linspace(5,50,10,dtype=int)
 
 
 # define model params
-L = 2 # system size
+L = int(sys.argv[4]) # system size
 if L==1:
-	J = 0.0 # required by PBC
-	hz = 1.0
-	hx_i= -1.0 # initial hx coupling
-	hx_f= +1.0 # final hx coupling
+	J=0
 else:
-	J = -1.0 #/0.809 # zz interaction
-	hz = 1.0 #0.9045/0.809 #1.0 # hz field
-	hx_i= -2.0 # initial hx coupling
-	hx_f= +2.0 # final hx coupling
+	J = 1.0 # zz interaction
+hz = 1.0 # hz field
+hx_i= -2.0 # initial hx coupling
+hx_f= +2.0 # final hx coupling
 
 # define dynamic params of H(t)
 b=hx_i
@@ -67,7 +64,7 @@ print "initial and final energies are:", E_i, E_f
 #print "initial entanglement is:", ent_entropy(psi_i,H.basis)['Sent']
 print "overlap btw initial and target state is:", abs(psi_i.dot(psi_f)**2)
 
-max_t_steps = 120 #max_t_steps_vec[int(sys.argv[3])-1] #40 
+max_t_steps = max_t_steps_vec[int(sys.argv[3])-1] #40 
 delta_time = 0.05 #0.05
 
 ##### RL params #####
