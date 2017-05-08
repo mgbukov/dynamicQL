@@ -15,7 +15,7 @@ params_SA['L'] = 6
 params_SA['N_time_step'] = 100
 params_SA['symmetrize'] = False
 
-percentile = 90
+percentile = 99
 
 fid_SA_group = {}
 T_count = 0
@@ -32,8 +32,8 @@ for T in np.arange(0.1,4.01,0.1):
             series = data[1]
             for d in series:
                 tmp.append(d[1])
-            #fidelity=np.mean(tmp)
-            fidelity=np.percentile(tmp,percentile)
+            fidelity=np.mean(tmp)
+            #fidelity=np.percentile(tmp,percentile)
             #fidelity=np.max(tmp)
             fidelity_std=np.std(tmp)
             fid_SA_group[(T_count,nQ)]=[fidelity,fidelity_std]
@@ -56,12 +56,15 @@ for T in np.arange(0.1,4.01,0.1):
             tmp.append(d[0])
         #fidelity.append(np.mean(tmp))
         #fidelity.append(np.percentile(tmp,90))
-        fidelity = np.max(tmp)
+        fidelity = np.max(tmp) # worst result !
         fidelity_std = np.std(tmp)
     fid_2SF_group[T_count]=[fidelity,fidelity_std]
     T_count+=1
 
 
+#print(fid_2SF_group[15][0])
+#print([fid_SA_group[(15,nQ)][0] for nQ in nQ_list])
+#exit()
 fid_nQ={}
 fid_t={}
 for nQ in nQ_list:
@@ -77,8 +80,9 @@ for t in range(40):
         fid_t[t].append((f_best-f_SA)/f_best)
 
 palette = np.array(sns.color_palette('hls',40))
-for t in range(4,40,2):
-    plt.plot(nQ_list,fid_t[t],label="%.2f"%(0.1*t+0.1),c=palette[t])
+nQ_list_inv = [1./(nQ+1e-10) for nQ in nQ_list]
+for t in range(4,40,4):
+    plt.plot(nQ_list_inv,fid_t[t],label="%.2f"%(0.1*t+0.1),c=palette[t])
 
 #for i,nQ in zip(range(len(nQ_list)),nQ_list):
 #    plt.plot(np.arange(0.1,4.01,0.1), fid_nQ[nQ], label=nQ, c=palette[i])

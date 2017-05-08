@@ -38,7 +38,7 @@ def main():
     print("running : ",file_name)
 
     custom_prot=LZ.custom_protocol(
-        J=1.0, hz=1.0, hx_init_state=-2.0, hx_target_state=2.0,
+        J=1.0, hz=1.0, hx_init_state=-3.0, hx_target_state=2.0,
         L=L, delta_t=dt, 
         hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.], option='fast')
 
@@ -52,9 +52,10 @@ def main():
         #sample_result.append([fid_best, hx_tmp, fid_best_list, hx_tmp_list])
         sample_result.append([fid_best, hx_tmp]) # only dumped at the end !
     
+    print([s[0] for s in sample_result]) 
     with open(file_name,'wb') as f:
         pickle.dump(sample_result, f)
-
+    print("Saved in : ",file_name)
     #fid_best_list=np.array(fid_best_list)
     #plt.scatter(fid_best_list[:,0],fid_best_list[:,1])
     #plt.show()
