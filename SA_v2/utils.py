@@ -90,6 +90,81 @@ def read_command_line_arg(argv,all_action_sets):
 	symm = (symm == "True")
 	return L, hxIS, hxFS, N_quench, N_time_step, action_set, outfile_name, delta_t, N_restart, verbose, action_set_name, symm
 
+def read_parameter_file(file="para.dat"):
+	with open(file,'r') as f:
+		info={}
+		for line in f:
+			tmp=line.strip('\n').split('\t')
+			print(tmp)
+			info[tmp[0]]=tmp[1]
+
+	param_type = {
+		'L' : int,
+		'dt' : float,
+		'J' : float,
+		'n_step': int,
+		'hz' : float,
+		'hx_i' : float,
+		'hx_f' : float,
+		'hx_max' : float,
+		'hx_min' : float,
+		'dh' : float,
+		'n_sample' : int,
+		'n_quench' : int,
+		'Ti' : float,
+		'symmetrize' : int,
+		'outfile' : str
+	}
+
+	param = {}
+	for p in param_type.keys(): # cast strings to floats and ints !
+		param[p] = param_type[p](info[p])
+
+	return param
+
+def print_parameters(parameters):
+
+	""" 
+    Parameters
+        L: system size
+        J: Jzz interaction
+        hz: longitudinal field
+        hx_i: initial tranverse field coupling
+        hx_initial_state: initial state transverse field
+        hx_final_state: final state transverse field
+        Ti: initial temperature for annealing
+        
+        N_quench: number of quenches (i.e. no. of time temperature is quenched to reach exactly T=0)
+        N_time_step: number of time steps
+        action_set: array of possible actions
+        outfile_name: file where data is being dumped (via pickle) 
+        delta_t: time scale
+        N_restart: number of restart for the annealing
+        verbose: If you want the program to print to screen the progress
+        symmetrize_protocol: Wether or not to work in the symmetrized sector of protocols
+        
+        hx_max : maximum hx field (the annealer can go between -hx_max and hx_max
+        FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations (deprecated)
+        RL_CONSTRAINT: use reinforcement learning constraints or not
+        fidelity_fast: prepcompute exponential matrices and runs fast_Fidelity() instead of Fidelity()
+    """
+
+	L, dt, J, n_step, hz, hx_i, hx_max = tuple([parameters[s] for s in ['L','dt', 'J', 'n_step','hz','hx_i','hx_max']])
+	hx_initial_state, hx_final_state, n_quench, n_sample, n_step = tuple([parameters[s] for s in ['hx_i','hx_f','n_quench','n_sample','n_step']])
+	symmetrize,outfile = tuple([parameters[s] for s in ['symmetrize','outfile']])
+
+	print("-------------------- > Parameters < --------------------")
+	print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx(t=0) \t\t %.3f\nhx_max \t\t\t %.3f "%(L, J, hz, hx_i, hx_max))
+	print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state, hx_final_state))
+	print("N_quench \t\t %i\ndelta_t \t\t %.2f\nN_restart \t\t %i"%(n_quench, dt, n_sample))
+	print("N_time_step \t\t %i"%n_step)
+	print("Total_time \t\t %.2f"%(n_step*dt))
+	print("Output file \t\t %s"%('data/'+outfile))
+	#print("# of possible actions \t %i"%len(action_set))
+	#print("Action_set \t <- \t %s"%action_set)
+	print("Symmetrizing protocols \t %s"%str(symmetrize))
+	#print("Fidelity MODE \t\t %s"%('fast' if fidelity_fast else 'standard'))
+
 def f_to_str(number,prec=2):
 	s=("%."+str(prec)+"f")%number
 	s=s.replace("-","m").replace(".","p")

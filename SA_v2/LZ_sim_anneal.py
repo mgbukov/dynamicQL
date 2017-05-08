@@ -19,148 +19,59 @@ Example of use:
         $python LZ_sim_anneal -h
 '''
 
-import utils as ut
-import sys,os # for running in batch from terminal
-ut.check_version()
-
+import utils
 import numpy as np
 import pickle
-import Hamiltonian_alex as Hamiltonian
+from Hamiltonian import HAMILTONIAN
 from quspin.operators import exp_op
 import time
-from analysis.compute_observable import MB_observables
-
+from model import MODEL
+#from analysis.compute_observable import MB_observables
+    
 np.set_printoptions(precision=4)
-    
-def main():
-    
-    ut.check_sys_arg(sys.argv)
-        
-    global action_set,hx_discrete,hx_max#,FIX_NUMBER_FID_EVAL
-    
-    continuous=[0.01,0.05,0.1,0.2,0.5,1.,2.,3.,4.,8.]
-    action_set_name=["bang-bang8","continuous-pos","continuous"]
-    action_set_arrays=[
-                      np.array([-8.0,0.,8.]),
-                      np.array(continuous,dtype=np.float32),
-                      np.array([-c for c in continuous]+[0]+continuous,dtype=np.float32)   
-                      ]
-    all_action_sets=dict(zip(action_set_name,action_set_arrays))
-    
-    """ 
-    Parameters
-        L: system size
-        J: Jzz interaction
-        hz: longitudinal field
-        hx_i: initial tranverse field coupling
-        hx_initial_state: initial state transverse field
-        hx_final_state: final state transverse field
-        Ti: initial temperature for annealing
-        
-        N_quench: number of quenches (i.e. no. of time temperature is quenched to reach exactly T=0)
-        N_time_step: number of time steps
-        action_set: array of possible actions
-        outfile_name: file where data is being dumped (via pickle) 
-        delta_t: time scale
-        N_restart: number of restart for the annealing
-        verbose: If you want the program to print to screen the progress
-        symmetrize_protocol: Wether or not to work in the symmetrized sector of protocols
-        
-        hx_max : maximum hx field (the annealer can go between -hx_max and hx_max
-        FIX_NUMBER_FID_EVAL: decide wether you want to fix the maximum number of fidelity evaluations (deprecated)
-        RL_CONSTRAINT: use reinforcement learning constraints or not
-        fidelity_fast: prepcompute exponential matrices and runs fast_Fidelity() instead of Fidelity()
-    """
-    #----------------------------------------
-    # DEFAULT PARAMETERS
-    J = 1.0  # zz interaction
-    hz = 1.0  #0.9045/0.809 #1.0 # hz field
-    hx_i = -4.0 # -1.0 # initial hx coupling
-    act_set_name='bang-bang8'
-    Ti=0.04 # initial temperature (for annealing)
-    
-    L = 10 # system size
-    hx_initial_state= -2.0 # initial state
-    hx_final_state = 2.0 #+1.0 # final hx coupling
-    N_quench=10
-    N_time_step=40
-    outfile_name='first_test.pkl'
-    action_set=all_action_sets['bang-bang8']
-    delta_t=0.05
-    N_restart=4
-    symmetrize_protocol=True
-    
-    hx_max=4
-    h_set=compute_h_set(hx_i,hx_max)
-    RL_CONSTRAINT=True 
-    verbose=True
-    fidelity_fast=True
-    
-    #----------------------------------------
-    
-    if len(sys.argv)>1:
-        """ 
-            if len(sys.argv) > 1 : run from command line -- check command line for parameters 
-        """        
-        argv=ut.read_command_line_arg(sys.argv,all_action_sets)
-        L=argv[0]
-        hx_initial_state=argv[1]
-        hx_final_state=argv[2]
-        N_quench=argv[3]
-        N_time_step=argv[4]
-        action_set=argv[5]
-        outfile_name=argv[6]
-        delta_t=argv[7]
-        N_restart=argv[8]
-        verbose=argv[9]
-        act_set_name=argv[10]
-        symmetrize_protocol=argv[11]
-        
 
+def b2(n10,w=10):
+    x = np.array(list(np.binary_repr(n10, width=w)),dtype=np.float)
+    x[x > 0.5] = 4.
+    x[x < 0.5] = -4.
+    return x
 
+def b2_array(n10,w=10):
+    return np.array(list(np.binary_repr(n10, width=w)),dtype=np.int)
 
-    print("-------------------- > Parameters < --------------------")
-    print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx(t=0) \t\t %.3f\nhx_max \t\t\t %.3f "%(L,J,hz,hx_i,hx_max))
-    print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state,hx_final_state))
-    print("N_quench \t\t %i\ndelta_t \t\t %.2f\nN_restart \t\t %i"%(N_quench,delta_t,N_restart))
-    print("N_time_step \t\t %i"%N_time_step)
-    print("Total_time \t\t %.2f"%(N_time_step*delta_t))
-    print("Output file \t\t %s"%('data/'+outfile_name))
-    print("Action_set \t <- \t %s"%np.round(action_set,3))
-    print("# of possible actions \t %i"%len(action_set))
-    print("Using RL constraints \t %s"%str(RL_CONSTRAINT))
-    print("Symmetrizing protocols \t %s"%str(symmetrize_protocol))
-    print("Fidelity MODE \t\t %s"%('fast' if fidelity_fast else 'standard'))
+def main():    
+    # Reading parameters from para.dat file
+    parameters = utils.read_parameter_file()
+    
+    # Printing parameters for user
+    utils.print_parameters(parameters)
+    # Defining Hamiltonian
+    H = HAMILTONIAN(**parameters)
 
-    param={'J':J,'hz':hz,'hx':hx_i} # Hamiltonian kwargs 
-    hx_discrete=[0]*N_time_step # dynamical part at every time step (initiaze to zero everywhere)
+    # Defines the model, and precomputes evolution matrices given set of states
+    model = MODEL(H, parameters)
     
-    # full system hamiltonian
-    H,_ = Hamiltonian.Hamiltonian(L,fct=hx_vs_t,**param)
-   
-    # calculate initial and final states
-    hx_discrete[0]=hx_initial_state # just a trick to get initial state
-    _, psi_i = H.eigsh(time=0,k=1,which='SA')
-    hx_discrete[0]=hx_final_state # just a trick to get final state
-    _, psi_target = H.eigsh(time=0,k=1,which='SA')
-    hx_discrete[0]=0
-    print("Initial overlap is \t %.5f"%(abs(np.sum(np.conj(psi_i)*psi_target))**2))
+    with open("ES_L-06_T-0.500_n_step-28.pkl", ‘rb’) as f:
+	    fidelities=pickle.load(f)
+    nfid=fidelities.shape[0]
+
+    fid_and_energy=np.empty((nfid,2),dtype=np.float)
+    for i,f in zip(range(nfid),fidelity):
+        model.update_protocol(b2_array(i), w = 28)
+        fid_and_energy[i][0]=fid
+        fid_and_energy[i][1]=model.compute_energy()
+
+    with open("ES_L-06_T-0.500_n_step-28-test.pkl", ‘wb’) as f:
+	    fidelities=pickle.dump(fid_and_energy,f)
     
-    # simulated annealing kwargs:
-    param_SA={'Ti':Ti,
-              'psi_i':psi_i,'H':H,'N_time_step':N_time_step,
-              'delta_t':delta_t,'psi_target':psi_target,
-              'hx_i':hx_i,'N_quench':N_quench,'RL_CONSTRAINT':RL_CONSTRAINT,
-              'verbose':verbose,'hx_initial_state':hx_initial_state,'hx_final_state':hx_final_state,
-              'L':L,'J':J,'hz':hz,'action_set':action_set_name.index(act_set_name),
-              'fidelity_fast':fidelity_fast,'symmetrize':symmetrize_protocol
-    }
-    
-    if param_SA['fidelity_fast'] :
-        print("\nPrecomputing evolution matrices ...")
-        start=time.time()
-        precompute_expmatrix(param_SA, h_set, H)
-        print("Done in %.4f seconds"%(time.time()-start))
+    #fid = model.compute_fidelity()
+    #energy = model.compute_energy()
+    #print(model.compute_energy())
+    #print(model.compute_energy(model.psi_target))
+    #print(energy)
+
+    exit()
+    model.anneal()
         
     if outfile_name=="auto": outfile_name=ut.make_file_name(param_SA)
     
@@ -209,76 +120,6 @@ def main():
     
     print("\n Thank you and goodbye !")
     
-def Fidelity(psi_i,H,N_time_step,delta_t,psi_target,option='standard'):
-    """
-    Purpose:
-        Calculates final fidelity by evolving psi_i over a N_time_step 
-    Return: 
-        Norm squared between the target state psi_target and the evolved state (according to the full hx_discrete protocol)
-        
-    """
-    if option is 'standard':
-        psi_evolve=psi_i.copy()
-        for t in range(N_time_step):
-            psi_evolve = exp_op(H(time=t),a=-1j*delta_t).dot(psi_evolve)
-        
-        return abs(np.sum(np.conj(psi_evolve)*psi_target))**2
-    else:
-        return fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target)
-    
-    
-def compute_h_set(hx_i,hx_max):
-    tmp=np.array([hx_i+a for a in action_set])
-    return tmp[(tmp < abs(hx_max)+0.0001) & (tmp > -abs(hx_max)-0.0001)]
-    
-def precompute_expmatrix(param_SA, h_set, H):
-    """
-
-    Purpose:
-        Precomputes the evolution matrix and stores them in a global dictionary
-        If unitary.dat is available, reads the matrices from this file
-
-    """
-
-    L=param_SA['L']
-    J=param_SA['J']
-    hz=param_SA['hz']
-    hx_final_state=param_SA['hx_final_state']
-    delta_t=param_SA['delta_t']
-
-    import os.path
-    from scipy.linalg import expm
-    global matrix_dict
-    file_name=ut.make_unitary_file_name(param_SA).replace("SA","unitaries/unitary")
-    file_eigenvector=ut.make_unitary_file_name(param_SA).replace("SA","unitaries/eigenvector_FS")
-
-    if os.path.isfile(file_name):
-        with open(file_name,"rb") as f:
-            matrix_dict=pickle.load(f)
-            f.close()
-        with open(file_eigenvector,"rb") as f:
-             param_SA['V_target']=pickle.load(f)
-    else:
-        matrix_dict={}
-        hx_dis_init=hx_discrete[0]
-        for h in h_set:
-            hx_discrete[0]=h #  fix it later !
-            matrix_dict[h]=np.asarray(exp_op(H,a=-1j*delta_t).get_mat().todense())
-
-        # define matrix exponential
-        # calculate final basis
-
-        hx_discrete[0]=hx_final_state
-        _,V_target=H.eigh()
-        param_SA['V_target']=V_target
-
-        with open(file_eigenvector,"wb") as f:
-            pickle.dump(V_target,f)
-            f.close()
-
-        hx_discrete[0]=hx_dis_init # resetting to it's original value
-        with open(file_name,"wb") as f:
-            pickle.dump(matrix_dict,f)
     
 def fast_Fidelity(psi_i,H,N_time_step,delta_t,psi_target):
     """

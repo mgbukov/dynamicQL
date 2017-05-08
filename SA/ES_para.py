@@ -18,6 +18,7 @@ from matplotlib import pyplot as plt
 import plotting
 import pickle
 
+
 def main():
 
     if len(sys.argv) > 1:
@@ -59,7 +60,7 @@ def main():
     best_hx = np.argmax(fid_array)
     best_fid = np.max(fid_array)
 
-    with open(file_name,"wb") as f:
+    with open(file_name,"wb") as f:   
         pickle.dump(fid_array, f)
         f.close()
 

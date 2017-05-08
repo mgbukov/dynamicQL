@@ -36,6 +36,8 @@ def truncate(f,n):
 
 def explore_beta(t,m,b,T,beta_RL_const=1000.0):
 	"""
+	This function efines the ramp of the RL inverse temperature:
+
 	t: episode number/time
 	m: slope of increase
 	b: y intercept
@@ -47,12 +49,12 @@ def explore_beta(t,m,b,T,beta_RL_const=1000.0):
 		return b + m/2.0*(float(t)/T - (t//T)/2.0) 
 	
 
-def best_protocol(best_actions,hx_i,delta_t):
-	""" This function builds the best encounteres protocol from best_actions """
-	protocol=np.zeros_like(best_actions)
-	t = np.array([delta_t*_i for _i in range(len(best_actions))])
+def build_protocol(actions,hx_i,delta_t):
+	""" This function builds a protocol from the set of actions actions """
+	protocol=np.zeros_like(actions)
+	t = np.array([delta_t*_i for _i in range(len(actions))])
 	S = hx_i
-	for _i,A in enumerate(best_actions):
+	for _i,A in enumerate(actions):
 		S+=A
 		protocol[_i]=S
 	return protocol, t
@@ -88,6 +90,11 @@ def greedy_protocol(theta,tilings,actions,hx_i,delta_t,max_t_steps,h_field):
 
 
 def Learn_Policy(state_i,best_actions,R,theta,tilings,actions):
+	"""
+	This function biases a given Q function (stored in the linear approximant theta)
+	to learn a policy by scaling the weights of all actions down below the value of the 
+	best action.
+	"""
 
 	N_tilings = tilings.shape[0]
 	N_tiles = tilings.shape[1]
@@ -121,6 +128,9 @@ def Learn_Policy(state_i,best_actions,R,theta,tilings,actions):
 
 
 def find_feature_inds(tilings,S,theta_inds):
+	"""
+	This function finds the feature indices of s state S in the set of tilings.
+	"""
 	for _k, tiling in enumerate(tilings): # cython-ise this loop as inline fn!
 		idx = tiling.searchsorted(S)
 		idx = np.clip(idx, 1, len(tiling)-1)
@@ -207,7 +217,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 	Return_ave = np.zeros((N_episodes,),dtype=np.float64)
 	Return = np.zeros_like(Return_ave)
 	Fidelity_ep = np.zeros_like(Return_ave)
-
+	protocol_ep = np.zeros((Fidelity_ep.shape[0],max_t_steps),)
+	
 	# initialise best fidelity
 	best_R = -1.0 # best encountered fidelity
 	# initialise reward
@@ -361,7 +372,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		if ( (ep+1)%(2*T_expl)-T_expl==0 and ep not in [0,N_episodes-1] ): # and beta_RL<20.0:
 			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
 		elif (ep//T_expl)%2==1 and abs(R-best_R)>1E-12:
-			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions,ep=ep)
+			theta = Learn_Policy(state_i,best_actions,best_R,theta,tilings,actions)
 
 		#"""
 		# check if Q-function converges
@@ -373,7 +384,8 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		Return_ave[ep] = 1.0/(ep+1)*(R + ep*Return_ave[ep-1])
 		Return[ep] = R
 		Fidelity_ep[ep] = R
-
+		protocol_ep[ep,:] = build_protocol(actions_taken,state_i[0],delta_time)[0].astype(int)
+		
 
 		if (ep+1)%(2*T_expl) == 0:
 			print "finished simulating episode {} with fidelity {} at hx_f = {}.".format(ep+1,np.round(R,5),S_prime[0])
@@ -381,7 +393,7 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 			#print 'current inverse exploration tampeature is {}.'.format(np.round(beta_RL,3))
 
 	# calculate best protocol and fidelity
-	protocol_best,t_best = best_protocol(best_actions,state_i[0],delta_time)
+	protocol_best,t_best = build_protocol(best_actions,state_i[0],delta_time)
 	protocol_greedy,t_greedy = greedy_protocol(theta,tilings,actions,state_i[0],delta_time,max_t_steps,h_field)
 			
 
@@ -425,8 +437,11 @@ def Q_learning(N,N_episodes,alpha_0,eta,lmbda,beta_RL_i,beta_RL_inf,T_expl,m_exp
 		dataname  = save_dir + "RL_data"+data_params+'.txt'
 		np.savetxt(dataname,Data_fid)
 
+		dataname  = save_dir + "RL_protocols"+data_params+'.txt'
+		np.savetxt(dataname,protocol_ep)
+
 		dataname  = save_dir + "obs_data_best"+data_params+'.txt'
-		np.savetxt(dataname,Data_obs)
+		np.savetxt(dataname,Data_obs_best)
 
 		dataname  = save_dir + "protocol_data"+data_params+'.txt'
 		np.savetxt(dataname,Data_protocol)

@@ -37,12 +37,8 @@ def main():
     file_name = make_file_name(param, root= "data/")
     print("running : ",file_name)
 
-    if L == 1:
-        div = 2.
-    else:
-        div = 1.
     custom_prot=LZ.custom_protocol(
-        J=1.0, hz=1.0, hx_init_state=-2.0/div, hx_target_state=2.0/div,
+        J=1.0, hz=1.0, hx_init_state=-3.0, hx_target_state=2.0,
         L=L, delta_t=dt, 
         hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.], option='fast')
 
@@ -53,19 +49,20 @@ def main():
 
     for _ in range(n_sample):
         fid_best, hx_tmp, fid_best_list, hx_tmp_list = SA(Ti, N_quench, n_step, m, custom_prot, init_random = True, info = True)
-        sample_result.append([fid_best, hx_tmp, fid_best_list, hx_tmp_list])
+        #sample_result.append([fid_best, hx_tmp, fid_best_list, hx_tmp_list])
+        sample_result.append([fid_best, hx_tmp]) # only dumped at the end !
     
+    print([s[0] for s in sample_result]) 
     with open(file_name,'wb') as f:
-        pickle.dump(sample_result,f)
+        pickle.dump(sample_result, f)
+    print("Saved in : ",file_name)
+    #fid_best_list=np.array(fid_best_list)
+    #plt.scatter(fid_best_list[:,0],fid_best_list[:,1])
+    #plt.show()
 
-    exit()
-    fid_best_list=np.array(fid_best_list)
-    plt.scatter(fid_best_list[:,0],fid_best_list[:,1])
-    plt.show()
-
-    Gamma=gamma(hx_tmp)
-    plotting.protocol(np.arange(0.,n_step)*dt, hx_tmp, 
-        title = "$m=%i$, $\Gamma=%.4f$, $F=%.12f$,\n $L=%i$, $dt=%.4f$, $T=%.3f$"%(m,Gamma,fid_best,L,dt,dt*n_step))
+    #Gamma=gamma(hx_tmp)
+    #plotting.protocol(np.arange(0.,n_step)*dt, hx_tmp, 
+    #    title = "$m=%i$, $\Gamma=%.4f$, $F=%.12f$,\n $L=%i$, $dt=%.4f$, $T=%.3f$"%(m,Gamma,fid_best,L,dt,dt*n_step))
 
 def gamma(hx_tmp):
     n_step = len(hx_tmp)
@@ -95,6 +92,7 @@ def SD(N_step, sector, custom_prot_obj, init_random = True, init_state=None, max
         hx_tmp = init_state
 
     fid_best = system.evaluate_protocol_fidelity(hx_tmp)
+    hx_tmp_best = hx_tmp
     
     n_tot_eval = n_tot_eval
     fid_best_list=[]
@@ -130,7 +128,7 @@ def SD(N_step, sector, custom_prot_obj, init_random = True, init_state=None, max
                     g1 = 0 if hx_tmp[x1]*hx_tmp[-(x1+1)] < 0 else 1
                     g2 = 0 if hx_tmp[x2]*hx_tmp[-(x2+1)] < 0 else 1
                     swap(hx_tmp,x1,x2)
-                    out_str = "{0:<6}{1:<9}{2:<20.14f}{3:<10.5f}{4:10}{5:10}".format(_,n_tot_eval,fid_best, gamma(hx_tmp_best),g1,g2)
+                    out_str = "{0:<6}{1:<9}{2:<20.14f}{3:<10.5f}{4:10}{5:10}".format(_,n_tot_eval,fid_best, gamma(hx_tmp_best), g1, g2)
                     print(out_str)
                 break
             else: # reject move
@@ -138,7 +136,7 @@ def SD(N_step, sector, custom_prot_obj, init_random = True, init_state=None, max
             
         if count == n_permutation - 1 :
             print("--> Minima reached !")
-            out_str = "{0:<6}{1:<9}{2:<20.14f}{3:<10.5f}{4:10}{5:10}".format(_,n_tot_eval,fid_best, gamma(hx_tmp_best),g1,g2)
+            out_str = "{0:<6}{1:<9}{2:<20.14f}{3:<10.5f}".format(_,n_tot_eval,fid_best, gamma(hx_tmp_best))
             print(out_str)
             break
 
