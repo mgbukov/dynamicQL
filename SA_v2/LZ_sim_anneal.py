@@ -51,17 +51,17 @@ def main():
     # Defines the model, and precomputes evolution matrices given set of states
     model = MODEL(H, parameters)
     
-    with open("ES_L-06_T-0.500_n_step-28.pkl", ‘rb’) as f:
+    with open("/projectnb/fheating/SGD/ES/dynamicQL/SA/ES/data/concat/ES_L-06_T-0.500_n_step-28.pkl", 'rb') as f:
 	    fidelities=pickle.load(f)
     nfid=fidelities.shape[0]
 
     fid_and_energy=np.empty((nfid,2),dtype=np.float)
-    for i,f in zip(range(nfid),fidelity):
-        model.update_protocol(b2_array(i), w = 28)
-        fid_and_energy[i][0]=fid
+    for i,f in zip(range(nfid),fidelities):
+        model.update_protocol(b2_array(i,w = 28))
+        fid_and_energy[i][0]=f
         fid_and_energy[i][1]=model.compute_energy()
 
-    with open("ES_L-06_T-0.500_n_step-28-test.pkl", ‘wb’) as f:
+    with open("/projectnb/fheating/SGD/ES/dynamicQL/SA/ES/data/concat/ES_L-06_T-0.500_n_step-28-test.pkl", 'wb') as f:
 	    fidelities=pickle.dump(fid_and_energy,f)
     
     #fid = model.compute_fidelity()
