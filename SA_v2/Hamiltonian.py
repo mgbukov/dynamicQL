@@ -16,7 +16,7 @@ class HAMILTONIAN:
 		z_field=[[-hz,i] for i in range(L)]
 
 		if L>1:
-			basis = spin_basis_1d(L=L,pauli=False)#,kblock=0,pblock=1) # include symmetries (momentum and parity sectors)
+			basis = spin_basis_1d(L=L,pauli=False,kblock=0,pblock=1) # include symmetries (momentum and parity sectors)
 			zz_int =[[-J,i,(i+1)%L] for i in range(L)] # Has periodic boundary conditions
 			static = [["zz",zz_int], ["z",z_field]]
 		else:
@@ -26,49 +26,36 @@ class HAMILTONIAN:
 
 		self.h_set = self.compute_h_set(hx_min,hx_max,dh) # discrete set of possible h fields 
 		self.hx_discrete = [0]*n_step # hx_discrete are protocols specified as integers
-		fct = lambda time: self.h_set[self.hx_discrete[int(time)]]
-		dynamic = [["x", ones, fct, fct_arg]]
+
+		fct = lambda time: self.h_set[self.hx_discrete[int(time)]] # time takes discrete values in our problem
+		fct_cont = lambda h: h # trick : when calling the time - will instead interpret it as a field value 
+
+		dynamic_discrete = [["x", ones, fct, fct_arg]]
+		dynamic_cont = [["x", ones, fct_cont, fct_arg]]
 		
 		kwargs = {'dtype':np.float64,'basis':basis,'check_symm':False,'check_herm':False,'check_pcon':False}
 
-		self.model = hamiltonian(static, dynamic, **kwargs)
 		self.basis = basis
-		self.hamiltonian = hamiltonian(static, dynamic, **kwargs)
-		self.basis = basis
+		self.hamiltonian_discrete = hamiltonian(static, dynamic_discrete, **kwargs)
+		self.hamiltonian_cont = hamiltonian(static, dynamic_cont, **kwargs)
 
-	def ground_state(self,time=0,hx=0):
-		return self.hamiltonian.eigsh(time=time,k=1,which='SA')[1]
+	def ground_state(self, hx = 0.):
+		return self.hamiltonian_cont.eigsh(time=hx, k=1, which='SA')[1]
 
-	def eigen_basis(self,time=0):
-		return self.hamiltonian.eigsh(time=time,which='SA')[1]
-	
-	def compute_h_set(self,hmin,hmax,dh):
-		return np.arange(hmin,hmax+1e-6,dh)
-	
-	def update_hx_real(self,time=0,hx=0):
-		idx = np.argmin(np.abs(self.h_set-hx))
-		self.hx_discrete[time] = idx
+	def eigen_basis(self, hx = 0.):
+		return self.hamiltonian_cont.eigsh(time=hx, which='SA')[1]
 
-	def update_hx(self,time,hx_idx):
-		self.hx_discrete[time]=hx_idx
+	def compute_h_set(self, hmin, hmax, dh):
+		return np.arange(hmin, hmax+1e-6, dh)
 
-	def evaluate_ground_state_hx_special(self,hx=0):
-		t1,t2 = self.hx_discrete[0], self.h_set[0]
-		self.hx_discrete[0]=0
-		self.h_set[0]=hx
-		gs = self.hamiltonian.eigsh(time=0,k=1,which='SA')[1]
-		self.hx_discrete[0], self.h_set[0]= t1,t2
-		return gs
-		
-	def evaluate_H_hx_special(self,hx=0):
-		t1,t2 = self.hx_discrete[0], self.h_set[0]
-		self.hx_discrete[0]=0
-		self.h_set[0]=hx
-		H = self.hamiltonian.toarray().copy()
-		self.hx_discrete[0], self.h_set[0]= t1,t2
-		return H
-		
+	def update_hx(self, time=0, hx = None, hx_idx = None):
+		if hx_idx is not None:
+			self.hx_discrete[time]=hx_idx
+		elif hx is not None:
+			idx = np.argmin(np.abs(self.h_set-hx))
+			self.hx_discrete[time] = idx
+		else:
+			assert False, "Error in update_hx in Hamiltonian class"
 
-
-	######### ---- > left it at trying to figure out how to specify an arbitrary field ... 
-	############_                 
+	def evaluate_H_at_hx(self, hx = 0.):
+		return self.hamiltonian_cont(time = hx)
