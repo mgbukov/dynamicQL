@@ -1,6 +1,15 @@
 import copy
 import numpy as np
 import time 
+import itertools
+
+a=[1,2,3]
+b=[1,4,9]
+c=[20,22]
+
+for i,j in itertools.product([a,b]):
+    print(i,j)
+exit()
 
 
 a='slds alsdklsa\tasjdka'

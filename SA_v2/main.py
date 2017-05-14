@@ -9,7 +9,7 @@ Purpose: (PYTHON3 IMPLEMENTATION)
 
 '''
 
-import utils
+from utils import UTILS
 import numpy as np
 import pickle
 from Hamiltonian import HAMILTONIAN
@@ -21,12 +21,19 @@ from model import MODEL
 np.set_printoptions(precision=4)
 
 def main():
+    # Utility object for reading, writing parameters, etc. 
+    utils = UTILS()
 
     # Reading parameters from para.dat file
     parameters = utils.read_parameter_file()
+    
+    # Command line specified parameters overide parameter file values
+    utils.read_command_line_arg(parameters,sys.argv)
 
     # Printing parameters for user
     utils.print_parameters(parameters)
+
+    exit()
 
     # Defining Hamiltonian
     H = HAMILTONIAN(**parameters)
@@ -136,7 +143,8 @@ def SA(param, model:MODEL):
     
     return best_fid, best_protocol
 
-def Gibbs_Sampling(param, model:MODEL):
+def Gibbs_Sampling(param, model:MODEL): 
+    # should also measure acceptance rate 
 
     Ti = param['Ti']
     beta = 1./Ti
