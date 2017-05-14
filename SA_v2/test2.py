@@ -2,6 +2,11 @@ import copy
 import numpy as np
 import time 
 
+
+a='slds alsdklsa\tasjdka'
+print(a.split('\t',' '))
+
+exit()
 #print(list(set(range(2))-set([0])))
 s = time.time()
 #np.random.choice([0,1])

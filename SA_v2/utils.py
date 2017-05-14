@@ -91,10 +91,20 @@ def read_command_line_arg(argv,all_action_sets):
 	return L, hxIS, hxFS, N_quench, N_time_step, action_set, outfile_name, delta_t, N_restart, verbose, action_set_name, symm
 
 def read_parameter_file(file="para.dat"):
+	"""
+	Reads parameters from file para.dat (default)
+	Parameters are specified by a label and their value must be seperated by a space or a tab
+	
+	Return:
+		dict of labels (str) to parameter values (float, str or int)
+	"""
 	with open(file,'r') as f:
 		info={}
 		for line in f:
 			tmp=line.strip('\n').split('\t')
+			if len(tmp) == 1:
+				tmp = tmp[0].split(' ')
+			assert len(tmp) == 2, 'Wrong format for input file, need to have a space or tab separating parameter and its value'
 			info[tmp[0]]=tmp[1]
 
 	param_type = {
@@ -112,7 +122,9 @@ def read_parameter_file(file="para.dat"):
 		'n_quench' : int,
 		'Ti' : float,
 		'symmetrize' : int,
-		'outfile' : str
+		'outfile' : str,
+		'verbose' : int,
+		'task' : str
 	}
 
 	param = {}
@@ -190,7 +202,8 @@ def make_file_name(parameters, extension = ".pkl", root=""):
 		return root+parameters['outfile']
 	
 	# These parameters specify completly the simulation :
-	param_and_type=[['L','int-2'],
+	param_and_type=[['task','str'],
+					['L','int-2'],
 					['dt','float-4'],
 					['n_step','int-4'],
 					# --
@@ -216,11 +229,14 @@ def make_file_name(parameters, extension = ".pkl", root=""):
 			param_value[i]=f_to_str(parameters[param_name],prec=int(tmp[1]))
 		elif tmp[0] == 'int':
 			param_value[i]=i_to_str(parameters[param_name],prec=int(tmp[1]))
+		elif tmp[0] == 'str':
+			param_value[i]=parameters[param_name]
 		else:
 			print(tmp)
 			assert False,"Wrong cast-type format"
 	
-	file_name_composition=["L=%s","dt=%s","nStep=%s",
+	file_name_composition=["%s",
+							"L=%s","dt=%s","nStep=%s",
 							"nQuench=%s","Ti=%s","symm=%s",
 							"J=%s","hz=%s","hxI=%s","hxF=%s","hxmax=%s","hxmin=%s","dh=%s"]
 	file_name="_".join(file_name_composition)

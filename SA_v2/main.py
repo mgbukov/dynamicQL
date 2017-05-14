@@ -14,7 +14,7 @@ import numpy as np
 import pickle
 from Hamiltonian import HAMILTONIAN
 from quspin.operators import exp_op
-import time
+import time,sys,os
 from model import MODEL
 #from analysis.compute_observable import MB_observables
     
@@ -35,7 +35,13 @@ def main():
     model = MODEL(H, parameters)
 
     # Run simulated annealing
-    run_SA(parameters, model)
+    if parameters['task'] ==  'SA':
+        print("Simulated annealing")
+        run_SA(parameters, model)
+    elif parameters['task'] == 'GB':
+        print("Gibbs sampling")
+    elif parameters['task'] == 'SD':
+        print("Stochastic descent")
 
     exit()
     
@@ -47,6 +53,9 @@ def main():
 
 
 def run_SA(parameters, model:MODEL, save = True):
+    
+    if parameters['verbose'] == 0:
+        blockPrint()
 
     n_sample = parameters['n_sample']
 
@@ -80,9 +89,10 @@ def run_SA(parameters, model:MODEL, save = True):
                 f.close()
             print("Saved iteration --> %i to %s"%(it,outfile))
         print("Iteration run time --> %.2f s" % (time.time()-start_time))
-
-    return all_result    
+    
     print("\n Thank you and goodbye !")
+    enablePrint()
+    return all_result    
 
 def SA(param, model:MODEL):
     
