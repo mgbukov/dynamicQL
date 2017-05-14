@@ -95,7 +95,6 @@ def read_parameter_file(file="para.dat"):
 		info={}
 		for line in f:
 			tmp=line.strip('\n').split('\t')
-			print(tmp)
 			info[tmp[0]]=tmp[1]
 
 	param_type = {
@@ -178,7 +177,7 @@ def i_to_str(number,prec=2):
 		s=str(number)
 	return s	
 
-def make_file_name(params_SA):
+def make_file_name(parameters, extension = ".pkl", root=""):
 	"""
 	Purpose:
 		Given the simulation parameters, produces a file name that contains the information about all the simulation parameters needed
@@ -187,48 +186,47 @@ def make_file_name(params_SA):
 	Return:
 		String representing a file name (extension is always .pkl)
 	"""
+	if parameters['outfile'] != 'auto':
+		return root+parameters['outfile']
 	
-	extension=".pkl"
-	#print(params_SA)
-	#exit()
-	param_and_type=[
-					['N_time_step','int-4'],
-					['N_quench','int-3'],
+	# These parameters specify completly the simulation :
+	param_and_type=[['L','int-2'],
+					['dt','float-4'],
+					['n_step','int-4'],
+					# --
+					['n_quench','int-4'],
 					['Ti','float-2'],
-					['action_set','int-1'],
-					['hx_initial_state','float-2'],
-					['hx_final_state','float-2'],
-					['delta_t','float-4'],
-					['hx_i','float-2'],
-					['RL_CONSTRAINT','bool'],
-					['L','int-2'],
+					['symmetrize','int-1'],
+					# -- 
 					['J','float-2'],
 					['hz','float-2'],
-					['symmetrize','bool']
+					['hx_i','float-2'],
+					['hx_f','float-2'],
+					['hx_max','float-2'],
+					['hx_min','float-2'],
+					['dh','float-2'],
 	]
 	n_param=len(param_and_type)
 	param_value=[0]*n_param
 	
 	for i,p in zip(range(n_param),param_and_type):
 		param_name,cast_type=p
-		if cast_type=='bool':
-			param_value[i]=str(int(params_SA[param_name]))
+		tmp=cast_type.split('-')
+		if tmp[0]=='float':
+			param_value[i]=f_to_str(parameters[param_name],prec=int(tmp[1]))
+		elif tmp[0] == 'int':
+			param_value[i]=i_to_str(parameters[param_name],prec=int(tmp[1]))
 		else:
-			tmp=cast_type.split('-')
-			if tmp[0]=='float':
-				param_value[i]=f_to_str(params_SA[param_name],prec=int(tmp[1]))
-			elif tmp[0] == 'int':
-				param_value[i]=i_to_str(params_SA[param_name],prec=int(tmp[1]))
-			else:
-				print(tmp)
-				assert False,"Wrong cast-type format"
+			print(tmp)
+			assert False,"Wrong cast-type format"
 	
-	file_name_composition=["SA","nStep-%s","nQuench-%s","Ti-%s","as-%s","hxIS-%s","hxFS-%s","deltaT-%s","hxI-%s",
-							"RL-%s","L-%s","J-%s","hz-%s","symm-%s"]
-	file_name="_".join(file_name_composition)+extension
+	file_name_composition=["L=%s","dt=%s","nStep=%s",
+							"nQuench=%s","Ti=%s","symm=%s",
+							"J=%s","hz=%s","hxI=%s","hxF=%s","hxmax=%s","hxmin=%s","dh=%s"]
+	file_name="_".join(file_name_composition)
 	file_name=file_name%tuple(param_value)
 	
-	return file_name
+	return root+file_name+extension
 
 def make_unitary_file_name(params_SA):
 	"""
@@ -349,6 +347,9 @@ def read_current_results(file_name):
 	"""
 	if os.path.isfile(file_name):
 		with open(file_name,'rb') as pkl_file:
-			file_content=pickle.load(pkl_file) # file_content = [dict_par,all_results]
+			_ , all_results = pickle.load(pkl_file)
 			pkl_file.close()
-		return file_content
+		n_sample = len(all_results)
+		return n_sample, all_results
+	else:
+		return 0, []

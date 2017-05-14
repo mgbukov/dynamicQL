@@ -1,22 +1,12 @@
 '''
-Created on Sep 1 , 2016
+Created on May 14 , 2017
 
 @author: Alexandre Day
 
 Purpose: (PYTHON3 IMPLEMENTATION)
-    Implements simulated annealing for 1D spin chain with uniform hz-field and uniform and time varying hx-field
-    Can be run from command line
-    
-Example of use:
-    1. Run with default parameters (specified in file)
-        $python LZ_sim_anneal
-        
-    2. Run with optional parameters: 30 quenches, 20 times steps, action_set, outfile, max number of fidelity evaluations,
-    time_scale, number of restarts, verbose, symmetrize_protocol:
-        $python LZ_sim_anneal.py 30 20 bang-bang8 out.txt 3000 0.05 100 False True
-        
-    3. Get some help
-        $python LZ_sim_anneal -h
+    Implements different flavors of simulated annealing for 1D spin chain with uniform hz-field and uniform and time varying hx-field
+    Can be run by specifying simulation parameters in the file called 'para.dat'
+
 '''
 
 import utils
@@ -30,20 +20,11 @@ from model import MODEL
     
 np.set_printoptions(precision=4)
 
-def b2(n10,w=10):
-    x = np.array(list(np.binary_repr(n10, width=w)),dtype=np.float)
-    x[x > 0.5] = 4.
-    x[x < 0.5] = -4.
-    return x
-
-def b2_array(n10,w=10):
-    return np.array(list(np.binary_repr(n10, width=w)),dtype=np.int)
-
 def main():
 
     # Reading parameters from para.dat file
     parameters = utils.read_parameter_file()
-    
+
     # Printing parameters for user
     utils.print_parameters(parameters)
 
@@ -58,27 +39,25 @@ def main():
 
     exit()
     
-    '''with open("ES_L-06_T-0.500_n_step-28.pkl", ‘rb’) as f:
-	    fidelities=pickle.load(f)
-    nfid=fidelities.shape[0]
 
-    fid_and_energy=np.empty((nfid,2),dtype=np.float)
-    for i,f in zip(range(nfid),fidelity):
-        model.update_protocol(b2_array(i), w = 28)
-        fid_and_energy[i][0]=fid
-        fid_and_energy[i][1]=model.compute_energy()
+###################################################################################
+###################################################################################
+###################################################################################
+###################################################################################
 
-    with open("ES_L-06_T-0.500_n_step-28-test.pkl", ‘wb’) as f:
-	    fidelities=pickle.dump(fid_and_energy,f)
-    '''
-def run_SA(parameters, model:MODEL):
 
-    print("\n\n-----------> Starting simulated annealing <-----------")
+def run_SA(parameters, model:MODEL, save = True):
 
     n_sample = parameters['n_sample']
-    n_exist_sample = 0
-    all_result = []
 
+    outfile = utils.make_file_name(parameters,root='data/')
+    n_exist_sample, all_result = utils.read_current_results(outfile)
+
+    if n_exist_sample >= n_sample :
+        print("\n\n-----------> Samples already computed in file -- terminating ... <-----------")
+        return all_result
+
+    print("\n\n-----------> Starting simulated annealing <-----------")
     for it in range(n_exist_sample, n_sample):
 
         start_time=time.time()
@@ -87,22 +66,22 @@ def run_SA(parameters, model:MODEL):
 
         n_fid_eval = parameters['n_quench']
 
-        result = [n_fid_eval, best_fid, best_protocol, energy]
+        result = [n_fid_eval, best_fid,  energy, best_protocol]
 
         print("\n----------> RESULT FOR ANNEALING NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%n_fid_eval)
         print("Best fidelity \t\t\t%.4f"%best_fid)
         print("Best hx_protocol\t\t",list(best_protocol))
-
+        
         all_result.append(result)
+        if save is True:
+            with open(outfile,'wb') as f:
+                pickle.dump([parameters, all_result],f)
+                f.close()
+            print("Saved iteration --> %i to %s"%(it,outfile))
+        print("Iteration run time --> %.2f s" % (time.time()-start_time))
 
-        #with open('data/%s'%outfile_name,'wb') as pkl_file:
-            ## Here read first then save, stop if reached quota
-        #    pickle.dump([dict_to_save_parameters,all_results],pkl_file);pkl_file.close()
-            
-        #print("Saved iteration --> %i to %s"%(it,'data/%s'%outfile_name))
-        print("Iteration run time --> %.2f s"%(time.time()-start_time))
-    
+    return all_result    
     print("\n Thank you and goodbye !")
 
 def SA(param, model:MODEL):
@@ -153,7 +132,7 @@ def Gibbs_Sampling(param, model:MODEL):
     beta = 1./Ti
     n_step = param['n_step']
     n_equilibrate = 10000
-    n_auto_correlate = n_step*10
+    n_auto_correlate = n_step*10 # should look at auto-correlation time !
     
     # initial random protocol
     model.update_protocol( np.random.randint(0, model.n_h_field, size=n_step) )
@@ -179,7 +158,7 @@ def Gibbs_Sampling(param, model:MODEL):
 
     samples = []
     fid_samples = []
-    energy_samples = []
+    energy_samples = []
 
     for i in range(n_sample):
         
