@@ -53,6 +53,7 @@ class UTILS:
 		for i, arg in zip(range(n_elem),argv):
 			if i > 0:
 				arg_split=arg.split('=')
+				# if arg is not specified properly this will trigger a dictionnary key error <--
 				parameters[arg_split[0]] = self.param_type[arg_split[0]](arg_split[1])
 
 	def read_parameter_file(self, file="para.dat"):

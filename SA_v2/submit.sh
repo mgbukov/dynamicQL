@@ -1,6 +1,7 @@
 #!/bin/bash -login
 #$ -P fheating
-#$ -N job_0
+#$ -N job_39
 #$ -l h_rt=12:00:00
 #$ -m n
-~/.conda/envs/py35/bin/python ES_para.py ${L} $nstep $slice $Treal > log/out_$nstep.log
+#$ -m ae
+~/.conda/envs/py35/bin/python main.py n_step=40 Ti=0.29
