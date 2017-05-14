@@ -30,6 +30,7 @@ data/
 
 # unitaries pkl files
 *.dat
+!para.dat
 
 # plot file
 plots/
