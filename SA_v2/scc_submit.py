@@ -1,8 +1,5 @@
-### python scripts for submitting job on scc
-import os,sys
-import subprocess
-import itertools
-import time
+### python scripts for submitting job on scc using qsub
+import os, subprocess, time
 import numpy as np
 
 parameters = {
@@ -10,7 +7,7 @@ parameters = {
     'job_name': 'job_%i',
     'walltime': '12:00:00',
     'command' : '~/.conda/envs/py35/bin/python main.py',
-    'arguments' : [],#[['n_step',23]], # fixed parameters
+    'arguments' : [['n_quench',121]], #[['n_step',23]], # fixed parameters
     'loop' : [['n_step',range(10,41,10)],['Ti',np.arange(0.2,0.3,0.01)]] # looping parameters
 }
 
@@ -22,7 +19,6 @@ parameters = {
 ###################################
 ###################################
 ###################################
-
 
 def main():
     global submit_count
@@ -59,6 +55,7 @@ def submit(parameters, file='submit.sh',exe = False):
             os.system('qsub %s'%file)
             os.system('rm %s'%file)
             submit_count += 1
+
         elif n_loop == 1:
             loop_1 = parameters['loop'][0]
             tag, iterable = (loop_1[0],loop_1[1])
@@ -69,6 +66,7 @@ def submit(parameters, file='submit.sh',exe = False):
                 os.system('rm %s'%file)
                 time.sleep(0.1)
                 submit_count+=1
+
         elif n_loop == 2:
             loop_1 = parameters['loop'][0]
             loop_2 = parameters['loop'][1]

@@ -33,8 +33,6 @@ def main():
     # Printing parameters for user
     utils.print_parameters(parameters)
 
-    exit()
-
     # Defining Hamiltonian
     H = HAMILTONIAN(**parameters)
 
@@ -47,8 +45,10 @@ def main():
         run_SA(parameters, model)
     elif parameters['task'] == 'GB':
         print("Gibbs sampling")
+        run_GS(parameters, model)
     elif parameters['task'] == 'SD':
         print("Stochastic descent")
+        run_SD(parameters, model)
 
     exit()
     
@@ -118,10 +118,12 @@ def SA(param, model:MODEL):
     step = 0
     while T > 1e-12:
         beta = 1./T
-
+        
+        #  --- ---> single spin flip update <--- ---
         random_time = np.random.randint(0,n_step)
         current_hx = model.protocol_hx(random_time)
         model.update_hx(random_time, model.random_flip(random_time))
+        #  --- --- --- --- --- --- --- --- --- ---
 
         new_fid = model.compute_fidelity()
         
