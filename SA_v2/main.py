@@ -42,7 +42,7 @@ def main():
     # Run simulated annealing
     if parameters['task'] ==  'SA':
         print("Simulated annealing")
-        run_SA(parameters, model)
+        run_SA(parameters, model, utils)
     elif parameters['task'] == 'GB':
         print("Gibbs sampling")
         run_GS(parameters, model)
@@ -59,7 +59,7 @@ def main():
 ###################################################################################
 
 
-def run_SA(parameters, model:MODEL, save = True):
+def run_SA(parameters, model:MODEL, utils, save = True):
     
     if parameters['verbose'] == 0:
         blockPrint()
