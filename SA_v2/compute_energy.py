@@ -42,7 +42,7 @@ def main():
     L = 6
     T = 0.1
     n_step = 28 
-    param = {'L' : L, 'T': T, 'n_step': n_step, 'slice': interval_slice}
+    param = {'L' : L, 'T': T, 'n_step': n_step}
     file_name = make_file_name(param, root= "/projectnb/fheating/SGD/ES/dynamicQL/SA/ES/data/")
 
     with open(file_name, 'rb') as f:
@@ -57,9 +57,11 @@ def main():
         psi = model.compute_evolved_state()
         fid_and_energy[i][0]=model.compute_fidelity(psi_evolve = psi)
         fid_and_energy[i][1]=model.compute_energy(psi_evolve = psi)
+        print(fid_and_energy[0],'\t',f)
+        break
 
     with open("ES_L-06_T-0.500_n_step-28-test.pkl", ‘wb’) as f:
-	    fidelities=pickle.dump(fid_and_energy,f)
+	    fidelities=pickle.dump(fid_and_energy,f, protocol=4)
 
 def make_file_name_2(param, root="",ext=".pkl",prefix=""):
     key_format = {
