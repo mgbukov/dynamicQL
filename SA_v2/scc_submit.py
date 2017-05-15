@@ -72,12 +72,14 @@ def submit(parameters, file='submit.sh',exe = False):
             loop_2 = parameters['loop'][1]
             tag_1, iterable_1 = (loop_1[0],loop_1[1])
             tag_2, iterable_2 = (loop_2[0],loop_2[1])
+            print(file)
             for value_1 in iterable_1:
                 for value_2 in iterable_2:    
                     target = write_header(file, parameters)
                     target.write(parameters['command']+(" "+tag_1+"="+str(value_1)+" "+tag_2+"="+str(value_2)+'\n'))
-                    os.system('qsub %s'%file)
-                    os.system('rm %s'%file)
+                    exit()
+                    #os.system('qsub %s'%file)
+                    #os.system('rm %s'%file)
                     time.sleep(0.1)
                     submit_count+=1
 
