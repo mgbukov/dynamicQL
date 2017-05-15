@@ -1,6 +1,6 @@
 ### python scripts for submitting job on scc using qsub
 import os, subprocess, time
-import numpy as np
+from numpy import arange # for iterating over real values
 
 parameters = {
     'project': 'fheating',
@@ -52,6 +52,7 @@ def submit(parameters, file='submit.sh',exe = False):
         if n_loop == 0:
             target = write_header(file, parameters)
             target.write(parameters['command']+"\n")
+            target.close()
             os.system('qsub %s'%file)
             os.system('rm %s'%file)
             submit_count += 1
@@ -62,6 +63,7 @@ def submit(parameters, file='submit.sh',exe = False):
             for value in iterable:    
                 target = write_header(file, parameters)
                 target.write(parameters['command']+(" "+tag+"="+str(value)+'\n'))
+                target.close()
                 os.system('qsub %s'%file)
                 os.system('rm %s'%file)
                 time.sleep(0.1)
@@ -77,9 +79,9 @@ def submit(parameters, file='submit.sh',exe = False):
                 for value_2 in iterable_2:    
                     target = write_header(file, parameters)
                     target.write(parameters['command']+(" "+tag_1+"="+str(value_1)+" "+tag_2+"="+str(value_2)+'\n'))
-                    exit()
-                    #os.system('qsub %s'%file)
-                    #os.system('rm %s'%file)
+                    target.close()
+                    os.system('qsub %s'%file)
+                    os.system('rm %s'%file)
                     time.sleep(0.1)
                     submit_count+=1
 
