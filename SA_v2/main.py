@@ -104,6 +104,10 @@ def run_SA(parameters, model:MODEL, utils, save = True):
 def SA(param, model:MODEL):
     
     Ti = param['Ti']
+    if param['Ti'] < 0. :
+        print("Determining initial high-temperature (acceptance rate = 99%) ...")
+        Ti = T_acceptance_rate_fix(param, model, n_sample=100)
+
     n_quench = param['n_quench']
     if n_quench == 0:
         return
@@ -205,12 +209,13 @@ def Gibbs_Sampling(param, model:MODEL):
         
     return samples, fid_samples, energy_samples
 
-def acceptance_rate(param, model:MODEL,n_sample = 100):
+def T_acceptance_rate_fix(param, model:MODEL,n_sample = 100):
+    # Estimates the high-temperature limit (where the acceptance rate is 99 the average worst case excitations %) 
 
     n_step = param['n_step']
     df_worst = 0.
 
-    for _ in n_sample:
+    for _ in range(n_sample):
         model.update_protocol( np.random.randint(0, model.n_h_field, size=n_step) )
         old_fid = model.compute_fidelity()
 
@@ -221,7 +226,7 @@ def acceptance_rate(param, model:MODEL,n_sample = 100):
             model.update_hx(i, model.random_flip(i))
         df_worst += np.min(excitations)
     
-    return np.abs(df_worst/n_sample)/np.log(0.99)
+    return -np.abs(df_worst/n_sample)/np.log(0.99)
 
 def SD_1SF(param, model, initial_protocol = None):
     ### --- follow up

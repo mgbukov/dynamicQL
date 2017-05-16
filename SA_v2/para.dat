@@ -9,7 +9,7 @@ hx_min	-4.
 dh	8.
 dt	0.01
 n_step	10
-n_sample	200
+n_sample	10
 n_quench	1000
 Ti	0.04
 outfile	auto

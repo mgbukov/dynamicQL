@@ -105,16 +105,16 @@ class UTILS:
 			fidelity_fast: prepcompute exponential matrices and runs fast_Fidelity() instead of Fidelity()
 		"""
 
-		L, dt, J, n_step, hz, hx_i, hx_max = tuple([parameters[s] for s in ['L','dt', 'J', 'n_step','hz','hx_i','hx_max']])
+		L, dt, J, n_step, hz, hx_max = tuple([parameters[s] for s in ['L','dt', 'J', 'n_step','hz','hx_max']])
 		hx_initial_state, hx_final_state, n_quench, n_sample, n_step = tuple([parameters[s] for s in ['hx_i','hx_f','n_quench','n_sample','n_step']])
 		symmetrize,outfile = tuple([parameters[s] for s in ['symmetrize','outfile']])
 
 		print("-------------------- > Parameters < --------------------")
-		print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx(t=0) \t\t %.3f\nhx_max \t\t\t %.3f "%(L, J, hz, hx_i, hx_max))
+		print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx_max \t\t\t %.3f "%(L, J, hz, hx_max))
 		print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state, hx_final_state))
-		print("N_quench \t\t %i\ndelta_t \t\t %.2f\nN_restart \t\t %i"%(n_quench, dt, n_sample))
-		print("N_time_step \t\t %i"%n_step)
-		print("Total_time \t\t %.2f"%(n_step*dt))
+		print("n_quench \t\t %i\ndelta_t \t\t %.2f\nn_sample \t\t %i"%(n_quench, dt, n_sample))
+		print("n_step \t\t\t %i"%n_step)
+		print("T \t\t\t %.2f"%(n_step*dt))
 		print("Output file \t\t %s"%('data/'+outfile))
 		#print("# of possible actions \t %i"%len(action_set))
 		#print("Action_set \t <- \t %s"%action_set)
