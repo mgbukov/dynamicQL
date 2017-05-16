@@ -8,7 +8,7 @@ parameters = {
     'walltime': '2:00:00',
     'command' : '~/.conda/envs/py35/bin/python main.py',
     'arguments' : [],# fixed parameters
-    'loop' : [['n_step',range(10,401,10)],['n_quench',[100, 1000, 5000, 10000, 20000]]] # looping parameters
+    'loop' : [['n_step',range(10,401,10)],['n_quench',[100,500,1000,2000,5000,10000]]] # looping parameters
 }
 
 ###################################
@@ -35,8 +35,8 @@ def write_header(file, parameters):
     target.write("#$ -N %s" % (parameters['job_name']) % submit_count) 
     target.write('\n')
     target.write("#$ -l h_rt=%s\n" % parameters['walltime'])
-    target.write("#$ -m n\n")
     target.write("#$ -m ae\n")
+    target.write("#$ -m n\n")
     return target
 
 def submit(parameters, file='submit.sh',exe = False):
@@ -74,7 +74,6 @@ def submit(parameters, file='submit.sh',exe = False):
             loop_2 = parameters['loop'][1]
             tag_1, iterable_1 = (loop_1[0],loop_1[1])
             tag_2, iterable_2 = (loop_2[0],loop_2[1])
-            print(file)
             for value_1 in iterable_1:
                 for value_2 in iterable_2:    
                     target = write_header(file, parameters)
