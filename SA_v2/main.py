@@ -44,7 +44,7 @@ def main():
         print("Simulated annealing")
         run_SA(parameters, model, utils)
     elif parameters['task'] == 'GB':
-        print("Gibbs sampling")
+        print("Gibbs sampling") 
         run_GS(parameters, model)
     elif parameters['task'] == 'SD':
         print("Stochastic descent")
@@ -113,6 +113,7 @@ def SA(param, model:MODEL):
     model.update_protocol( np.random.randint(0, model.n_h_field, size=n_step) )
     old_fid = model.compute_fidelity()
     best_fid = old_fid
+    best_protocol = np.copy(model.protocol())
 
     T = Ti
     step = 0
@@ -203,6 +204,24 @@ def Gibbs_Sampling(param, model:MODEL):
         energy_samples.append(model.compute_energy())
         
     return samples, fid_samples, energy_samples
+
+def acceptance_rate(param, model:MODEL,n_sample = 100):
+
+    n_step = param['n_step']
+    df_worst = 0.
+
+    for _ in n_sample:
+        model.update_protocol( np.random.randint(0, model.n_h_field, size=n_step) )
+        old_fid = model.compute_fidelity()
+
+        excitations = []
+        for i in range(n_step):
+            model.update_hx(i, model.random_flip(i))
+            excitations.append(model.compute_fidelity()-old_fid)
+            model.update_hx(i, model.random_flip(i))
+        df_worst += np.min(excitations)
+    
+    return np.abs(df_worst/n_sample)/np.log(0.99)
 
 def SD_1SF(param, model, initial_protocol = None):
     ### --- follow up
