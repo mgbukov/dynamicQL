@@ -64,10 +64,13 @@ def run_SA(parameters, model:MODEL, utils, save = True):
     if parameters['verbose'] == 0:
         blockPrint()
 
-    n_sample = parameters['n_sample']
-
     outfile = utils.make_file_name(parameters,root='data/')
     n_exist_sample, all_result = utils.read_current_results(outfile)
+    n_sample = parameters['n_sample']
+
+    if param['Ti'] < 0. :
+        print("Determining initial high-temperature (acceptance rate = 99%) ...")
+        param['Ti'] = T_acceptance_rate_fix(param, model, n_sample=500)
 
     if n_exist_sample >= n_sample :
         print("\n\n-----------> Samples already computed in file -- terminating ... <-----------")
@@ -77,7 +80,7 @@ def run_SA(parameters, model:MODEL, utils, save = True):
     for it in range(n_exist_sample, n_sample):
 
         start_time=time.time()
-        best_fid, best_protocol = SA(parameters, model)
+        best_fid, best_protocol = SA(parameters, model) # -- --> performing annealing here <-- --
         energy = model.compute_energy(protocol = best_protocol)
 
         n_fid_eval = parameters['n_quench']
@@ -104,10 +107,6 @@ def run_SA(parameters, model:MODEL, utils, save = True):
 def SA(param, model:MODEL):
     
     Ti = param['Ti']
-    if param['Ti'] < 0. :
-        print("Determining initial high-temperature (acceptance rate = 99%) ...")
-        Ti = T_acceptance_rate_fix(param, model, n_sample=100)
-
     n_quench = param['n_quench']
     if n_quench == 0:
         return
