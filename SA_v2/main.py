@@ -68,9 +68,9 @@ def run_SA(parameters, model:MODEL, utils, save = True):
     n_exist_sample, all_result = utils.read_current_results(outfile)
     n_sample = parameters['n_sample']
 
-    if param['Ti'] < 0. :
+    if parameters['Ti'] < 0. :
         print("Determining initial high-temperature (acceptance rate = 99%) ...")
-        param['Ti'] = T_acceptance_rate_fix(param, model, n_sample=500)
+        parameters['Ti'] = T_acceptance_rate_fix(parameters, model, n_sample=500)
 
     if n_exist_sample >= n_sample :
         print("\n\n-----------> Samples already computed in file -- terminating ... <-----------")
