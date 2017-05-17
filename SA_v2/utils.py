@@ -40,6 +40,7 @@ class UTILS:
 		'n_sample' : int,
 		'n_quench' : int,
 		'Ti' : float,
+		'T' : float,
 		'symmetrize' : int,
 		'outfile' : str,
 		'verbose' : int,
@@ -75,6 +76,11 @@ class UTILS:
 		param = {}
 		for p in self.param_type.keys(): # cast strings to floats and ints !
 			param[p] = self.param_type[p](info[p])
+		
+		if param['dt'] < 0. : # time slices should be automatically computed 
+			param['dt'] = param['T']/param['n_step']
+		else:
+			param['T'] = param['dt']*param['n_step']
 
 		return param
 
@@ -138,6 +144,7 @@ class UTILS:
 						['L','int-2'],
 						['dt','float-4'],
 						['n_step','int-4'],
+						['T','float-2'],
 						# --
 						['n_quench','int-4'],
 						['Ti','float-2'],
@@ -169,7 +176,7 @@ class UTILS:
 				assert False,"Wrong cast-type format"
 		
 		file_name_composition=["%s",
-								"L=%s","dt=%s","nStep=%s",
+								"L=%s","dt=%s","nStep=%s","T=%s",
 								"nQuench=%s","Ti=%s","symm=%s",
 								"J=%s","hz=%s","hxI=%s","hxF=%s","hxmax=%s","hxmin=%s","dh=%s"]
 		file_name="_".join(file_name_composition)
