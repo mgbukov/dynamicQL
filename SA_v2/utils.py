@@ -40,6 +40,7 @@ class UTILS:
 		'n_sample' : int,
 		'n_quench' : int,
 		'Ti' : float,
+		'T' : float,
 		'symmetrize' : int,
 		'outfile' : str,
 		'verbose' : int,
@@ -78,6 +79,8 @@ class UTILS:
 		
 		if param['dt'] < 0. : # time slices should be automatically computed 
 			param['dt'] = param['T']/param['n_step']
+		else:
+			param['T'] = param['dt']*param['n_step]
 
 		return param
 
@@ -141,6 +144,7 @@ class UTILS:
 						['L','int-2'],
 						['dt','float-4'],
 						['n_step','int-4'],
+						['T','float-2'],
 						# --
 						['n_quench','int-4'],
 						['Ti','float-2'],
