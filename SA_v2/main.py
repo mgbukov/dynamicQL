@@ -248,7 +248,7 @@ def run_ES(parameters, model:MODEL, utils):
     
     outfile = utils.make_file_name(parameters,root='data/')
     with open(outfile,'wb') as f:
-        pickle.dump(exact_data,f)
+        pickle.dump(exact_data, f, protocol=4)
     print("Total run time : \t %.3f s"%(time.time()-st))
     print("\n Thank you and goodbye !")
     f.close()
