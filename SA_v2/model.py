@@ -57,13 +57,13 @@ class MODEL:
             psi_evolve = self.compute_evolved_state(protocol=protocol)
         return overlap(psi_evolve, self.psi_target)[0,0]
 
-    def update_protocol(self, protocol, format = None):
+    def update_protocol(self, protocol, format = 'standard'):
         # Update full protocol
         # Format is integers or real values (which are then converted to integers)
 
-        if format is None:
+        if format is 'standard':
             self.H.hx_discrete = copy.deepcopy(protocol)
-        else:
+        elif format is 'real':
             n_bang = len(protocol)
             for t, h in zip(range(n_bang),protocol):
                 self.H.update_hx(time=t,hx=h) 

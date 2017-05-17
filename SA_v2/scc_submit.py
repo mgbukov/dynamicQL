@@ -8,7 +8,7 @@ parameters = {
     'walltime': '12:00:00',
     'command' : '~/.conda/envs/py35/bin/python main.py',
     'arguments' : [['n_quench',121]], #[['n_step',23]], # fixed parameters
-    'loop' : [['n_step',range(10,41,10)],['Ti',np.arange(0.2,0.3,0.01)]] # looping parameters
+    'loop' : [['n_step',range(10,41,10)],['Ti',np.arange(0.2,0.3,0.01)]], # looping parameters
 }
 
 ###################################

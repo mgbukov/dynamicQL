@@ -49,7 +49,9 @@ def main():
     elif parameters['task'] == 'SD':
         print("Stochastic descent")
         run_SD(parameters, model)
-
+    elif parameters['task'] == 'ES':
+        print("Exact spectrum")
+        run_ES(parameters, model, utils)
     exit()
     
 
@@ -226,6 +228,31 @@ def T_acceptance_rate_fix(param, model:MODEL,n_sample = 100):
         df_worst += np.min(excitations)
     
     return -np.abs(df_worst/n_sample)/np.log(0.99)
+
+def run_ES(parameters, model:MODEL, utils):
+    
+    n_step = parameters['n_step']
+    n_protocol = 2**n_step
+    exact_data = np.zeros((n_protocol,2),dtype=np.float32)
+    
+    b2_array = lambda n10 : np.array(list(np.binary_repr(n10, width=n_step)), dtype=np.int)
+    st=time.time()
+    model.compute_fidelity(protocol=np.random.randint(0, model.n_h_field, size=n_step))
+    print("Est. run time : \t %.3f s"%(0.5*n_protocol*(time.time()-st)))
+
+    st=time.time()
+    for p in range(n_protocol):
+        model.update_protocol(b2_array(p))
+        psi = model.compute_evolved_state()
+        exact_data[p] = (model.compute_fidelity(psi_evolve=psi), model.compute_energy(psi_evolve=psi))
+    
+    outfile = utils.make_file_name(parameters,root='data/')
+    with open(outfile,'wb') as f:
+        pickle.dump(exact_data,f)
+    print("Total run time : \t %.3f s"time.time()-st)
+    print("\n Thank you and goodbye !")
+    f.close()
+
 
 def SD_1SF(param, model, initial_protocol = None):
     ### --- follow up

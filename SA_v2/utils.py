@@ -75,6 +75,9 @@ class UTILS:
 		param = {}
 		for p in self.param_type.keys(): # cast strings to floats and ints !
 			param[p] = self.param_type[p](info[p])
+		
+		if param['dt'] < 0. : # time slices should be automatically computed 
+			param['dt'] = param['T']/param['n_step']
 
 		return param
 
