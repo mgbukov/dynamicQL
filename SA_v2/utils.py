@@ -80,7 +80,7 @@ class UTILS:
 		if param['dt'] < 0. : # time slices should be automatically computed 
 			param['dt'] = param['T']/param['n_step']
 		else:
-			param['T'] = param['dt']*param['n_step]
+			param['T'] = param['dt']*param['n_step']
 
 		return param
 
@@ -176,7 +176,7 @@ class UTILS:
 				assert False,"Wrong cast-type format"
 		
 		file_name_composition=["%s",
-								"L=%s","dt=%s","nStep=%s",
+								"L=%s","dt=%s","nStep=%s","T=%s",
 								"nQuench=%s","Ti=%s","symm=%s",
 								"J=%s","hz=%s","hxI=%s","hxF=%s","hxmax=%s","hxmin=%s","dh=%s"]
 		file_name="_".join(file_name_composition)
