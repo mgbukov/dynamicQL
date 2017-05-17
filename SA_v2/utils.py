@@ -56,6 +56,13 @@ class UTILS:
 				arg_split=arg.split('=')
 				# if arg is not specified properly this will trigger a dictionnary key error <--
 				parameters[arg_split[0]] = self.param_type[arg_split[0]](arg_split[1])
+		
+		if param['dt'] < 0. : # time slices should be automatically computed 
+			param['dt'] = param['T']/param['n_step']
+		else:
+			param['T'] = param['dt']*param['n_step']
+
+
 
 	def read_parameter_file(self, file="para.dat"):
 		"""
@@ -76,12 +83,6 @@ class UTILS:
 		param = {}
 		for p in self.param_type.keys(): # cast strings to floats and ints !
 			param[p] = self.param_type[p](info[p])
-		
-		if param['dt'] < 0. : # time slices should be automatically computed 
-			param['dt'] = param['T']/param['n_step']
-		else:
-			param['T'] = param['dt']*param['n_step']
-
 		return param
 
 	def print_parameters(self, parameters):
