@@ -193,10 +193,10 @@ class UTILS:
 					pkl_file.close()
 				n_sample = len(all_results)
 				return n_sample, all_results
-			except EOFError:
-    			return 0, []
+			except EOFError :
+				return 0,[]
 		else:
-			return 0, []
+			return 0,[]
 
 def check_version():
 	import sys
