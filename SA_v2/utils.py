@@ -49,14 +49,13 @@ class UTILS:
 
 	def read_command_line_arg(self,parameters,argv):
 		n_elem = len(argv)
-		if n_elem == 1:
-			return
-		for i, arg in zip(range(n_elem),argv):
-			if i > 0:
-				arg_split=arg.split('=')
-				# if arg is not specified properly this will trigger a dictionnary key error <--
-				parameters[arg_split[0]] = self.param_type[arg_split[0]](arg_split[1])
-		
+		if n_elem > 1:
+			for i, arg in zip(range(n_elem),argv):
+				if i > 0:
+					arg_split=arg.split('=')
+					# if arg is not specified properly this will trigger a dictionnary key error <--
+					parameters[arg_split[0]] = self.param_type[arg_split[0]](arg_split[1])
+			
 		if parameters['dt'] < 0. : # time slices should be automatically computed 
 			parameters['dt'] = parameters['T']/parameters['n_step']
 		else:
@@ -188,11 +187,14 @@ class UTILS:
 			Read current data in filename
 		"""
 		if os.path.isfile(file_name):
-			with open(file_name,'rb') as pkl_file:
-				_ , all_results = pickle.load(pkl_file)
-				pkl_file.close()
-			n_sample = len(all_results)
-			return n_sample, all_results
+			try:
+				with open(file_name,'rb') as pkl_file:
+					_ , all_results = pickle.load(pkl_file)
+					pkl_file.close()
+				n_sample = len(all_results)
+				return n_sample, all_results
+			except EOFError:
+    			return 0, []
 		else:
 			return 0, []
 
