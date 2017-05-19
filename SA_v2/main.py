@@ -38,7 +38,7 @@ def main():
 
     # Defines the model, and precomputes evolution matrices given set of states
     model = MODEL(H, parameters)
-
+    
     # Run simulated annealing
     if parameters['task'] ==  'SA':
         print("Simulated annealing")
@@ -48,10 +48,14 @@ def main():
         run_GS(parameters, model)
     elif parameters['task'] == 'SD':
         print("Stochastic descent")
-        run_SD(parameters, model)
+        run_SD(parameters, model, utils)
     elif parameters['task'] == 'ES':
         print("Exact spectrum")
         run_ES(parameters, model, utils)
+    elif parameters['task'] == 'SASD':
+        print("Simulating annealing followed by stochastic descent")
+
+
     exit()
     
 
@@ -76,16 +80,15 @@ def run_SA(parameters, model:MODEL, utils, save = True):
 
     if n_exist_sample >= n_sample :
         print("\n\n-----------> Samples already computed in file -- terminating ... <-----------")
-        return all_result
+        return   
+        all_result
 
     print("\n\n-----------> Starting simulated annealing <-----------")
     for it in range(n_exist_sample, n_sample):
 
         start_time=time.time()
-        best_fid, best_protocol = SA(parameters, model) # -- --> performing annealing here <-- --
+        best_fid, best_protocol, n_fid_eval = SA(parameters, model) # -- --> performing annealing here <-- --
         energy = model.compute_energy(protocol = best_protocol)
-
-        n_fid_eval = parameters['n_quench']
 
         result = [n_fid_eval, best_fid,  energy, best_protocol]
 
@@ -96,11 +99,11 @@ def run_SA(parameters, model:MODEL, utils, save = True):
         
         all_result.append(result)
         if save is True:
-            with open(outfile,'wb') as f:
+            with open(outfile,'wb') as f: # sometime, if job is killed, this part can 
                 pickle.dump([parameters, all_result],f)
                 f.close()
             print("Saved iteration --> %i to %s"%(it,outfile))
-        print("Iteration run time --> %.2f s" % (time.time()-start_time))
+        print("Iteration run time --> %.4f s" % (time.time()-start_time))
     
     print("\n Thank you and goodbye !")
     enablePrint()
@@ -149,7 +152,87 @@ def SA(param, model:MODEL):
         step += 1
         T = Ti * (1.0-step/n_quench)
     
-    return best_fid, best_protocol
+    return best_fid, best_protocol, n_quench
+
+def run_SD(parameters, model:MODEL, utils, save = True):
+    
+    if parameters['verbose'] == 0:
+        blockPrint()
+
+    outfile = utils.make_file_name(parameters,root='data/')
+    n_exist_sample, all_result = utils.read_current_results(outfile)
+    n_sample = parameters['n_sample']
+
+    if n_exist_sample >= n_sample :
+        print("\n\n-----------> Samples already computed in file -- terminating ... <-----------")
+        return   
+        all_result
+
+    print("\n\n-----------> Starting stochastic descent <-----------")
+    for it in range(n_exist_sample, n_sample):
+
+        start_time=time.time()
+        best_fid, best_protocol, n_fid_eval = SD(parameters, model, init=True) # -- --> performing stochastic descent here <-- -- 
+        energy = model.compute_energy(protocol = best_protocol)
+
+        result = [n_fid_eval, best_fid, energy, best_protocol]
+
+        print("\n----------> RESULT FOR STOCHASTIC DESCENT NO %i <-------------"%(it+1))
+        print("Number of fidelity eval \t%i"%n_fid_eval)
+        print("Best fidelity \t\t\t%.4f"%best_fid)
+        print("Best hx_protocol\t\t",list(best_protocol))
+        
+        all_result.append(result)
+        if save is True:
+            with open(outfile,'wb') as f: # sometime, if job is killed, this part can 
+                pickle.dump([parameters, all_result],f)
+                f.close()
+            print("Saved iteration --> %i to %s"%(it,outfile))
+        print("Iteration run time --> %.4f s" % (time.time()-start_time))
+    
+    print("\n Thank you and goodbye !")
+    enablePrint()
+    return all_result    
+
+
+def SD(param, model:MODEL, init=False):
+    
+    n_step = param['n_step']
+    n_fid_eval = 0
+
+    if init:
+        # Random initialization
+        model.update_protocol( np.random.randint(0, model.n_h_field, size=n_step) )
+        old_fid = model.compute_fidelity()
+        best_protocol = np.copy(model.protocol())
+    else:
+        # So user can feed in data say from a specific protocol
+        old_fid = model.compute_fidelity()
+        best_protocol = np.copy(model.protocol())
+
+    while True: # careful with this. For binary actions, this is guaranteed to break
+
+        random_position = np.arange(n_step, dtype=int)
+        np.random.shuffle(random_position)
+
+        local_minima = True
+        for t in random_position:
+            model.update_hx(t, model.random_flip(t))
+            new_fid = model.compute_fidelity()
+            n_fid_eval +=1
+
+            if new_fid > old_fid : # accept descent
+                old_fid = new_fid
+                best_protocol = np.copy(model.protocol())
+                local_minima = False # will exit for loop before it ends ... local update accepted
+                break
+            else:
+                model.update_hx(t, model.random_flip(t))
+        
+        if local_minima:
+            break
+
+    return old_fid, best_protocol, n_fid_eval
 
 def Gibbs_Sampling(param, model:MODEL): 
     # should also measure acceptance rate 
