@@ -4,11 +4,11 @@ from numpy import arange # for iterating over real values
 
 parameters = {
     'project': 'fheating',
-    'job_name': 'job_SA_%i',
-    'walltime': '00:30:00',
+    'job_name': 'job_SD_%i',
+    'walltime': '24:00:00',
     'command' : '~/.conda/envs/py35/bin/python main.py',
     'arguments' : [],# fixed parameters
-    'loop' : [['n_step',[4,6,8,10,12,14,16,18,20,22,24,26,28]],['T',[0.1, 0.3, 0.8, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]]] # looping parameters
+    'loop' : [['n_step',[4,6,8,10,12,14,16,18,20,22,24,26,28]],['T',[0.1, 0.3, 0.5, 0.7, 0.9, 1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]]] # looping parameters
 }
 
 ###################################
