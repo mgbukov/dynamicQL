@@ -84,7 +84,11 @@ def run_SA(parameters, model:MODEL, utils, save = True):
         all_result
 
     print("\n\n-----------> Starting simulated annealing <-----------")
-    for it in range(n_exist_sample, n_sample):
+    
+    n_iteration_left = n_sample - n_exist_sample  # data should be saved 10 times --> no more (otherwise things are way too slow !)
+    n_mod = max([1, n_iteration_left // 10])
+
+    for it in range(n_iteration_left):
 
         start_time=time.time()
         best_fid, best_protocol, n_fid_eval = SA(parameters, model) # -- --> performing annealing here <-- --
@@ -98,15 +102,20 @@ def run_SA(parameters, model:MODEL, utils, save = True):
         print("Best hx_protocol\t\t",list(best_protocol))
         
         all_result.append(result)
-        if save is True:
-            with open(outfile,'wb') as f: # sometime, if job is killed, this part can 
+        if save and it % n_mod == 0:
+            with open(outfile,'wb') as f:
                 pickle.dump([parameters, all_result],f)
                 f.close()
-            print("Saved iteration --> %i to %s"%(it,outfile))
+            print("Saved iteration --> %i to %s"%(it + n_exist_sample,outfile))
         print("Iteration run time --> %.4f s" % (time.time()-start_time))
     
     print("\n Thank you and goodbye !")
     enablePrint()
+
+    if save :
+        with open(outfile,'wb') as f:
+            pickle.dump([parameters, all_result],f)
+            f.close()
     return all_result    
 
 def SA(param, model:MODEL):
@@ -169,8 +178,12 @@ def run_SD(parameters, model:MODEL, utils, save = True):
         all_result
 
     print("\n\n-----------> Starting stochastic descent <-----------")
-    for it in range(n_exist_sample, n_sample):
-
+    
+    n_iteration_left = n_sample - n_exist_sample  # data should be saved 10 times --> no more (otherwise things are way too slow !)
+    n_mod = max([1,n_iteration_left // 10])
+    
+    for it in range(n_iteration_left):
+    
         start_time=time.time()
         best_fid, best_protocol, n_fid_eval = SD(parameters, model, init=True) # -- --> performing stochastic descent here <-- -- 
         energy = model.compute_energy(protocol = best_protocol)
@@ -183,17 +196,22 @@ def run_SD(parameters, model:MODEL, utils, save = True):
         print("Best hx_protocol\t\t",list(best_protocol))
         
         all_result.append(result)
-        if save is True:
-            with open(outfile,'wb') as f: # sometime, if job is killed, this part can 
+
+        if save and it % n_mod == 0:
+            with open(outfile,'wb') as f:
                 pickle.dump([parameters, all_result],f)
                 f.close()
-            print("Saved iteration --> %i to %s"%(it,outfile))
+            print("Saved iteration --> %i to %s"%(it + n_exist_sample, outfile))
         print("Iteration run time --> %.4f s" % (time.time()-start_time))
     
     print("\n Thank you and goodbye !")
     enablePrint()
-    return all_result    
 
+    if save :
+        with open(outfile,'wb') as f:
+            pickle.dump([parameters, all_result],f)
+            f.close()
+    return all_result    
 
 def SD(param, model:MODEL, init=False):
     
