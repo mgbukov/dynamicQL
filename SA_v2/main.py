@@ -207,7 +207,7 @@ def run_SD(parameters, model:MODEL, utils, save = True):
 
         print("\n----------> RESULT FOR STOCHASTIC DESCENT NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%n_fid_eval)
-        print("Best fidelity \t\t\t%.4f"%best_fid)
+        print("Best fidelity \t\t\t%.16f"%best_fid)
         print("Best hx_protocol\t\t",list(best_protocol))
         
         all_result.append(result)
@@ -401,7 +401,7 @@ def run_ES(parameters, model:MODEL, utils):
     
     n_step = parameters['n_step']
     n_protocol = 2**n_step
-    exact_data = np.zeros((n_protocol,2),dtype=np.float32)
+    exact_data = np.zeros((n_protocol,2), dtype=np.float64) # 15 digits precision
     
     b2_array = lambda n10 : np.array(list(np.binary_repr(n10, width=n_step)), dtype=np.int)
     st=time.time()
