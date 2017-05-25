@@ -46,7 +46,7 @@ def main():
     elif parameters['task'] == 'GB':
         print("Gibbs sampling") 
         run_GS(parameters, model)
-    elif parameters['task'] == 'SD':
+    elif parameters['task'] == 'SD' or parameters['task'] == 'SD2' :
         print("Stochastic descent")
         run_SD(parameters, model, utils)
     elif parameters['task'] == 'ES':
@@ -54,6 +54,7 @@ def main():
         run_ES(parameters, model, utils)
     elif parameters['task'] == 'SASD':
         print("Simulating annealing followed by stochastic descent")
+        run_SA(parameters, model, utils)
 
 
     exit()
@@ -75,8 +76,8 @@ def run_SA(parameters, model:MODEL, utils, save = True):
     n_sample = parameters['n_sample']
 
     if parameters['Ti'] < 0. :
-        print("Determining initial high-temperature (acceptance rate = 99%) ...")
-        parameters['Ti'] = T_acceptance_rate_fix(parameters, model, n_sample=500)
+        parameters['Ti'] = compute_initial_Ti(parameters, model, n_sample=1000)
+        print("Initial temperature Ti=%.3f" % parameters['Ti'])
 
     if n_exist_sample >= n_sample :
         print("\n\n-----------> Samples already computed in file -- terminating ... <-----------")
@@ -92,6 +93,13 @@ def run_SA(parameters, model:MODEL, utils, save = True):
 
         start_time=time.time()
         best_fid, best_protocol, n_fid_eval = SA(parameters, model) # -- --> performing annealing here <-- --
+        
+        if parameters['task'] == 'SASD':
+            print(' -> Stochastic descent ... ')
+            model.update_protocol(best_protocol)
+            best_fid, best_protocol, n_fid_eval_SD = SD(parameters, model, init = False)
+            n_fid_eval += n_fid_eval_SD
+
         energy = model.compute_energy(protocol = best_protocol)
 
         result = [n_fid_eval, best_fid,  energy, best_protocol]
@@ -183,9 +191,16 @@ def run_SD(parameters, model:MODEL, utils, save = True):
     n_mod = max([1,n_iteration_left // 10])
     
     for it in range(n_iteration_left):
-    
+       
         start_time=time.time()
-        best_fid, best_protocol, n_fid_eval = SD(parameters, model, init=True) # -- --> performing stochastic descent here <-- -- 
+
+        if parameters['task'] == 'SD':
+            best_fid, best_protocol, n_fid_eval = SD(parameters, model, init=True) # -- --> performing stochastic descent here <-- -- 
+        elif parameters['task'] == 'SD2':
+            best_fid, best_protocol, n_fid_eval = SD_2SF(parameters, model, init=True) # -- --> performing 2 spin flip stochastic descent here <-- -- 
+        else:
+            assert False, 'Error in task specification'
+
         energy = model.compute_energy(protocol = best_protocol)
 
         result = [n_fid_eval, best_fid, energy, best_protocol]
@@ -252,6 +267,59 @@ def SD(param, model:MODEL, init=False):
 
     return old_fid, best_protocol, n_fid_eval
 
+def SD_2SF(param, model:MODEL, init=False):
+
+    if model.n_h_field > 2:
+        assert False, 'This works only for bang-bang protocols'
+    
+    n_step = param['n_step']
+    n_fid_eval = 0
+
+    if init:
+        # Random initialization
+        tmp = np.ones(n_step,dtype=int) # m = 0 state ...
+        tmp[0:n_step//2] = 0
+        np.random.shuffle(tmp) 
+        
+        model.update_protocol(tmp)
+        old_fid = model.compute_fidelity()
+        best_protocol = np.copy(model.protocol())
+
+    else:
+        # So user can feed in data say from a specific protocol
+        old_fid = model.compute_fidelity()
+        best_protocol = np.copy(model.protocol())
+
+    x1_ar, x2_ar = np.triu_indices(n_step,1)
+    order = np.arange(0, x1_ar.shape[0] , dtype=np.int)
+
+    while True: # careful with this. For binary actions, this is guaranteed to break
+
+        np.random.shuffle(order)
+        local_minima = True
+
+        for pos in order:
+            t1, t2 = (x1_ar[pos], x2_ar[pos])
+
+            model.swap(t1, t2)
+            new_fid = model.compute_fidelity()
+            n_fid_eval += 1
+
+            if new_fid > old_fid : # accept descent
+                print("%.15f"%new_fid,'\t',n_fid_eval)
+                old_fid = new_fid
+                best_protocol = np.copy(model.protocol())
+                local_minima = False # will exit for loop before it ends ... local update accepted
+                break
+            else:
+                model.swap(t1, t2)
+        
+        if local_minima:
+            break
+
+    return old_fid, best_protocol, n_fid_eval
+
+
 def Gibbs_Sampling(param, model:MODEL): 
     # should also measure acceptance rate 
 
@@ -311,24 +379,23 @@ def Gibbs_Sampling(param, model:MODEL):
         
     return samples, fid_samples, energy_samples
 
-def T_acceptance_rate_fix(param, model:MODEL,n_sample = 100):
+def compute_initial_Ti(param, model:MODEL, n_sample = 100, rate = 0.8):
+    # OK how is this acceptable ? >>>>>>> not tested at all <<<<<<<<
     # Estimates the high-temperature limit (where the acceptance rate is 99 the average worst case excitations %) 
 
     n_step = param['n_step']
-    df_worst = 0.
+    dF_mean = []
 
     for _ in range(n_sample):
         model.update_protocol( np.random.randint(0, model.n_h_field, size=n_step) )
         old_fid = model.compute_fidelity()
-
-        excitations = []
-        for i in range(n_step):
-            model.update_hx(i, model.random_flip(i))
-            excitations.append(model.compute_fidelity()-old_fid)
-            model.update_hx(i, model.random_flip(i))
-        df_worst += np.min(excitations)
+        rand_pos = np.random.randint(n_step)
+        model.update_hx(rand_pos, model.random_flip(rand_pos))
+        dF = model.compute_fidelity()-old_fid
+        if dF < 0: 
+            dF_mean.append(dF)
     
-    return -np.abs(df_worst/n_sample)/np.log(0.99)
+    return np.mean(dF_mean)/ np.log(rate)
 
 def run_ES(parameters, model:MODEL, utils):
     

@@ -17,7 +17,7 @@ def main():
     parameters = utils.read_parameter_file()
     
     '''prob_vs_T = {}
-    for T in [0.1, 0.3, 0.8, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0] :
+    for T in [0.1, 0.3, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0] :
         prob_vs_T[T] = np.zeros((13,2),dtype=np.float32)
         ii = 0
         for n_step in [4,6,8,10,12,14,16,18,20,22,24,26,28] :
@@ -42,12 +42,12 @@ def main():
             print(T,' ',n_step,' : ',prob)
             ii += 1'''
 
-    with open('scaling.pkl', 'rb') as f:
+    with open('scaling_SD.pkl', 'rb') as f:
         #pickle.dump(prob_vs_T,f)
     #exit()
         prob_vs_T = pickle.load(f)
 
-    for T in [0.1, 0.3, 0.8, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0] :
+    for T in [0.1, 0.3, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0] :
         plt.plot(prob_vs_T[T][:,0],-np.log(prob_vs_T[T][:,1]),label='$T=%.2f$'%T)
         plt.scatter(prob_vs_T[T][:,0],-np.log(prob_vs_T[T][:,1]))
 
