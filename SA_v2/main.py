@@ -306,7 +306,7 @@ def SD_2SF(param, model:MODEL, init=False):
             n_fid_eval += 1
 
             if new_fid > old_fid : # accept descent
-                print("%.15f"%new_fid,'\t',n_fid_eval)
+                #print("%.15f"%new_fid,'\t',n_fid_eval)
                 old_fid = new_fid
                 best_protocol = np.copy(model.protocol())
                 local_minima = False # will exit for loop before it ends ... local update accepted
