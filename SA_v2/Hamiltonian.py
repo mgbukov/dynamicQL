@@ -25,7 +25,7 @@ class HAMILTONIAN:
 		
 
 		self.h_set = self.compute_h_set(hx_min,hx_max,dh) # discrete set of possible h fields 
-		self.hx_discrete = [0]*n_step # hx_discrete are protocols specified as integers
+		self.hx_discrete = np.zeros(n_step, dtype=int) # hx_discrete are protocols specified as integers
 
 		fct = lambda time: self.h_set[self.hx_discrete[int(time)]] # time takes discrete values in our problem
 		fct_cont = lambda h: h # trick : when calling the time - will instead interpret it as a field value 
