@@ -9,13 +9,12 @@ import numpy as np
 import os.path
 import pickle
 
-
-def f_to_str(number,prec=2):
-	s="%.10f"%number
-	pos_p = s.find(".")
-	s=s[:(pos_p+prec+1)]
-	s=s.replace("-","m").replace(".","p")
-	return s	
+def f_to_str(number, prec=2): #this avoids rounding numbers and thus is more portable
+        s="%.10f"%number 
+        pos_p = s.find(".")
+        s=s[:(pos_p+prec+1)]
+        s=s.replace("-","m").replace(".","p")
+        return s
 
 def i_to_str(number,prec=2):
 	l=len(str(number))
