@@ -32,7 +32,7 @@ def main():
         specified_element.append(l[0])
     for a in parameters['arguments']:
         specified_element.append(a[0])
-        
+
     for k,v in p_tmp.items():
         if specified_element.count(k) == 0 :
             parameters['arguments'].append([k,v])
@@ -92,9 +92,8 @@ def submit(parameters, file='submit.sh',exe = False):
                     target = write_header(file, parameters)
                     cmd = parameters['command']+(" "+tag_1+"="+str(value_1)+" "+tag_2+"="+str(value_2)+'\n')
                     target.write(cmd)
-                    print(cmd)
                     target.close()
-                    #os.system('qsub %s'%file)
+                    os.system('qsub %s'%file)
                     os.system('rm %s'%file)
                     time.sleep(0.1)
                     submit_count+=1
