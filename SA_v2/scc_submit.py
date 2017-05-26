@@ -1,14 +1,15 @@
 ### python scripts for submitting job on scc using qsub
 import os, subprocess, time
 from numpy import arange # for iterating over real values
+from utils import UTILS
 
 parameters = {
     'project': 'fheating',
-    'job_name': 'job_%i',
+    'job_name': 'job_SD_%i',
     'walltime': '12:00:00',
     'command' : '~/.conda/envs/py35/bin/python main.py',
-    'arguments' : [['n_quench',121]], #[['n_step',23]], # fixed parameters
-    'loop' : [['n_step',range(10,41,10)],['Ti',np.arange(0.2,0.3,0.01)]], # looping parameters
+    'arguments' : [],# fixed parameters -> this overwrites what is in para.dat
+    'loop' : [['n_step',[4,6,8]],['T',arange(0.1,0.101,0.1)]] # looping parameters
 }
 
 ###################################
@@ -23,6 +24,18 @@ parameters = {
 def main():
     global submit_count
     submit_count = 0
+    utils = UTILS()
+    p_tmp = utils.read_parameter_file("para.dat")
+    
+    specified_element=[]
+    for l in parameters['loop']:
+        specified_element.append(l[0])
+    for a in parameters['arguments']:
+        specified_element.append(a[0])
+        
+    for k,v in p_tmp.items():
+        if specified_element.count(k) == 0 :
+            parameters['arguments'].append([k,v])
     submit(parameters,exe=True)
 
 def write_header(file, parameters):
@@ -35,8 +48,8 @@ def write_header(file, parameters):
     target.write("#$ -N %s" % (parameters['job_name']) % submit_count) 
     target.write('\n')
     target.write("#$ -l h_rt=%s\n" % parameters['walltime'])
-    target.write("#$ -m n\n")
     target.write("#$ -m ae\n")
+    target.write("#$ -m n\n")
     return target
 
 def submit(parameters, file='submit.sh',exe = False):
@@ -74,13 +87,14 @@ def submit(parameters, file='submit.sh',exe = False):
             loop_2 = parameters['loop'][1]
             tag_1, iterable_1 = (loop_1[0],loop_1[1])
             tag_2, iterable_2 = (loop_2[0],loop_2[1])
-            print(file)
             for value_1 in iterable_1:
                 for value_2 in iterable_2:    
                     target = write_header(file, parameters)
-                    target.write(parameters['command']+(" "+tag_1+"="+str(value_1)+" "+tag_2+"="+str(value_2)+'\n'))
+                    cmd = parameters['command']+(" "+tag_1+"="+str(value_1)+" "+tag_2+"="+str(value_2)+'\n')
+                    target.write(cmd)
+                    print(cmd)
                     target.close()
-                    os.system('qsub %s'%file)
+                    #os.system('qsub %s'%file)
                     os.system('rm %s'%file)
                     time.sleep(0.1)
                     submit_count+=1
