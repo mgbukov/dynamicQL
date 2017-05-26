@@ -10,8 +10,8 @@ def main():
     utils=UTILS()
     parameters = utils.read_parameter_file()
     res = {} 
-    for T in [0.1, 0.3, 0.8, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]:
-        for n_step in [4,6,8,10,12,14,16,18,20,22,24,26,28]:
+    for T in np.arange(0.1,4.01,0.1):
+        for n_step in [4,6,8,10,12,14,16,18,20,22,24]:
             parameters['T']= T
             parameters['n_step'] = n_step
             parameters['dt'] = T/n_step
@@ -26,7 +26,7 @@ def main():
             pos_min_2 = np.argmax(data[:,0])
             gap = optimal_fid - data[pos_min_2,0]
             print(T,'\t',n_step,'\t',optimal_fid,'\t',gap)
-            res[(T,n_step)]=[optimal_fid, gap]
+            res[(round(T,2),n_step)]=[optimal_fid, gap]
     with open('optimal.pkl','wb') as f:
         pickle.dump(res,f)
 

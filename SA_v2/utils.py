@@ -11,7 +11,9 @@ import pickle
 
 
 def f_to_str(number,prec=2):
-	s=("%."+str(prec)+"f")%number
+	s="%.10f"%number
+	pos_p = s.find(".")
+	s=s[:(pos_p+prec+1)]
 	s=s.replace("-","m").replace(".","p")
 	return s	
 
