@@ -20,7 +20,7 @@ str2=str1.split('\\')
 n=len(str2)
 my_dir = str2[n-1]
 
-max_t_steps_vec=np.array([4,10,14,20,30,40,50,60,70,80])   #np.linspace(5,50,10,dtype=int)
+max_t_steps_vec=np.array([4,8,10,12,20,30,40,48,50,60,70,80])   #np.linspace(5,50,10,dtype=int)
 
 
 # define model params
