@@ -18,6 +18,7 @@ from matplotlib import pyplot as plt
 import plotting
 import pickle
 
+
 def main():
 
     if len(sys.argv) > 1:

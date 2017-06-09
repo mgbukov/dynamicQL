@@ -193,7 +193,7 @@ def main():
         print("\n----------> RESULT FOR ANNEALING NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%count_fid_eval)
         print("Best fidelity \t\t\t%.4f"%best_fid)
-        print("Best hx_protocol\t\t",best_hx_discrete)
+        print("Best hx_protocol\t\t",list(best_hx_discrete))
 
         if L > 1:  
             _,E,delta_E,Sd,Sent = MB_observables(best_hx_discrete, param_SA, matrix_dict, fin_vals=True)
@@ -477,7 +477,7 @@ def simulate_anneal(params):
     beta = 1./T
     option_fidelity = ('fast' if params['fidelity_fast'] else 'standard')
 
-    # Fidelity calculation parameters
+    # Fidelity calculation parametersls
     psi_i = params['psi_i']
     H = params['H']
     N_time_step = params['N_time_step']
