@@ -120,6 +120,7 @@ class UTILS:
 		print("n_quench \t\t %i\ndelta_t \t\t %.2f\nn_sample \t\t %i"%(n_quench, dt, n_sample))
 		print("n_step \t\t\t %i"%n_step)
 		print("T \t\t\t %.2f"%(n_step*dt))
+		print("Task \t\t\t %s"%parameters['task'])
 		print("Output file \t\t %s"%('data/'+outfile))
 		#print("# of possible actions \t %i"%len(action_set))
 		#print("Action_set \t <- \t %s"%action_set)
