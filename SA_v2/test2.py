@@ -10,18 +10,19 @@ def main():
 
     with open('optimal.pkl','rb') as f:
         res = pickle.load(f)
+        
     ### READING ES data and finding optimal state and the gap to excited states.
     ### Looping over parameters and storing data in a dictionary. 
     
     utils=UTILS()
     parameters = utils.read_parameter_file()
     
-    '''prob_vs_T = {}
+    prob_vs_T = {}
     for T_tmp in np.arange(0.1,4.01,0.1):
         T = round(T_tmp,2)
         prob_vs_T[T] = np.zeros((13,2),dtype=np.float64)
         ii = 0
-        for n_step in [4,6,8,10,12,14,16,18,20,22,24] :
+        for n_step in [4,6,8,10,12,14,16,18,20,22,24,26,28] :
             
             parameters['T']= T
             parameters['n_step'] = n_step
@@ -37,21 +38,31 @@ def main():
                 n_eval = np.zeros(n_elem,dtype=np.float64) # careful here, precision is important ---> !!!
                 for i,elem in zip(range(n_elem),data):
                     v[i] = elem[1]
-                    n_eval = elem[0]
+                    n_eval[i] = elem[0]
 
-            prob = (v[np.abs(v - gs_fid) < 1e-14].shape[0])/n_elem
+            count = (v[np.abs(v - gs_fid) < 1e-14].shape[0])
+
+            prob = count/n_elem
+            mean = np.mean(n_eval)
             if prob > 1e-14:
-                prob=prob**-1*np.mean(n_eval)
+                prob=prob**-1*mean
+            else:
+                prob=2**n_step # worst case ... need to search the whole space ...
+            if prob > 2**n_step:
+                prob = 2**n_step # worst case ...   
             
             prob_vs_T[T][ii,0] = n_step
             prob_vs_T[T][ii,1] = prob 
-            print(T,' ',n_step,' : ',prob)
-            ii += 1'''
+            mean=np.mean(n_eval)
+            std=np.std(n_eval)
+            out_str = "{0:<6.2f}{1:<6}{2:<20.3f}{3:<10.4f}{4:<10.4f}{5:<8}".format(T,n_step,prob,std/mean,mean,count)
+            print(out_str)
+            ii += 1
 
-    file_tmp='scaling_SD2.pkl'
-    #with open(file_tmp, 'wb') as f:
-    #    pickle.dump(prob_vs_T,f)
-    #exit()
+    file_tmp='scaling_SD.pkl'
+    with open(file_tmp, 'wb') as f:
+        pickle.dump(prob_vs_T,f)
+    exit()
     #exit()
     with open(file_tmp,'rb') as f:
         prob_vs_T = pickle.load(f)
