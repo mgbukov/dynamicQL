@@ -18,6 +18,8 @@ tags
 # pure fortran source files #
 *.f90
 
+landscape/
+
 # bash files
 #*.sh
 

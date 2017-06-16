@@ -8,6 +8,12 @@ import pickle
 import utils
 import os
 
+
+p=[1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0]
+plotting.protocol(np.linspace(0,3.5,50),p,show=True)
+
+exit()
+
 def b2(n10,w=10):
     x = np.array(list(np.binary_repr(n10, width=w)),dtype=np.float)
     x[x > 0.5] = 4.

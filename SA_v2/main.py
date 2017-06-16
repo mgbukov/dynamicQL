@@ -47,8 +47,8 @@ def main():
     elif parameters['task'] == 'GB':
         print("Gibbs sampling") 
         run_GS(parameters, model)
-    elif parameters['task'] == 'SD' or parameters['task'] == 'SD2' or parameters['task'] == 'SD4':
-        print("Stochastic descent")
+    elif parameters['task'] == 'SD' or parameters['task'] == 'SD2' or parameters['task'] == 'SD2M0':
+        print("Stochastic descent with task = %s"%parameters['task']) # options are [SD, SD2, SD2M0]
         run_SD(parameters, model, utils)
     elif parameters['task'] == 'ES':
         print("Exact spectrum")
@@ -83,8 +83,7 @@ def run_SA(parameters, model:MODEL, utils, save = True):
 
     if n_exist_sample >= n_sample :
         print("\n\n-----------> Samples already computed in file -- terminating ... <-----------")
-        return   
-        all_result
+        return all_result
 
     print("\n\n-----------> Starting simulated annealing <-----------")
     
@@ -99,11 +98,11 @@ def run_SA(parameters, model:MODEL, utils, save = True):
         if parameters['task'] == 'SASD':
             print(' -> Stochastic descent ... ')
             model.update_protocol(best_protocol)
-            best_fid, best_protocol, n_fid_eval_SD = SD(parameters, model, init = False)
+            best_fid, best_protocol, n_fid_eval_SD = SD(parameters, model, init_random = False)
             n_fid_eval += n_fid_eval_SD
 
         energy = model.compute_energy(protocol = best_protocol)
-
+        
         result = [n_fid_eval, best_fid,  energy, best_protocol]
 
         print("\n----------> RESULT FOR ANNEALING NO %i <-------------"%(it+1))
@@ -124,6 +123,7 @@ def run_SA(parameters, model:MODEL, utils, save = True):
 
     if save :
         with open(outfile,'wb') as f:
+            print("Saved results in %s"%outfile)
             pickle.dump([parameters, all_result],f)
             f.close()
     return all_result    
@@ -187,8 +187,7 @@ def run_SD(parameters, model:MODEL, utils, save = True):
 
     if n_exist_sample >= n_sample :
         print("\n\n-----------> Samples already computed in file -- terminating ... <-----------")
-        return   
-        all_result
+        return all_result
 
     print("\n\n-----------> Starting stochastic descent <-----------")
     
@@ -200,20 +199,23 @@ def run_SD(parameters, model:MODEL, utils, save = True):
         start_time=time.time()
 
         if parameters['task'] == 'SD':
-            best_fid, best_protocol, n_fid_eval = SD(parameters, model, init=True) # -- --> performing stochastic descent here <-- -- 
+            best_fid, best_protocol, n_fid_eval, n_visit = SD(parameters, model, init_random=True) # -- --> performing stochastic descent here <-- -- 
         elif parameters['task'] == 'SD2':
-            best_fid, best_protocol, n_fid_eval = SD_2SF(parameters, model, init=True) # -- --> performing 2 spin flip stochastic descent here <-- -- 
-        elif parameters['task'] == 'SD4':
-            best_fid, best_protocol, n_fid_eval = SD_4SF(parameters, model, init=True) # -- --> performing 2 spin flip stochastic descent here <-- -- 
+            best_fid, best_protocol, n_fid_eval, n_visit = SD_2SF(parameters, model, init_random=True) # -- --> performing 2 spin flip stochastic descent here <-- -- 
+        elif parameters['task'] == 'SD2M0':
+            best_fid, best_protocol, n_fid_eval, n_visit = SD_2SF_M0(parameters, model, init_random=True) # -- --> performing 2 spin flip stochastic descent here <-- -- 
+        #elif parameters['task'] == 'SD4':
+        #best_fid, best_protocol, n_fid_eval, n_enc_state = SD_4SF(parameters, model, init_random=True) # -- --> performing 2 spin flip stochastic descent here <-- -- 
         else:
             assert False, 'Error in task specification'
 
         energy = model.compute_energy(protocol = best_protocol)
-
-        result = [n_fid_eval, best_fid, energy, best_protocol]
+        
+        result = [n_fid_eval, best_fid, energy, n_visit, best_protocol]
 
         print("\n----------> RESULT FOR STOCHASTIC DESCENT NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%n_fid_eval)
+        print("Number of states visited \t%i"%n_visit)
         print("Best fidelity \t\t\t%.16f"%best_fid)
         print("Best hx_protocol\t\t",list(best_protocol))
         
@@ -229,18 +231,20 @@ def run_SD(parameters, model:MODEL, utils, save = True):
     print("\n Thank you and goodbye !")
     enablePrint()
 
-    if save :
+    if save : # final saving !
         with open(outfile,'wb') as f:
             pickle.dump([parameters, all_result],f)
+            print("Saved results in %s"%outfile)
             f.close()
     return all_result    
 
-def SD(param, model:MODEL, init=False):
+def SD(param, model:MODEL, init_random=False):
     
     n_step = param['n_step']
     n_fid_eval = 0
+    n_visit = 1
 
-    if init:
+    if init_random:
         # Random initialization
         model.update_protocol( np.random.randint(0, model.n_h_field, size=n_step) )
         old_fid = model.compute_fidelity()
@@ -265,6 +269,7 @@ def SD(param, model:MODEL, init=False):
 
             if new_fid > old_fid : # accept descent
                 old_fid = new_fid
+                n_visit += 1
                 local_minima_reached = False
                 break
             else:
@@ -273,9 +278,9 @@ def SD(param, model:MODEL, init=False):
         if local_minima_reached:
             break
 
-    return old_fid, np.copy(model.protocol()), n_fid_eval
+    return old_fid, np.copy(model.protocol()), n_fid_eval, n_visit
 
-def SD_2SF(param, model:MODEL, init=False):
+def SD_2SF(param, model:MODEL, init_random=False):
     # 2 spin flip algorithm --> note that scaling is O(N^3) so can only deal with n_step < 500 or so !
 
     if model.n_h_field > 2:
@@ -283,8 +288,95 @@ def SD_2SF(param, model:MODEL, init=False):
     
     n_step = param['n_step']
     n_fid_eval = 0
+    n_visit = 1
 
-    if init:
+    if init_random:
+        # Random initialization
+        model.update_protocol( np.random.randint(0, model.n_h_field, size=n_step) )
+        old_fid = model.compute_fidelity()
+        best_protocol = np.copy(model.protocol())
+    else:
+        # So user can feed in data say from a specific protocol
+        old_fid = model.compute_fidelity()
+        best_protocol = np.copy(model.protocol())
+
+    x1_ar, x2_ar = np.triu_indices(n_step,1)
+
+    n_2F_step = x1_ar.shape[0] # number of possible 2-flip updates
+    order2F = np.arange(0,n_2F_step, dtype=np.int) # ordering sequenc // to be randomly shuffled
+
+    n_1F_step = n_step
+    order1F = np.arange(0,n_1F_step, dtype=np.int) # ordering sequenc // to be randomly shuffled
+
+    order1F_vs_2F = 2*np.ones(n_2F_step + n_1F_step, dtype=np.int)
+    order1F_vs_2F[:n_1F_step]=1
+    
+
+    ############################
+    #########################
+    while True: # careful with this. For binary actions, this is guaranteed to break
+
+        np.random.shuffle(order1F)
+        np.random.shuffle(order2F)
+        np.random.shuffle(order1F_vs_2F)
+        idx_1F=0
+        idx_2F=0
+
+        local_minima_reached = True
+
+        for update_type in order1F_vs_2F:
+            
+            if update_type == 1:    
+                # perform 1 SF update
+                t = order1F[idx_1F]
+                model.update_hx(t, model.protocol_hx(t)^1) # assumes binary fields
+                new_fid = model.compute_fidelity()
+                n_fid_eval +=1
+                idx_1F+=1
+
+                if new_fid > old_fid : # accept descent
+                    #print("%.15f"%new_fid,'\t',n_fid_eval)
+                    n_visit+=1
+                    old_fid = new_fid
+                    local_minima_reached = False # will exit for loop before it ends ... local update accepted
+                    break
+                else:
+                    model.update_hx(t, model.protocol_hx(t)^1)
+            else:
+                # perform 2 SF update
+                o2F=order2F[idx_2F]
+                t1,t2 = x1_ar[o2F],x2_ar[o2F]
+                model.update_hx(t1, model.protocol_hx(t1)^1) # assumes binary fields
+                model.update_hx(t2, model.protocol_hx(t2)^1)
+                new_fid = model.compute_fidelity()
+                n_fid_eval +=1
+                idx_2F+=1
+
+                if new_fid > old_fid : # accept descent
+                    #print("%.15f"%new_fid,'\t',n_fid_eval)
+                    n_visit+=1
+                    old_fid = new_fid
+                    local_minima_reached = False # will exit for loop before it ends ... local update accepted
+                    break
+                else:
+                    model.update_hx(t1, model.protocol_hx(t1)^1) # assumes binary fields
+                    model.update_hx(t2, model.protocol_hx(t2)^1)
+
+        if local_minima_reached:
+            break
+
+    return old_fid, np.copy(model.protocol()), n_fid_eval, n_visit
+
+def SD_2SF_M0(param, model:MODEL, init_random=False):
+
+    if model.n_h_field > 2:
+        assert False, 'This works only for bang-bang protocols'
+    
+    n_step = param['n_step']
+    n_fid_eval = 0
+    n_visit = 1
+    
+    if init_random:
         # Random initialization
         tmp = np.ones(n_step,dtype=int) # m = 0 state ...
         tmp[0:n_step//2] = 0
@@ -299,7 +391,7 @@ def SD_2SF(param, model:MODEL, init=False):
         old_fid = model.compute_fidelity()
         best_protocol = np.copy(model.protocol())
  
-    x1_ar, x2_ar = np.triu_indices(n_step,1)
+    x1_ar, x2_ar = np.triu_indices(n_step,1) 
     order = np.arange(0, x1_ar.shape[0] , dtype=np.int)
 
     while True: # careful with this. For binary actions, this is guaranteed to break
@@ -316,8 +408,9 @@ def SD_2SF(param, model:MODEL, init=False):
                 n_fid_eval += 1
 
                 if new_fid > old_fid : # accept descent
-                    print("%.15f"%new_fid,'\t',n_fid_eval)
+                    #print("%.15f"%new_fid,'\t',n_fid_eval)
                     old_fid = new_fid
+                    n_visit +=1
                     #best_protocol = np.copy(model.protocol())
                     local_minima = False # will exit for loop before it ends ... local update accepted
                     break
@@ -327,101 +420,7 @@ def SD_2SF(param, model:MODEL, init=False):
         if local_minima:
             break
 
-    return old_fid, np.copy(model.protocol()), n_fid_eval
-
-def SD_4SF(param, model:MODEL, init=False):
-    # Stochastic descent with restricted 4 spin flip algorithm in the m=0 sector 
-    # 4 spin flip algorithm --> note that scaling is O(N^5) so can only deal with n_step < 80 or so !
-
-    if model.n_h_field > 2:
-        assert False, 'This works only for bang-bang protocols'
-    
-    n_step = param['n_step']
-    n_fid_eval = 0
-
-    if init:
-        # Random initialization
-        tmp = np.ones(n_step,dtype=int) # m = 0 state ...
-        tmp[0:n_step//2] = 0
-        np.random.shuffle(tmp) 
-        
-        model.update_protocol(tmp)
-        old_fid = model.compute_fidelity()
-        best_protocol = np.copy(model.protocol())
-
-    else:
-        # So user can feed in data say from a specific protocol
-        old_fid = model.compute_fidelity()
-        best_protocol = np.copy(model.protocol())
-
-    
-    x1 = np.where(best_protocol == 1)[0]
-    x2 = np.where(best_protocol == 0)[0]
-    
-    elem1=np.arange(0,len(x1),dtype=np.int)
-    elem2=np.arange(0,len(x2),dtype=np.int)
-
-    prod = np.array(list(product(elem1,elem2)))
-
-    order_pair1 = np.arange(0,len(prod),dtype=np.int)
-    order_pair2 = np.arange(0,len(prod),dtype=np.int)
-    #print(len(order_pair1))
-    #exit()
-
-    while True:
-        
-        np.random.shuffle(order_pair1)
-        np.random.shuffle(order_pair2)
-        local_minima = True
-        
-        for o1 in order_pair1:
-            for o2 in order_pair2:
-                
-                pair1_pos = prod[o1]
-                pair1_val = x1[pair1_pos[0]],x2[pair1_pos[1]]
-
-                pair2_pos = prod[o2]
-                pair2_val = x1[pair2_pos[0]],x2[pair2_pos[1]]
-                
-                if pair1_val[0]!=pair2_val[0] and pair1_val[1]!=pair2_val[1]:
-                    t1, t2 = pair1_val
-                    t3, t4 = pair2_val 
-                    #x2[pair2[0]],x2[pair2[1]]
-                    #print(t1,t2,t3,t4)
-                    #print(model.compute_fidelity())
-                    model.swap(t1,t2) # restricted 4 flip
-                    model.swap(t3,t4)
-                    new_fid = model.compute_fidelity()
-                    #print(new_fid)
-                    #print(model.compute_magnetization())
-                    #exit()
-                    n_fid_eval +=1
-
-                    if new_fid > old_fid: # accept move
-                        print("%.15f"%new_fid,'\t',n_fid_eval)
-                        if n_fid_eval > 100000:
-                            print(model.protocol())
-                        old_fid = new_fid #best_protocol = np.copy(model.protocol()) # no need to save, this is greedy
-                        local_minima = False
-                        
-                        x1[pair1_pos[0]] = t2 # moved to another location
-                        x2[pair1_pos[1]] = t1 # moved to another location
-                        
-                        x1[pair2_pos[0]] = t4 # moved to another location
-                        x2[pair2_pos[1]] = t3 # moved to another location
-
-                        break
-                    else:
-                        model.swap(t1,t2)
-                        model.swap(t3,t4)
-
-            if not local_minima:
-                break
-
-        if local_minima:
-            break
-
-    return old_fid, np.copy(model.protocol()), n_fid_eval
+    return old_fid, np.copy(model.protocol()), n_fid_eval, n_visit
 
 
 def Gibbs_Sampling(param, model:MODEL): 

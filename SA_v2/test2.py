@@ -10,7 +10,7 @@ def main():
 
     with open('optimal.pkl','rb') as f:
         res = pickle.load(f)
-        
+
     ### READING ES data and finding optimal state and the gap to excited states.
     ### Looping over parameters and storing data in a dictionary. 
     
@@ -18,7 +18,7 @@ def main():
     parameters = utils.read_parameter_file()
     
     prob_vs_T = {}
-    for T_tmp in np.arange(0.1,4.01,0.1):
+    for T_tmp in np.arange(0.025,4.001,0.025):
         T = round(T_tmp,2)
         prob_vs_T[T] = np.zeros((13,2),dtype=np.float64)
         ii = 0

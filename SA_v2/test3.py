@@ -39,13 +39,70 @@ def main():
     # Defines the model, and precomputes evolution matrices given set of states
     model = MODEL(H, parameters)
 
-    n_step = parameters['n_step']
-
-    X,y=sample_m0(10000,n_step,model)
-    print(y[0:10])
-    plt.hist(y,bins=20)
-    plt.show()
+    #n_step = parameters['n_step']
+    #X,y=sample_m0(10000,n_step,model)
+    #print(y[0:10])
+    #plt.hist(y,bins=20)
+    #plt.show()
     
+    rob_vs_T = {}
+    n_eval = {}
+    n_fid = {}
+
+    for T_tmp in np.arange(0.025,10.001,0.025):
+        for n_step in [100,200,400] :
+            
+            parameters['T']= T_tmp
+            parameters['n_step'] = n_step
+            parameters['dt'] = T_tmp/n_step
+
+            file = utils.make_file_name(parameters,root='data/')
+            
+            with open(file,'rb') as f:
+                _, data = pickle.load(f)
+                n_elem = len(data)
+                n_eval[(n_step,hash(T_tmp))]=[]
+                n_fid[(n_step,hash(T_tmp))]=[]
+                for elem in data:
+                    n_eval[(n_step,hash(T_tmp))].append(elem[0])
+                    n_fid[(n_step,hash(T_tmp))].append(elem[1])
+
+    #print(n_eval)
+    #exit()               
+    n_eval_mean = {}
+    n_fid_mean = {}
+    for n_step in [100,200,400]:
+        n_eval_mean[n_step]=[]
+        n_fid_mean[n_step]=[]
+        for T_tmp in np.arange(0.025,10.001,0.025):
+            n_eval_mean[n_step].append([T_tmp,np.mean(n_eval[(n_step,hash(T_tmp))])/n_step])
+            n_fid_mean[n_step].append([T_tmp,np.mean(n_fid[(n_step,hash(T_tmp))])])
+    
+    '''c_list=['#1a9850','#d73027','#c51b7d']
+    for i, n_step in enumerate([100,200,400]):
+        x = np.array(n_eval_mean[n_step])
+        plt.plot(x[:,0], x[:,1],c='black',zorder=0)
+        plt.scatter(x[:,0],x[:,1],c=c_list[i], marker='o', s=5, label='$N=%i$'%n_step,zorder=1)
+    
+    plt.title('Number of fidelity evaluations vs. ramp time \n for single flip')
+    plt.ylabel('$N_{eval}/N$')
+    plt.xlabel('$T$')
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.show()'''
+
+    c_list=['#1a9850','#d73027','#c51b7d']
+    for i, n_step in enumerate([100,200,400]):
+        x = np.array(n_fid_mean[n_step])
+        plt.plot(x[:,0], x[:,1],c='black',zorder=0)
+        plt.scatter(x[:,0],x[:,1],c=c_list[i], marker='o', s=5, label='$N=%i$'%n_step,zorder=1)
+    
+    plt.title('Mean fidelity vs. ramp time for single flip')
+    plt.ylabel('$F$')
+    plt.xlabel('$T$')
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.show()
 
 
     '''f_best = -1.
