@@ -200,6 +200,48 @@ class UTILS:
 		else:
 			return 0,[]
 
+	def quick_setup(self,argv=[]):
+
+		argv_tmp=['myfile.txt']+argv
+		from Hamiltonian import HAMILTONIAN
+		from model import MODEL
+
+		# Reading parameters from para.dat file
+		parameters = self.read_parameter_file()
+
+    	# Command line specified parameters overide parameter file values
+		self.read_command_line_arg(parameters,argv_tmp)
+
+		# Printing parameters for user
+		#utils.print_parameters(parameters)
+
+		# Defining Hamiltonian
+		H = HAMILTONIAN(**parameters)
+
+		# Defines the model, and precomputes evolution matrices given set of states
+		return MODEL(H, parameters)
+
+
+def parse_data(file):
+	f=open(file,'rb')
+	info,data = pickle.load(f)
+
+	key = ['n_fid','F','E','n_visit','protocol']
+	n_sample = len(data)
+	n_step = info['n_step']
+	res = {}
+
+	res['n_fid']=np.zeros(n_sample,dtype=np.int)
+	res['n_visit']=np.zeros(n_sample,dtype=np.int)
+	res['F']=np.zeros(n_sample)
+	res['E']=np.zeros(n_sample)
+	res['protocol'] = np.zeros((n_sample,n_step),dtype=np.int)
+
+	for i, elem in enumerate(data):
+		for j, ej in enumerate(elem):
+			res[key[j]][i] = ej
+	return res
+
 def check_version():
 	import sys
 	if sys.version_info[0] < 3:

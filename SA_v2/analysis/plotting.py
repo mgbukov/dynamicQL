@@ -2,11 +2,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 import sys,os
 from sklearn.neighbors import KernelDensity
-plt.rc('text', usetex=True)
-font = {'family' : 'serif', 'size'   : 40}
-plt.rc('font', **font)
 
 def density_map(X,kde=None,savefile='test.png',show=True,xlabel=None,ylabel=None):
+    plt.rc('text', usetex=True)
+    font = {'family' : 'serif', 'size'   : 40}
+    plt.rc('font', **font)
 
     fig =  plt.figure(figsize=(8,6))
     ax = fig.add_subplot(111) 
@@ -59,15 +59,12 @@ def density_map(X,kde=None,savefile='test.png',show=True,xlabel=None,ylabel=None
     #plt.show()
 
 
-global palette
-palette=[plt.get_cmap('Dark2')(0),plt.get_cmap('Dark2')(10),plt.get_cmap('Dark2')(20)]
-
 def protocol(time_slice,protocol_array,title=None,out_file=None,labels=None,show=True,ylabel='$h_x(t)$',xlabel="$t$"):
     """
     Purpose:
         Plots protocol vs time in latex form
     """
-    
+    palette=[plt.get_cmap('Dark2')(0),plt.get_cmap('Dark2')(10),plt.get_cmap('Dark2')(20)]
     protocols=adjust_format(protocol_array)
 
     # fig size
