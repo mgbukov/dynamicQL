@@ -38,12 +38,13 @@ def main():
     print("running : ",file_name)
 
     custom_prot=LZ.custom_protocol(
-        J=1.0, hz=1.0, hx_init_state=-3.0, hx_target_state=2.0,
+        J=1.0, hz=1.0, hx_init_state=-2.0, hx_target_state=2.0,
         L=L, delta_t=dt, 
         hx_i=-4., hx_max=4., action_set_=[-8.,0.,8.], option='fast')
 
     Ti = 1e-3
     N_quench = 20000
+    N_quench = 2
     sample_result = []
     print("Running for %i samples"%n_sample)
 
