@@ -38,8 +38,9 @@ class MODEL:
 
         for idx, h in zip(range(len(h_set)),h_set):
             self.precompute_mat[idx] = expm(-1j*self.param['dt']*self.H.evaluate_H_at_hx(hx=h).todense())
-
-        self.param['V_target'] = self.H.eigen_basis(hx=self.param['hx_f'])
+        
+        if self.param['L'] > 1:
+            self.param['V_target'] = self.H.eigen_basis(hx=self.param['hx_f'])
     
     def compute_evolved_state(self, protocol=None): 
         # Compute the evolved state after applying protocol
@@ -103,3 +104,4 @@ class MODEL:
         Nup = np.sum(protocol)
         Ndown = protocol.shape[0] - Nup
         return Nup - Ndown
+
