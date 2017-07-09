@@ -43,7 +43,7 @@ class HAMILTONIAN:
 		return self.hamiltonian_cont.eigsh(time=hx, k=1, which='SA')[1]
 
 	def eigen_basis(self, hx = 0.):
-		return self.hamiltonian_cont.eigsh(time=hx, which='SA')[1]
+		return self.hamiltonian_cont.eigh(time=hx)
 
 	def compute_h_set(self, hmin, hmax, dh):
 		return np.arange(hmin, hmax+1e-6, dh)
