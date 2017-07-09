@@ -180,7 +180,7 @@ def run_SD(parameters, model:MODEL, utils, save = True):
     
     if parameters['verbose'] == 0:
         blockPrint()
-
+ 
     outfile = utils.make_file_name(parameters,root='data/')
     n_exist_sample, all_result = utils.read_current_results(outfile)
     n_sample = parameters['n_sample']
@@ -212,7 +212,7 @@ def run_SD(parameters, model:MODEL, utils, save = True):
         energy = model.compute_energy(protocol = best_protocol)
         
         result = [n_fid_eval, best_fid, energy, n_visit, best_protocol]
-
+        
         print("\n----------> RESULT FOR STOCHASTIC DESCENT NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%n_fid_eval)
         print("Number of states visited \t%i"%n_visit)

@@ -200,19 +200,20 @@ class UTILS:
 		else:
 			return 0,[]
 
-	def quick_setup(self,argv=[]):
+	def quick_setup(self,argv=[],file = 'para.dat'):
 
 		argv_tmp=['myfile.txt']+argv
 		from Hamiltonian import HAMILTONIAN
 		from model import MODEL
 
 		# Reading parameters from para.dat file
-		parameters = self.read_parameter_file()
+		parameters = self.read_parameter_file(file=file)
 
     	# Command line specified parameters overide parameter file values
 		self.read_command_line_arg(parameters,argv_tmp)
 
 		# Printing parameters for user
+		print(parameters)
 		#utils.print_parameters(parameters)
 
 		# Defining Hamiltonian
@@ -222,11 +223,15 @@ class UTILS:
 		return MODEL(H, parameters)
 
 
-def parse_data(file):
+def parse_data(file, v=2):
 	f=open(file,'rb')
 	info,data = pickle.load(f)
 
-	key = ['n_fid','F','E','n_visit','protocol']
+	if v == 2:
+		key = ['n_fid','F','E','n_visit','protocol']
+	else:
+		key = ['n_fid','F','E','protocol']
+
 	n_sample = len(data)
 	n_step = info['n_step']
 	res = {}

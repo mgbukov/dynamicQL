@@ -9,6 +9,7 @@ from quspin.operators import exp_op
 import time,sys,os
 from model import MODEL
 from matplotlib import pyplot as plt
+from utils import parse_data
 #from analysis.compute_observable import MB_observables
     
 np.set_printoptions(precision=4)
@@ -47,49 +48,83 @@ def main():
     
     rob_vs_T = {}
     n_eval = {}
-    n_fid = {}
+    fid = {}
+    res = {}
+    visit= {}
+    T_list = np.arange(0.05,10.001,0.05)
+    n_step_list = [40,50,60,70,80,90,100,110]
 
-    for T_tmp in np.arange(0.025,10.001,0.025):
-        for n_step in [100,200,400] :
-            
-            parameters['T']= T_tmp
+    for T in T_list:
+        for n_step in n_step_list:#[40,50,60,70,80,90,100,110,120]:
+    
+    ##for T in np.arange(0.025,10.001,0.025):
+    #    for n_step in [100,200,400] :        
+            parameters['T']= T
             parameters['n_step'] = n_step
-            parameters['dt'] = T_tmp/n_step
+            parameters['dt'] = T/n_step
 
             file = utils.make_file_name(parameters,root='data/')
+            res = parse_data(file)
+            n_eval[(n_step,hash(T))]=res['n_fid']
+            fid[(n_step,hash(T))]=res['F']
+            visit[(n_step,hash(T))] = res['n_visit']
             
-            with open(file,'rb') as f:
+        '''    with open(file,'rb') as f:
                 _, data = pickle.load(f)
                 n_elem = len(data)
-                n_eval[(n_step,hash(T_tmp))]=[]
-                n_fid[(n_step,hash(T_tmp))]=[]
+                n_eval[(n_step,hash(T))]=[]
+                n_fid[(n_step,hash(T))]=[]
                 for elem in data:
-                    n_eval[(n_step,hash(T_tmp))].append(elem[0])
-                    n_fid[(n_step,hash(T_tmp))].append(elem[1])
+                    n_eval[(n_step,hash(T))].append(elem[0])
+                    n_fid[(n_step,hash(T))].append(elem[1])'''
 
     #print(n_eval)
     #exit()               
     n_eval_mean = {}
-    n_fid_mean = {}
-    for n_step in [100,200,400]:
+    fid_mean = {}
+    visit_mean = {}
+    #print(visit[(40,115292150460684704)])
+    #exit()
+    for n_step in n_step_list:
         n_eval_mean[n_step]=[]
-        n_fid_mean[n_step]=[]
-        for T_tmp in np.arange(0.025,10.001,0.025):
-            n_eval_mean[n_step].append([T_tmp,np.mean(n_eval[(n_step,hash(T_tmp))])/n_step])
-            n_fid_mean[n_step].append([T_tmp,np.mean(n_fid[(n_step,hash(T_tmp))])])
+        fid_mean[n_step]=[]
+        visit_mean[n_step]=[]
+        for T in T_list:
+            hT=hash(T)
+            n_eval_mean[n_step].append([T,np.mean(n_eval[(n_step,hT)])/(n_step*n_step)])
+            fid_mean[n_step].append([T,np.mean(fid[(n_step,hT)])])
+            visit_mean[n_step].append([T,np.mean(visit[(n_step,hT)])/(n_step)])
     
-    '''c_list=['#1a9850','#d73027','#c51b7d']
-    for i, n_step in enumerate([100,200,400]):
+    c_list=['#d53e4f','#f46d43','#fdae61','#fee08b','#e6f598','#abdda4','#66c2a5','#3288bd']
+    for i, n_step in enumerate(n_step_list):
         x = np.array(n_eval_mean[n_step])
         plt.plot(x[:,0], x[:,1],c='black',zorder=0)
         plt.scatter(x[:,0],x[:,1],c=c_list[i], marker='o', s=5, label='$N=%i$'%n_step,zorder=1)
     
-    plt.title('Number of fidelity evaluations vs. ramp time \n for single flip')
-    plt.ylabel('$N_{eval}/N$')
+    plt.title('Number of fidelity evaluations vs. ramp time \n for 2 flip')
+    plt.ylabel('$N_{eval}/N^2$')
     plt.xlabel('$T$')
     plt.legend(loc='best')
     plt.tight_layout()
-    plt.show()'''
+    plt.show()
+
+    for i, n_step in enumerate(n_step_list):
+        x = np.array(visit_mean[n_step])
+        plt.plot(x[:,0], x[:,1],c='black',zorder=0)
+        plt.scatter(x[:,0],x[:,1],c=c_list[i], marker='o', s=5, label='$N=%i$'%n_step,zorder=1)
+    
+    plt.title('Number of visited states vs. ramp time \n for 2 flip')
+    plt.ylabel('$N_{visit}/N$')
+    plt.xlabel('$T$')
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.show()
+
+
+
+
+
+    '''
 
     c_list=['#1a9850','#d73027','#c51b7d']
     for i, n_step in enumerate([100,200,400]):
@@ -105,7 +140,7 @@ def main():
     plt.show()
 
 
-    '''f_best = -1.
+    f_best = -1.
     s_best = -1
     n_symm_s = 2**(n_step//2)
     for s in range(n_symm_s):
