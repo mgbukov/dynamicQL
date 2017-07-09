@@ -41,7 +41,6 @@ def main():
                     n_eval[i] = elem[0]
 
             count = (v[np.abs(v - gs_fid) < 1e-14].shape[0])
-
             prob = count/n_elem
             mean = np.mean(n_eval)
             if prob > 1e-14:
@@ -58,29 +57,6 @@ def main():
             out_str = "{0:<6.2f}{1:<6}{2:<20.3f}{3:<10.4f}{4:<10.4f}{5:<8}".format(T,n_step,prob,std/mean,mean,count)
             print(out_str)
             ii += 1
-
-    file_tmp='scaling_SD.pkl'
-    with open(file_tmp, 'wb') as f:
-        pickle.dump(prob_vs_T,f)
-    exit()
-    #exit()
-    with open(file_tmp,'rb') as f:
-        prob_vs_T = pickle.load(f)
-
-    #print(prob_vs_T[0.1][:-3,1])
-    #print(-np.log(prob_vs_T[0.1][:-3,1]))
-    #exit()
-    for Ttmp in np.arange(0.1,4.0,0.3) :
-        T=round(Ttmp,2)
-        plt.plot(prob_vs_T[T][:-2,0],np.log(prob_vs_T[T][:-2,1]),label='$T=%.2f$'%T)
-        #plt.scatter(prob_vs_T[T][:-3,0],-np.log(prob_vs_T[T][:-3,1]))
-
-    plt.xlabel('$N$',fontsize=16)
-    plt.ylabel('$-\log p(h(t)=h_{\mathrm{opt}}(t))$',fontsize=16)
-    plt.legend(loc='best')
-    plt.tick_params(labelsize=16)
-    plt.tight_layout()
-    plt.show()
 
 
 
