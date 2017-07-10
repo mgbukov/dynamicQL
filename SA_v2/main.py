@@ -73,7 +73,7 @@ def run_SA(parameters, model:MODEL, utils, save = True):
     if parameters['verbose'] == 0:
         blockPrint()
 
-    outfile = utils.make_file_name(parameters,root='data/')
+    outfile = utils.make_file_name(parameters,root=parameters['root'])
     n_exist_sample, all_result = utils.read_current_results(outfile)
     n_sample = parameters['n_sample']
 
@@ -181,7 +181,7 @@ def run_SD(parameters, model:MODEL, utils, save = True):
     if parameters['verbose'] == 0:
         blockPrint()
  
-    outfile = utils.make_file_name(parameters,root='data/')
+    outfile = utils.make_file_name(parameters,root=parameters['root'])
     n_exist_sample, all_result = utils.read_current_results(outfile)
     n_sample = parameters['n_sample']
 
@@ -522,7 +522,7 @@ def run_ES(parameters, model:MODEL, utils):
         psi = model.compute_evolved_state()
         exact_data[p] = (model.compute_fidelity(psi_evolve=psi), model.compute_energy(psi_evolve=psi))
     
-    outfile = utils.make_file_name(parameters,root='data/')
+    outfile = utils.make_file_name(parameters,root=parameters['root'])
     with open(outfile,'wb') as f:
         pickle.dump(exact_data, f, protocol=4)
     print("Total run time : \t %.3f s"%(time.time()-st))
