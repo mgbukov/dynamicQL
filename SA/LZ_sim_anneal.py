@@ -198,7 +198,7 @@ def main():
         if L > 1:  
             _,E,delta_E,Sd,Sent = MB_observables(best_hx_discrete, param_SA, matrix_dict, fin_vals=True)
             result = result + [E, delta_E, Sd, Sent] # Appending Energy, Energy fluctuations, Diag. entropy, Ent. entropy
-        
+            
         all_results.append(result)
         with open('data/%s'%outfile_name,'wb') as pkl_file:
             ## Here read first then save, stop if reached quota
