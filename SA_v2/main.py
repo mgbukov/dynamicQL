@@ -239,6 +239,8 @@ def run_SD(parameters, model:MODEL, utils, save = True):
     return all_result    
 
 def SD(param, model:MODEL, init_random=False):
+    """ Single spin flip stochastic descent
+    """
     
     n_step = param['n_step']
     n_fid_eval = 0
@@ -280,8 +282,65 @@ def SD(param, model:MODEL, init_random=False):
 
     return old_fid, np.copy(model.protocol()), n_fid_eval, n_visit
 
+''' def SD_symm(param, model:MODEL, init_random=False):
+    """ Stochastic descent in symmetrized sector
+    """
+    
+    n_step = param['n_step']
+    assert n_step % 2 ==0, 'Must be an even number of time steps to symmetrize ... ABORTING'
+    n_fid_eval = 0
+    n_visit = 1
+
+    def symmetrize_protocol(hx_protocol):
+    Nstep=len(hx_protocol)
+    half_N=int(Nstep/2)
+    for i in range(half_N):
+        hx_protocol[-(i+1)]=-hx_protocol[i]
+
+    if init_random:
+        # Random initialization
+        tmp = np.random.randint(0, model.n_h_field, size=n_step)
+
+
+        model.update_protocol(np.random.randint(0, model.n_h_field, size=n_step) )
+        old_fid = model.compute_fidelity()
+        best_protocol = np.copy(model.protocol())
+    else:
+        # So user can feed in data say from a specific protocol
+        old_fid = model.compute_fidelity()
+        best_protocol = np.copy(model.protocol())
+
+    random_position = np.arange(n_step, dtype=int)
+
+    while True:
+
+        np.random.shuffle(random_position)
+        local_minima_reached = True # trick
+
+        for t in random_position:
+            
+            model.update_hx(t, model.protocol_hx(t)^1) # assumes binary fields
+            new_fid = model.compute_fidelity()
+            n_fid_eval +=1
+
+            if new_fid > old_fid : # accept descent
+                old_fid = new_fid
+                n_visit += 1
+                local_minima_reached = False
+                break
+            else:
+                model.update_hx(t, model.protocol_hx(t)^1) # assumes binary fields
+        
+        if local_minima_reached:
+            break
+
+    return old_fid, np.copy(model.protocol()), n_fid_eval, n_visit '''
+
+
 def SD_2SF(param, model:MODEL, init_random=False):
-    # 2 spin flip algorithm --> note that scaling is O(N^3) so can only deal with n_step < 500 or so !
+    """ 2SF + 1 SF stochastic descent: all possible 2 spin-flip and
+    1 spin-flip moves are considered. Algorithm halts when all moves will decrease fidelity
+    """
 
     if model.n_h_field > 2:
         assert False, 'This works only for bang-bang protocols'
@@ -368,6 +427,8 @@ def SD_2SF(param, model:MODEL, init_random=False):
     return old_fid, np.copy(model.protocol()), n_fid_eval, n_visit
 
 def SD_2SF_M0(param, model:MODEL, init_random=False):
+    """Two spin flip stochastic descent in the M=0 sector
+    """
 
     if model.n_h_field > 2:
         assert False, 'This works only for bang-bang protocols'
