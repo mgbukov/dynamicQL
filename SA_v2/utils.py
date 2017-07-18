@@ -45,7 +45,8 @@ class UTILS:
 		'symmetrize' : int,
 		'outfile' : str,
 		'verbose' : int,
-		'task' : str
+		'task' : str,
+		'root' : str
 	}
 
 	def read_command_line_arg(self,parameters,argv):
@@ -136,6 +137,9 @@ class UTILS:
 		Return:
 			String representing a file name (extension is always .pkl)
 		"""
+		if (len(root) != 0) and (root[-1] != "/"):
+			root+="/"
+
 		if parameters['outfile'] != 'auto':
 			return root+parameters['outfile']
 		
@@ -156,7 +160,7 @@ class UTILS:
 						['hx_f','float-2'],
 						['hx_max','float-2'],
 						['hx_min','float-2'],
-						['dh','float-2'],
+						['dh','float-2']
 		]
 
 		n_param=len(param_and_type)

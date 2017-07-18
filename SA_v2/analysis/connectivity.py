@@ -19,8 +19,8 @@ def main():
     n_cluster= []
     slarge = []
 
-    parameters['task']='SD2'
-    Trange = np.arange(0.05,4.0,0.05)
+    parameters['task']='SD'
+    Trange = np.arange(0.05,1.0,0.01)
     n_fid = []
     n_visit = []
     fid = []
@@ -105,6 +105,8 @@ def main():
         #plist2.append(-np.sum(prob*np.log(prob))/np.log(n_sample))
         #print(T,'\t',-np.sum(prob*np.log(prob)))
     
+    plt.scatter(Trange,S_shannon)
+    plt.show()
     '''sorted_f = np.sort(res['F'])
     #print(np.std(sorted_f[-45000:]))
     #print(np.std(sorted_f))
