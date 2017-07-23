@@ -193,13 +193,14 @@ def run_SD(parameters, model:MODEL, utils, save = True):
     
     n_iteration_left = n_sample - n_exist_sample  # data should be saved 10 times --> no more (otherwise things are way too slow !)
     n_mod = max([1,n_iteration_left // 10])
+    fid_series = [-1]
     
     for it in range(n_iteration_left):
        
         start_time=time.time()
 
         if parameters['task'] == 'SD':
-            best_fid, best_protocol, n_fid_eval, n_visit = SD(parameters, model, init_random=True) # -- --> performing stochastic descent here <-- -- 
+            best_fid, best_protocol, n_fid_eval, n_visit, fid_series = SD(parameters, model, init_random=True) # -- --> performing stochastic descent here <-- -- 
         elif parameters['task'] == 'SD2':
             best_fid, best_protocol, n_fid_eval, n_visit = SD_2SF(parameters, model, init_random=True) # -- --> performing 2 spin flip stochastic descent here <-- -- 
         elif parameters['task'] == 'SD2M0':
@@ -211,7 +212,10 @@ def run_SD(parameters, model:MODEL, utils, save = True):
 
         energy = model.compute_energy(protocol = best_protocol)
         
-        result = [n_fid_eval, best_fid, energy, n_visit, best_protocol]
+        if parameters['fid_series'] is True:
+            result = [n_fid_eval, best_fid, energy, n_visit, best_protocol, fid_series]
+        else:
+            result = [n_fid_eval, best_fid, energy, n_visit, best_protocol, [-1]]
         
         print("\n----------> RESULT FOR STOCHASTIC DESCENT NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%n_fid_eval)
@@ -257,6 +261,7 @@ def SD(param, model:MODEL, init_random=False):
         best_protocol = np.copy(model.protocol())
 
     random_position = np.arange(n_step, dtype=int)
+    fid_series = []
 
     while True:
 
@@ -276,11 +281,13 @@ def SD(param, model:MODEL, init_random=False):
                 break
             else:
                 model.update_hx(t, model.protocol_hx(t)^1) # assumes binary fields
-        
+            
+            fid_series.append(old_fid)
+
         if local_minima_reached:
             break
-
-    return old_fid, np.copy(model.protocol()), n_fid_eval, n_visit
+    
+    return old_fid, np.copy(model.protocol()), n_fid_eval, n_visit, fid_series
 
 ''' def SD_symm(param, model:MODEL, init_random=False):
     """ Stochastic descent in symmetrized sector

@@ -46,7 +46,8 @@ class UTILS:
 		'outfile' : str,
 		'verbose' : int,
 		'task' : str,
-		'root' : str
+		'root' : str,
+		'fid_series': bool
 	}
 
 	def read_command_line_arg(self,parameters,argv):
@@ -233,6 +234,8 @@ def parse_data(file, v=2):
 
 	if v == 2:
 		key = ['n_fid','F','E','n_visit','protocol']
+	elif v == 3:
+		key = ['n_fid','F','E','n_visit','protocol','fid_series']
 	else:
 		key = ['n_fid','F','E','protocol']
 
@@ -245,10 +248,15 @@ def parse_data(file, v=2):
 	res['F']=np.zeros(n_sample)
 	res['E']=np.zeros(n_sample)
 	res['protocol'] = np.zeros((n_sample,n_step),dtype=np.int)
+	res['fid_series'] = []
+
 
 	for i, elem in enumerate(data):
 		for j, ej in enumerate(elem):
-			res[key[j]][i] = ej
+			if key[j] == 'fid_series':
+				res[key[j]].append(ej)
+			else:
+				res[key[j]][i] = ej
 	return res
 
 def check_version():
