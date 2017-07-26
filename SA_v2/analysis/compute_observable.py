@@ -41,7 +41,7 @@ def Ed_Ad_OP(h_protocol, min_h, max_h, var=True):
     std = np.std(h_protocol, axis=0)
     mid = 0.5*(max_h - min_h)     
 
-    if var = True:
+    if var is True:
         std = std*std
         mid = mid*mid
 

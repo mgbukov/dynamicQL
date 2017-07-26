@@ -3,7 +3,8 @@ from matplotlib import pyplot as plt
 import sys,os
 from sklearn.neighbors import KernelDensity
 
-def density_map(X,kde=None,savefile='test.png',show=True,xlabel=None,ylabel=None):
+def density_map(X,kde,savefile='test.png',show=True,xlabel=None,ylabel=None):
+
     plt.rc('text', usetex=True)
     font = {'family' : 'serif', 'size'   : 40}
     plt.rc('font', **font)
@@ -26,14 +27,10 @@ def density_map(X,kde=None,savefile='test.png',show=True,xlabel=None,ylabel=None
 
     my_map=plt.get_cmap(name='BuGn')
 
-    #print("Kde estimation underway")
-    if kde is None:
-        kde=KernelDensity(bandwidth=0.2, algorithm='kd_tree',atol=0.00001, rtol=0.000001)
-        kde.fit(X)
-
     xy=np.array([[xi,yi] for yi in y for xi in x])
     #print("kk")
-    z = np.exp(kde.score_samples(xy))
+    z = np.exp(kde.evaluate_density(xy))
+    #z = np.exp(rho)
     #print("ksdjfk")
     z=mms.fit_transform(z.reshape(-1,1))
     Z=z.reshape(n_mesh, n_mesh)
