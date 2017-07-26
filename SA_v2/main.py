@@ -419,7 +419,7 @@ def SD_2SF(param, model:MODEL, init_random=False):
                 idx_2F+=1
 
                 if new_fid > old_fid : # accept descent
-                    #print("%.15f"%new_fid,'\t',n_fid_eval)
+                    print("%.15f"%new_fid,'\t',n_fid_eval)
                     n_visit+=1
                     old_fid = new_fid
                     local_minima_reached = False # will exit for loop before it ends ... local update accepted

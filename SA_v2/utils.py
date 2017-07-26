@@ -119,7 +119,7 @@ class UTILS:
 		print("-------------------- > Parameters < --------------------")
 		print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx_max \t\t\t %.3f "%(L, J, hz, hx_max))
 		print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state, hx_final_state))
-		print("n_quench \t\t %i\ndelta_t \t\t %.2f\nn_sample \t\t %i"%(n_quench, dt, n_sample))
+		print("n_quench \t\t %i\ndelta_t \t\t %.4f\nn_sample \t\t %i"%(n_quench, dt, n_sample))
 		print("n_step \t\t\t %i"%n_step)
 		print("T \t\t\t %.2f"%(n_step*dt))
 		print("Task \t\t\t %s"%parameters['task'])

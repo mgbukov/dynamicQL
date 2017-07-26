@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import copy
+from scipy.linalg import expm
 
 def overlap(psi1,psi2):
     # Square of overlap between two states
@@ -31,7 +32,6 @@ class MODEL:
 
     def precompute_expmatrix(self):
         # Precomputes the evolution matrix and stores them in a dictionary
-        from scipy.linalg import expm
         
         # set of possible -> fields 
         h_set = self.H.h_set
@@ -41,6 +41,23 @@ class MODEL:
         
         self.param['V_target'] = self.H.eigen_basis(hx=self.param['hx_f'])
     
+    ''' def precomute_joined_expmatrix(self, length = 10):
+        h_set = self.H.h_set
+        base = len(h_set)
+        n_config = base**length
+        self.precompute_joined = {}
+
+        for i in n_config:# -----
+            self.precompute_joined[i] = #
+
+
+        for idx, h in zip(range(len(h_set)),h_set):
+            self.precompute_mat[idx] = expm(-1j*self.param['dt']*self.H.evaluate_H_at_hx(hx=h).todense())
+     '''    
+
+
+
+
     def compute_evolved_state(self, protocol=None): 
         # Compute the evolved state after applying protocol
         if protocol is None:
@@ -50,7 +67,14 @@ class MODEL:
         for idx in protocol:
             psi_evolve = self.precompute_mat[idx].dot(psi_evolve)
         return psi_evolve
-
+    
+    def compute_continuous_fidelity(self, continuous_protocol):
+        # Computes fidelity for continuous field values (much slower, matrices have not been pre-computed)
+        psi_evolve=self.psi_i.copy()
+        for h in continuous_protocol:
+            psi_evolve = expm(-1j*self.param['dt']*self.H.evaluate_H_at_hx(hx=h).todense()).dot(psi_evolve)
+        return overlap(psi_evolve, self.psi_target)[0,0]
+    
     def compute_fidelity(self, protocol = None, psi_evolve = None):
         # Computes fidelity for a given protocol
         if psi_evolve is None:
