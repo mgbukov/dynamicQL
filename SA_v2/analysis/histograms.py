@@ -23,7 +23,7 @@ def main():
     parameters['n_quench'] = 1000
     parameters['dt']=parameters['T']/parameters['n_step']
 
-    file_name = utils.make_file_name(parameters,root="../data/")
+    file_name = utils.make_file_name(parameters, root="../data/")
     data = parse_data(file_name, v=3)
     
     fid_series = data['fid_series']

@@ -247,7 +247,7 @@ def SD(param, model:MODEL, init_random=False):
     """
     
     n_step = param['n_step']
-    n_fid_eval = 0
+    n_fid_eval = 1
     n_visit = 1
 
     if init_random:
@@ -261,7 +261,7 @@ def SD(param, model:MODEL, init_random=False):
         best_protocol = np.copy(model.protocol())
 
     random_position = np.arange(n_step, dtype=int)
-    fid_series = []
+    fid_series = [old_fid]
 
     while True:
 
@@ -273,6 +273,7 @@ def SD(param, model:MODEL, init_random=False):
             model.update_hx(t, model.protocol_hx(t)^1) # assumes binary fields
             new_fid = model.compute_fidelity()
             n_fid_eval +=1
+            fid_series.append(old_fid)
 
             if new_fid > old_fid : # accept descent
                 old_fid = new_fid
@@ -281,8 +282,6 @@ def SD(param, model:MODEL, init_random=False):
                 break
             else:
                 model.update_hx(t, model.protocol_hx(t)^1) # assumes binary fields
-            
-            fid_series.append(old_fid)
 
         if local_minima_reached:
             break

@@ -61,6 +61,10 @@ def protocol(time_slice,protocol_array,title=None,out_file=None,labels=None,show
     Purpose:
         Plots protocol vs time in latex form
     """
+    plt.rc('text', usetex=True)
+    font = {'family' : 'serif', 'size'   : 16}
+    plt.rc('font', **font)
+
     palette=[plt.get_cmap('Dark2')(0),plt.get_cmap('Dark2')(10),plt.get_cmap('Dark2')(20)]
     protocols=adjust_format(protocol_array)
 
@@ -83,8 +87,9 @@ def protocol(time_slice,protocol_array,title=None,out_file=None,labels=None,show
     else:
         for i,p in zip(range(n_curve),protocols):
             ext_p=np.hstack((p,p[-1]))
-            plt.step(ext_ts,ext_p,'-',clip_on=False,c=palette[i],where='post')
-            plt.plot(time_slice,p,'o',clip_on=False,c=palette[i])
+            plt.step(ext_ts,ext_p,'-',clip_on=False,c='black',where='post',zorder=0,lw=5)
+            #plt.scatter(time_slice,p,clip_on=False,c='black',marker='o',s=8,edgecolor='black',linewidths=0.5,zorder=1)
+            #plt.plot(time_slice,p,clip_on=False,c=palette[i])
         
     if title is not None:
         plt.title(title,fontsize=fontsize)
@@ -124,11 +129,73 @@ def adjust_format(my_array):
     else:
         assert False
 
+def smooth_MA(y, window=20, padding = 'left'):
+    if padding == 'left':
+        yi = y[0]
+        yf = y[-1]
+        ypad = np.concatenate((yi*np.ones(window,dtype=float),y))
+        ysmooth = np.zeros(len(y),dtype=float)
+
+        for i in range(len(y)):
+            ysmooth[i]=np.mean(ypad[i:window+i])
+    
+    return ysmooth
+
+def smooth_data(x,y): # smooth data using moving average --> 
+    from scipy.optimize import curve_fit
+    from scipy.interpolate import interp1d
+    from scipy.signal import savgol_filter
+
+    xx = np.linspace(x.min(),x.max(), 1000)
+
+    # interpolate + smooth
+    itp = interp1d(x,y, kind='linear')
+    window_size, poly_order = 101, 4
+    yy_sg = savgol_filter(itp(xx), window_size, poly_order)
+
+    return xx, yy_sg
 
 
+def density_trajectory(final_fid):
 
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import NullFormatter
+    from sklearn.neighbors.kde import KernelDensity
 
+    kde = KernelDensity(kernel='gaussian', bandwidth=0.006).fit(final_fid[:, np.newaxis])
 
+    fig, ax = plt.subplots(1, 1, sharex=True)
+
+    x=np.linspace(0,1.1,5000)
+    y=np.exp(kde.score_samples(x[:, np.newaxis]))
+    ax.fill_between(x, 0, y)
+    ax.plot(x,y)
+    #plt.yscale('log')
+    plt.xlim((-0.05,1.05))
+    plt.show()
+
+def trajectory(traj,c_idx):
+
+    plt.rc('text', usetex=True)
+    font = {'family' : 'serif', 'size'   : 16}
+    plt.rc('font', **font)
+    
+    green= (0.477789,0.719150,0.193583)
+    blue = (0.229527,0.518693,0.726954)
+    red = (0.797623,0.046473,0.127759)
+    clist = [green,blue,red]
+    for i,s in enumerate(traj):
+        #s_smooth=smooth_MA(s)    
+        plt.plot(range(len(s)),s,c=clist[c_idx[i]],zorder=2-c_idx[i])
+    for i,s in enumerate(traj):
+        plt.scatter(len(s)-1,s[-1],zorder=3,c=clist[c_idx[i]],marker='o',s=15,edgecolor='black',linewidths=0.5)
+
+    plt.xlabel('SD iterations')
+    plt.ylabel('Fidelity')
+    #plt.ylim((-0.05,1.1))
+    plt.xlim((-10,1200))
+    plt.show()
 
 def main():
     print("heelo")

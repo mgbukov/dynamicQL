@@ -230,7 +230,7 @@ class UTILS:
 
 def parse_data(file, v=2):
 	f=open(file,'rb')
-	info,data = pickle.load(f)
+	info, data = pickle.load(f)
 
 	if v == 2:
 		key = ['n_fid','F','E','n_visit','protocol']
@@ -249,7 +249,6 @@ def parse_data(file, v=2):
 	res['E']=np.zeros(n_sample)
 	res['protocol'] = np.zeros((n_sample,n_step),dtype=np.int)
 	res['fid_series'] = []
-
 
 	for i, elem in enumerate(data):
 		for j, ej in enumerate(elem):
