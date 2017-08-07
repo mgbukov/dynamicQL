@@ -43,8 +43,19 @@ def paper_figure_1a():
     print('green:', np.count_nonzero(c_idx == 0))
     print('blue:', np.count_nonzero(c_idx == 1))
     print('red:', np.count_nonzero(c_idx == 2))
+    #exit()
+
+    green= (0.477789,0.719150,0.193583)
+    blue = (0.229527,0.518693,0.726954)
+    red = (0.797623,0.046473,0.127759)
+    color_list = [green, blue, red]
+
+    for i in range(3):
+        plotting.density_trajectory_2(data['F'], color_list, c_location, show=False)
+    
+    plt.show()
+
     exit()
-    plotting.density_trajectory(data['F'])
     plotting.trajectory(fid_series, c_idx)
     
     x=np.loadtxt('grapeprot.txt')
@@ -54,8 +65,9 @@ def paper_figure_1a():
     #n_step = 200
     
     print(x)
-
-    #plotting.protocol(
+    
+    # --------------------------------
+    # --------------------------------
 
     exit()
     fid = data['F']

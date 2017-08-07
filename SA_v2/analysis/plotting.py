@@ -156,7 +156,7 @@ def smooth_data(x,y): # smooth data using moving average -->
     return xx, yy_sg
 
 
-def density_trajectory(final_fid):
+def density_trajectory(final_fid, c=(0.229527,0.518693,0.726954), show=True):
 
     import numpy as np
     import matplotlib.pyplot as plt
@@ -169,11 +169,49 @@ def density_trajectory(final_fid):
 
     x=np.linspace(0,1.1,5000)
     y=np.exp(kde.score_samples(x[:, np.newaxis]))
-    ax.fill_between(x, 0, y)
-    ax.plot(x,y)
+    ax.fill_between(x, 0, y, facecolor=c)
+    ax.plot(x,y,c=c)
     #plt.yscale('log')
     plt.xlim((-0.05,1.05))
-    plt.show()
+    #print(show)
+    if show is True:
+        plt.show()
+
+def density_trajectory_2(final_fid, c_list, idx_list, show=True):
+    
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import NullFormatter
+    from sklearn.neighbors.kde import KernelDensity
+
+    
+    fig, ax = plt.subplots(1, 1, sharex=True)
+    X=final_fid[:,np.newaxis]
+    kde = KernelDensity(kernel='gaussian', bandwidth=0.006).fit(X)
+    x=np.linspace(0,1.1,5000)
+    y=np.exp(kde.score_samples(x[:, np.newaxis]))
+
+    i1 = [0,1000]
+    i2 = [1000,4000]
+    i3 = [4000,5000]
+
+    c0 = c_list[0]
+    ax.fill_between(x[i1[0]:i1[1]], 0, y[i1[0]:i1[1]], facecolor=c0)
+    ax.plot(x[i1[0]:i1[1]],y[i1[0]:i1[1]],c=c0)
+    c1 = c_list[1]
+    ax.fill_between(x[i2[0]:i2[1]], 0, y[i2[0]:i2[1]], facecolor=c1)
+    ax.plot(x[i2[0]:i2[1]],y[i2[0]:i2[1]],c=c1)
+    c2 = c_list[2]
+    ax.fill_between(x[i3[0]:i3[1]], 0, y[i3[0]:i3[1]], facecolor=c2)
+    ax.plot(x[i3[0]:i3[1]],y[i3[0]:i3[1]],c=c2)
+
+    #ax.plot(x,y,c=c_list[i])
+    #plt.yscale('log')
+    plt.xlim((-0.05,1.05))
+    #print(show)
+    if show is True:
+        plt.show()
+
 
 def trajectory(traj,c_idx):
 
@@ -190,6 +228,7 @@ def trajectory(traj,c_idx):
         plt.plot(range(len(s)),s,c=clist[c_idx[i]],zorder=2-c_idx[i])
     for i,s in enumerate(traj):
         plt.scatter(len(s)-1,s[-1],zorder=3,c=clist[c_idx[i]],marker='o',s=15,edgecolor='black',linewidths=0.5)
+        #plt.scatter(len(s)-1,s[-1],zorder=3,c='black',marker='o',s=15,edgecolor='black',linewidths=0.5)
 
     plt.xlabel('SD iterations')
     plt.ylabel('Fidelity')

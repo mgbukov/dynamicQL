@@ -1,5 +1,5 @@
 task	SD
-L	6
+L	2
 J	1.0
 hz	1.0
 hx_i	-2.
@@ -8,10 +8,10 @@ hx_max	4.
 hx_min	-4.
 dh	8.
 dt	-1
-n_step	200
-n_sample	200
+n_step	100
+n_sample	50
 n_quench	1000
-T	3.2
+T	2.0
 Ti	-1
 outfile	auto
 root data/
