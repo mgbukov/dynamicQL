@@ -8,14 +8,14 @@ hx_max	4.
 hx_min	-4.
 dh	8.
 dt	-1
-n_step	250
-n_sample	1
+n_step	200
+n_sample	1000
 n_quench	1000
 T	1.0
 Ti	-1
 outfile	auto
 root data/
-verbose	1
+verbose	0
 symmetrize	0
 msector	0
 fid_series 1
