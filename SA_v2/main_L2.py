@@ -17,6 +17,7 @@ from quspin.operators import exp_op
 import time,sys,os
 from itertools import product
 from model import MODEL
+from copy import deepcopy
 #from analysis.compute_observable import MB_observables
     
 np.set_printoptions(precision=4)
@@ -34,12 +35,28 @@ def main():
     # Printing parameters for user
     utils.print_parameters(parameters)
 
+    parameters['J'] = 0 
     # Defining Hamiltonian
+
     H = HAMILTONIAN(**parameters)
 
     # Defines the model, and precomputes evolution matrices given set of states
     model = MODEL(H, parameters)
+
+    psi_i_int = deepcopy(model.psi_i)
+    psi_targer_int = deepcopy(model.psi_target)
+
+    parameters['J'] = 1
     
+
+    H = HAMILTONIAN(**parameters)
+
+    # Defines the model, and precomputes evolution matrices given set of states
+    model = MODEL(H, parameters)
+
+    model.psi_target = psi_targer_int
+    model.psi_i = psi_i_int
+
     # Run simulated annealing
     if parameters['task'] ==  'SA':
         print("Simulated annealing")
