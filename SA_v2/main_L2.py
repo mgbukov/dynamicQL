@@ -35,7 +35,7 @@ def main():
     # Printing parameters for user
     utils.print_parameters(parameters)
 
-    parameters['J'] = 0 
+    parameters['J'] = 1 
     # Defining Hamiltonian
 
     H = HAMILTONIAN(**parameters)
@@ -44,17 +44,18 @@ def main():
     model = MODEL(H, parameters)
 
     psi_i_int = deepcopy(model.psi_i)
-    psi_targer_int = deepcopy(model.psi_target)
+    psi_target_int = deepcopy(model.psi_target)
+    H_target = deepcopy(model.H_target)
 
-    parameters['J'] = 1
-    
+    parameters['J'] = 0
 
     H = HAMILTONIAN(**parameters)
 
     # Defines the model, and precomputes evolution matrices given set of states
     model = MODEL(H, parameters)
 
-    model.psi_target = psi_targer_int
+    model.H_target = H_target
+    model.psi_target = psi_target_int
     model.psi_i = psi_i_int
 
     # Run simulated annealing
