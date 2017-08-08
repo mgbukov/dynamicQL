@@ -51,7 +51,28 @@ def main():
     fid = {}
     res = {}
     visit= {}
-    T_list = np.arange(0.05,10.001,0.05)
+    T_list = np.arange(0.1,4.01,0.1)
+    n_step = 100
+    fid_list = []
+
+    for T in T_list:
+        parameters['T']= T
+        parameters['n_step'] = n_step
+        parameters['dt'] = T/n_step
+        file = utils.make_file_name(parameters,root='data/')
+        res = parse_data(file,v=3)
+        fid_list.append(np.mean(res['F']))
+        #n_eval[(n_step,hash(T))]=res['n_fid']
+        #fid[(n_step,hash(T))]=res['F']
+        #visit[(n_step,hash(T))] = res['n_visit']
+    plt.plot(T_list,fid_list)
+    plt.xlabel('T')
+    plt.ylabel('Fidelity')
+    plt.show()
+    exit()
+
+
+
     n_step_list = [40,50,60,70,80,90,100,110]
 
     for T in T_list:
