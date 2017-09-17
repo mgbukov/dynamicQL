@@ -1,5 +1,5 @@
-task	SD
-L	2
+task	ES
+L	8
 J	1.0
 hz	1.0
 hx_i	-2.
@@ -8,7 +8,7 @@ hx_max	4.
 hx_min	-4.
 dh	8.
 dt	-1
-n_step	100
+n_step	12
 n_sample	50
 n_quench	1000
 T	2.0
