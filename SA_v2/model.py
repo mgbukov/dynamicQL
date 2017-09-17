@@ -119,7 +119,7 @@ class MODEL:
             psi_evolve = self.compute_evolved_state(protocol=protocol)
         return np.real(np.dot(np.conj(psi_evolve).T, np.dot(self.H_target, psi_evolve)))[0,0]
     
-    def compute_Sent(self,protocol=None,psi_evolve = None):
+    def compute_Sent(self, protocol=None, psi_evolve = None):
         """ Compute Sent of evolved state acc. to Hamiltonian """
         if psi_evolve is None:
             psi_evolve = self.compute_evolved_state(protocol=protocol)
