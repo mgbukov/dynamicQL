@@ -55,9 +55,6 @@ class MODEL:
             self.precompute_mat[idx] = expm(-1j*self.param['dt']*self.H.evaluate_H_at_hx(hx=h).todense())
      '''    
 
-
-
-
     def compute_evolved_state(self, protocol=None): 
         # Compute the evolved state after applying protocol
         if protocol is None:
@@ -111,6 +108,7 @@ class MODEL:
         return np.random.choice(list(set(range(self.n_h_field))-set([current_h])))
 
     def swap(self, time_1, time_2):
+        # Swaps field configurations h(t1) <-> h(t2)
         tmp = self.H.hx_discrete[time_1]
         self.H.hx_discrete[time_1] = self.H.hx_discrete[time_2]
         self.H.hx_discrete[time_2] = tmp
@@ -121,7 +119,15 @@ class MODEL:
             psi_evolve = self.compute_evolved_state(protocol=protocol)
         return np.real(np.dot(np.conj(psi_evolve).T, np.dot(self.H_target, psi_evolve)))[0,0]
     
+    def compute_Sent(self,protocol=None,psi_evolve = None):
+        # Compute Sent of evolved state acc. to Hamiltonian
+        if psi_evolve is None:
+            psi_evolve = self.compute_evolved_state(protocol=protocol)
+
+        return self.H.basis.ent_entropy(psi_evolve.squeeze())['Sent_A']
+
     def compute_magnetization(self, protocol = None):
+        # Computes magnetization
         if protocol is None:
             protocol = self.H.hx_discrete
         Nup = np.sum(protocol)
