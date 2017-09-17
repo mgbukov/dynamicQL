@@ -580,7 +580,7 @@ def run_ES(parameters, model:MODEL, utils):
     psi = model.compute_evolved_state()
     model.compute_fidelity(psi_evolve=psi)
     model.compute_Sent(psi_evolve=psi)
-    #model.compute_energy(psi_evolve=psi)
+    model.compute_energy(psi_evolve=psi)
     print("Est. run time : \t %.3f s"%(0.5*n_protocol*(time.time()-st)))
     # ---> Starting real calculation <---
 
@@ -588,7 +588,7 @@ def run_ES(parameters, model:MODEL, utils):
     for p in range(n_protocol):
         model.update_protocol(b2_array(p))
         psi = model.compute_evolved_state()
-        exact_data[p] = (model.compute_fidelity(psi_evolve=psi), model.compute_Sent(psi_evolve=psi))
+        exact_data[p] = (model.compute_fidelity(psi_evolve=psi), model.compute_energy(psi_evolve=psi), model.compute_Sent(psi_evolve=psi))
     
     outfile = utils.make_file_name(parameters, root=parameters['root'])
     with open(outfile,'wb') as f:
