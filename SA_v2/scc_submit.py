@@ -5,9 +5,9 @@ from utils import UTILS
 
 parameters = {
     'project': 'fheating',
-    'job_name': 'SD_L6_series_%i',
-    'walltime': '2:00:00',
-    'command' : '~/.conda/envs/py35/bin/python main.py',
+    'job_name': 'SD_L2-400_series_%i',
+    'walltime': '5:00:00',
+    'command' : '~/.conda/envs/py35/bin/python main_L2.py',
     'arguments' : [],# fixed parameters
     'loop' : [['T',arange(0.1,4.01,0.1)]] # looping parameters
 }
