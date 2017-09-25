@@ -38,12 +38,12 @@ def density_map(X, kde, savefile='test.png', show=True, xlabel=None, ylabel=None
 
     Zrgb[Z < 0.005] = (1.0,1.0,1.0,1.0)
 
-    plt.imshow(Zrgb, interpolation='bilinear',cmap='BuGn', extent=extent,origin='lower',aspect='auto',zorder=1)
+    plt.imshow(Zrgb, interpolation='bilinear',cmap='BuGn', extent=extent,origin='lower', aspect='auto', zorder=1)
     cb=plt.colorbar()
     cb.set_label(label='Density',labelpad=10)
 
     X1, Y1 = np.meshgrid(x,y)
-    plt.contour(X1, Y1, Z, levels=np.linspace(0.03,0.8,6), linewidths=0.3, colors='k', extent=extent,zorder=2)
+    plt.contour(X1, Y1, Z, levels=np.linspace(0.03,0.8,6), linewidths=0.3, colors='k', extent=extent, zorder=2)
     ax.grid(False)
 
     if xlabel is not None:
