@@ -3,7 +3,7 @@ Created on Sep 1 , 2016
 
 @author: Alexandre Day
 '''
-from quspin.operators import hamiltonian
+from quspin.operators import hamiltonian,exp_op
 from quspin.basis import spin_basis_1d
 import numpy as np
 
@@ -23,6 +23,8 @@ class HAMILTONIAN:
 			basis = spin_basis_1d(L=L,pauli=False) # w/o symmetries (momentum and parity sectors)
 			static = [["z", z_field]]
 		
+		self.J=J
+		self.hz=hz
 
 		self.h_set = self.compute_h_set(hx_min,hx_max,dh) # discrete set of possible h fields 
 		self.hx_discrete = np.zeros(n_step, dtype=int) # hx_discrete are protocols specified as integers
@@ -36,6 +38,7 @@ class HAMILTONIAN:
 		kwargs = {'dtype':np.float64,'basis':basis,'check_symm':False,'check_herm':False,'check_pcon':False}
 
 		self.basis = basis
+		self.control_hamiltonian = hamiltonian([["x", ones]], [], **kwargs)
 		self.hamiltonian_discrete = hamiltonian(static, dynamic_discrete, **kwargs)
 		self.hamiltonian_cont = hamiltonian(static, dynamic_cont, **kwargs)
 
@@ -61,4 +64,6 @@ class HAMILTONIAN:
 	def evaluate_H_at_hx(self, hx = 0.):
 		return self.hamiltonian_cont(time = hx)
 
-		
+	def exponentiate_at_hx(self,hx =0.,a=-1j):
+		return exp_op(self.hamiltonian_cont(time = hx), a=a)
+

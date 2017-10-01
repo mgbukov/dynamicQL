@@ -39,7 +39,6 @@ def main():
     # Defines the model, and precomputes evolution matrices given set of states
     model = MODEL(H, parameters)
     
-    
     #root='data/data_ES/'
     root='data/data_SD/'
 
@@ -54,6 +53,9 @@ def main():
     elif parameters['task'] == 'SD' or parameters['task'] == 'SD2' :
         print("Stochastic descent")
         run_SD(parameters, model, utils, root)
+    elif parameters['task'] == 'GRAPE' :
+        print("GRAPE")
+        run_GRAPE(parameters, model, utils, root)
     elif parameters['task'] == 'ES':
         print("Exact spectrum")
         run_ES(parameters, model, utils, root)
@@ -371,6 +373,158 @@ def SD_2SF(param, model:MODEL, init=False):
             break
 
     return old_fid, best_protocol, n_fid_eval
+
+
+def GRAPE(param, model:MODEL, init=False):
+    
+    n_step = param['n_step']
+    n_fid_eval = 0
+
+    if init:
+        # Random initialization
+        model.update_protocol( np.random.randint(0, model.n_h_field, size=n_step) )        
+        old_fid = model.compute_fidelity()
+        best_protocol = np.copy(model.protocol())
+
+    else:
+        # So user can feed in data say from a specific protocol
+        old_fid = model.compute_fidelity()
+        best_protocol = np.copy(model.protocol())
+
+    # compute random initial protocol
+    model.update_protocol( np.random.uniform(param['hx_min'],param['hx_max'],size=param['n_step']) )
+
+    alpha=.9 # initial learning rate
+    i_=0
+    start_time=time.time()
+    while i_<1200: # careful with this. For binary actions, this is guaranteed to break
+
+        # compute protocol gradient
+        protocol_gradient=model.compute_protocol_gradient()
+        new_protocol=model.protocol() + alpha*protocol_gradient 
+
+        # impose boundedness condition
+        ind_max=np.where(new_protocol>param['hx_max'])
+        new_protocol[ind_max]=param['hx_max']
+
+        ind_min=np.where(new_protocol<param['hx_min'])
+        new_protocol[ind_min]=param['hx_min']
+
+        # update protocol
+        model.update_protocol(new_protocol)
+
+        #print(model.protocol())
+        #print(model.compute_fidelity(protocol=model.protocol(),discrete=False))
+        #print(i_)
+
+        i_+=1
+        #alpha/=np.sqrt(i_)
+
+        '''
+        random_position = np.arange(n_step, dtype=int)
+        np.random.shuffle(random_position)
+
+        local_minima = True
+        for t in random_position:
+            model.update_hx(t, model.random_flip(t))
+            new_fid = model.compute_fidelity()
+            n_fid_eval +=1
+
+            if new_fid > old_fid : # accept descent
+                old_fid = new_fid
+                best_protocol = np.copy(model.protocol())
+                local_minima = False # will exit for loop before it ends ... local update accepted
+                break
+            else:
+                model.update_hx(t, model.random_flip(t))
+        
+        if local_minima:
+            break
+
+        '''
+    print(time.time()-start_time)
+    return old_fid, best_protocol, n_fid_eval
+
+
+def run_GRAPE(parameters, model:MODEL, utils, root, save = True):
+    if parameters['verbose'] == 0:
+        blockPrint()
+
+    outfile = utils.make_file_name(parameters,root=root)
+    n_exist_sample, optimal_index, all_result = utils.read_current_results(outfile)
+    n_sample = parameters['n_sample']
+    if optimal_index is not None:
+        best_seen_fid=all_result[optimal_index][1]
+    else:
+        best_seen_fid=0.0
+
+    if n_exist_sample >= n_sample :
+        print("\n\n-----------> Samples already computed in file -- terminating ... <-----------")
+
+        print("\n\n-------> Best encountered fidelity over all samples is %0.8f <-------"%(best_seen_fid))
+
+        print("\n\n-------> Best encountered hx_protocol over all samples:")
+        print(list(all_result[optimal_index][5]))
+        print("<-------")
+
+        return  all_result
+
+    print("\n\n-----------> Starting stochastic descent <-----------")
+    
+    n_iteration_left = n_sample - n_exist_sample  # data should be saved 10 times --> no more (otherwise things are way too slow !)
+    n_mod = max([1,n_iteration_left // 10])
+    
+    for it in range(n_iteration_left):
+       
+        start_time=time.time()
+
+        if parameters['task'] == 'GRAPE':
+            best_fid, best_protocol, n_fid_eval = GRAPE(parameters, model, init=True) # -- --> performing stochastic descent here <-- -- 
+        else:
+            assert False, 'Error in task specification'
+
+        exit()
+
+        energy, delta_energy, Sent = model.compute_observables(protocol = best_protocol)
+
+        result = [n_fid_eval, best_fid, energy, delta_energy, Sent, best_protocol]
+
+        print("\n----------> RESULT FOR STOCHASTIC DESCENT NO %i <-------------"%(it+1))
+        print("Number of fidelity eval \t%i"%n_fid_eval)
+        print("Best fidelity \t\t\t%.16f"%best_fid)
+        print("Best hx_protocol\t\t",list(best_protocol))
+        
+        all_result.append(result)
+
+        # check if a better fidelity has been seen in previous samples
+        if best_fid > best_seen_fid:
+            best_seen_fid=best_fid
+            optimal_index=len(all_result)-1
+
+        if save and it % n_mod == 0:
+            with open(outfile,'wb') as f:
+                pickle.dump([parameters, all_result],f)
+                f.close()
+            print("Saved iteration --> %i to %s"%(it + n_exist_sample, outfile))
+        print("Iteration run time --> %.4f s" % (time.time()-start_time))
+    
+
+    # print best seen fidelity and protocol over all times
+    print("\n\n-------> Best encountered fidelity over all samples is %0.8f <-------"%(best_seen_fid))
+
+    print("\n\n-------> Best encountered hx_protocol over all samples:")
+    print(list(all_result[optimal_index][5]))
+    print("<-------") 
+
+    print("\n Thank you and goodbye !")
+    enablePrint()
+
+    if save :
+        with open(outfile,'wb') as f:
+            pickle.dump([parameters, all_result],f)
+            f.close()
+    return all_result    
+
 
 
 def Gibbs_Sampling(param, model:MODEL): 
