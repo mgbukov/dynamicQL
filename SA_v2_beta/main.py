@@ -394,13 +394,16 @@ def GRAPE(param, model:MODEL, init=False):
     # compute random initial protocol
     model.update_protocol( np.random.uniform(param['hx_min'],param['hx_max'],size=param['n_step']) )
 
-    alpha=.9 # initial learning rate
+    alpha=.1 # initial learning rate
     i_=0
     start_time=time.time()
-    while i_<1200: # careful with this. For binary actions, this is guaranteed to break
+    while i_<1200: #
 
         # compute protocol gradient
         protocol_gradient=model.compute_protocol_gradient()
+        # normalise
+        protocol_gradient/=np.max(np.abs(protocol_gradient))
+
         new_protocol=model.protocol() + alpha*protocol_gradient 
 
         # impose boundedness condition
@@ -413,12 +416,14 @@ def GRAPE(param, model:MODEL, init=False):
         # update protocol
         model.update_protocol(new_protocol)
 
-        #print(model.protocol())
-        #print(model.compute_fidelity(protocol=model.protocol(),discrete=False))
-        #print(i_)
+        fidelity=model.compute_fidelity(protocol=model.protocol(),discrete=False)
 
         i_+=1
-        #alpha/=np.sqrt(i_)
+        
+        print(model.protocol())
+        print(fidelity)
+        #print(i_)
+
 
         '''
         random_position = np.arange(n_step, dtype=int)
