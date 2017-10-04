@@ -1,4 +1,4 @@
-task	ES
+task	SD
 L	2
 J	1.0
 hz	1.0
@@ -17,5 +17,5 @@ outfile	auto
 verbose	1
 symmetrize	0
 msector	0
-algorithm	1SF
+algorithm 	1SF
 norm GS

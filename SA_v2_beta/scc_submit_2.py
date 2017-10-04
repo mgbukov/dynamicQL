@@ -3,20 +3,19 @@ import os, subprocess, time
 import numpy as np
 from utils import UTILS
 
-T=2.0 # total ramp time
-dt=0.0005 # time step
-
-# T=3.0
-#np.arange(2500,int(T/dt)+1,1)
+T=4.0 # total ramp time
+dt=0.0025 # time step
 
 parameters = {
     'project': 'fheating',
     'job_name': 'job_SD_%i',
-    'walltime': '24:00:00',
+    'walltime': '12:00:00',
     'command' : '~/.conda/envs/py35/bin/python main.py',
-    'arguments' : [['dt',dt]],# fixed parameters -> this overwrites what is in para.dat
-    'loop' : [['n_step',np.arange(1500*int(0.001/dt),int(T/dt)+1,1)]] # looping parameters 
+    'arguments' : [['dt',dt,'task','SD','norm','trace']],# fixed parameters -> this overwrites what is in para.dat
+    'loop' : [['n_step',np.arange(10,int(T/dt)+1,10)]] # looping parameters 
 }
+
+# main.py dt=0.01 n_step=260 L=2 J=1.0 hz=1.0 hx_i=-2.0 hx_f=2.0 hx_min=-4.0 hx_max=4.0 dh=8.0 task=SD n_sample=100 n_quench=10000 outfile=auto verbose=1 Ti=-1.0 T=1.0 symmetrize=0
 
 ###################################
 ###################################
