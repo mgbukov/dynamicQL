@@ -243,9 +243,9 @@ def run_SD(parameters, model:MODEL, utils, root, save = True):
         else:
             assert False, 'Error in task specification'
 
-        energy, delta_energy, Sent = model.compute_observables(protocol = best_protocol)
+        energy_target, delta_energy_target, Sent = model.compute_observables(protocol = best_protocol)
 
-        result = [n_fid_eval, best_fid, energy, delta_energy, Sent, best_protocol]
+        result = [n_fid_eval, best_fid, energy_target, delta_energy_target, Sent, best_protocol]
 
         print("\n----------> RESULT FOR STOCHASTIC DESCENT NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%n_fid_eval)
@@ -382,29 +382,30 @@ def GRAPE(param, model:MODEL, init=False):
 
     if init:
         # Random initialization
-        model.update_protocol( np.random.randint(0, model.n_h_field, size=n_step) )        
-        old_fid = model.compute_fidelity()
+        model.update_protocol( np.random.uniform(param['hx_min'],param['hx_max'],size=param['n_step']) )
+        old_fid=model.compute_fidelity(protocol=model.protocol(),discrete=False)
         best_protocol = np.copy(model.protocol())
 
     else:
         # So user can feed in data say from a specific protocol
-        old_fid = model.compute_fidelity()
-        best_protocol = np.copy(model.protocol())
+        raise NotImplementedError("yet to be implemented.")
+        #old_fid = model.compute_fidelity(discrete=False)
+        #best_protocol = np.copy(model.protocol())
 
-    # compute random initial protocol
-    model.update_protocol( np.random.uniform(param['hx_min'],param['hx_max'],size=param['n_step']) )
+    
+    eta=0.6 # initial learning rate
 
-    alpha=.1 # initial learning rate
-    i_=0
-    start_time=time.time()
-    while i_<1200: #
+    n_fid_eval=0
+    fid_diff = 1.0
+    while np.abs(fid_diff)>1E-6: # guaranteed to break but after very long time
 
         # compute protocol gradient
         protocol_gradient=model.compute_protocol_gradient()
-        # normalise
+        
+        # normalise gradient
         protocol_gradient/=np.max(np.abs(protocol_gradient))
-
-        new_protocol=model.protocol() + alpha*protocol_gradient 
+        # GD update rule
+        new_protocol=model.protocol() + eta*protocol_gradient 
 
         # impose boundedness condition
         ind_max=np.where(new_protocol>param['hx_max'])
@@ -412,43 +413,29 @@ def GRAPE(param, model:MODEL, init=False):
 
         ind_min=np.where(new_protocol<param['hx_min'])
         new_protocol[ind_min]=param['hx_min']
-
-        # update protocol
-        model.update_protocol(new_protocol)
-
-        fidelity=model.compute_fidelity(protocol=model.protocol(),discrete=False)
-
-        i_+=1
         
-        print(model.protocol())
-        print(fidelity)
-        #print(i_)
 
+        ###
+        fid=model.compute_fidelity(protocol=new_protocol,discrete=False)
 
-        '''
-        random_position = np.arange(n_step, dtype=int)
-        np.random.shuffle(random_position)
-
-        local_minima = True
-        for t in random_position:
-            model.update_hx(t, model.random_flip(t))
-            new_fid = model.compute_fidelity()
-            n_fid_eval +=1
-
-            if new_fid > old_fid : # accept descent
-                old_fid = new_fid
-                best_protocol = np.copy(model.protocol())
-                local_minima = False # will exit for loop before it ends ... local update accepted
-                break
-            else:
-                model.update_hx(t, model.random_flip(t))
         
-        if local_minima:
-            break
+        # if we overshoot, decrease step size, otherwise update protocol
+        fid_diff = fid - old_fid
+        if fid_diff < 0:
+            eta*=0.5
+            print('overshot minimum:',n_fid_eval, eta, np.abs(fid_diff))
+        else:
+            # update protocol
+            model.update_protocol(new_protocol)
 
-        '''
-    print(time.time()-start_time)
-    return old_fid, best_protocol, n_fid_eval
+
+        old_fid=fid.copy()
+        n_fid_eval+=1
+        
+        print(fid)
+        print(n_fid_eval,eta,fid_diff)
+
+    return old_fid, model.protocol(), n_fid_eval
 
 
 def run_GRAPE(parameters, model:MODEL, utils, root, save = True):
@@ -488,13 +475,11 @@ def run_GRAPE(parameters, model:MODEL, utils, root, save = True):
         else:
             assert False, 'Error in task specification'
 
-        exit()
-
-        energy, delta_energy, Sent = model.compute_observables(protocol = best_protocol)
+        energy, delta_energy, Sent = model.compute_observables(protocol = best_protocol, discrete=False)
 
         result = [n_fid_eval, best_fid, energy, delta_energy, Sent, best_protocol]
 
-        print("\n----------> RESULT FOR STOCHASTIC DESCENT NO %i <-------------"%(it+1))
+        print("\n----------> RESULT FOR GRAPE NO %i <-------------"%(it+1))
         print("Number of fidelity eval \t%i"%n_fid_eval)
         print("Best fidelity \t\t\t%.16f"%best_fid)
         print("Best hx_protocol\t\t",list(best_protocol))

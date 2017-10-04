@@ -15,7 +15,7 @@ class MODEL:
         if self.param['norm']=='GS':
             self.psi_i = H.ground_state(hx=param['hx_i']).squeeze()
             self.psi_target = H.ground_state(hx=param['hx_f']).squeeze()
-            self.norm=1.0
+            self.norm=1
         elif self.param['norm']=='trace':
             self.psi_i = H.eigen_basis(hx=param['hx_i']) # initial eigenbasis
             self.psi_target = H.eigen_basis(hx=param['hx_f'])
@@ -105,28 +105,21 @@ class MODEL:
         
         for i, (h,h_rev) in enumerate(zip(protocol, protocol[::-1])):
             # evolve psi forward: U(t,0)|psi>
-            psi[:,i] = psi_evolve
+            psi[...,i] = psi_evolve
             #psi_evolve = sla.expm(-1j*self.dt*self.H.evaluate_H_at_hx(hx=h).toarray()).dot(psi_evolve)
             psi_evolve = self.analytic_evolution_op(hx=h).dot(psi_evolve)
             
-            #print(sla.expm(-1j*self.dt*self.H.evaluate_H_at_hx(hx=h).toarray())  -  self.analytic_evolution_op(hx=h))
-            #print()
-            #exit()
-
             # evolve phi backward: <phi|U(T,t)
             #phi_evolve = phi_evolve.dot( sla.expm(-1j*self.dt*self.H.evaluate_H_at_hx(hx=h_rev).toarray()) )
             phi_evolve = phi_evolve.dot( self.analytic_evolution_op(hx=h_rev) )
-            
-            phi[:,i]=phi_evolve
+            phi[...,i]=phi_evolve
 
         # compute overlap and prefactor
-        prefactor=psi_evolve.conj().dot(self.psi_target)
-        double_overlap=np.einsum('ij,ik,kj->j',phi[:,::-1],self.H.control_hamiltonian.toarray(),psi)
-        
-        protocol_gradient = 2.0*np.imag( prefactor*double_overlap )
-        
-        #protocol_gradient = 2.0/self.norm*np.sum(np.imag( prefactor*np.array(double_overlap) ),axis=1)
-        
+        prefactor=np.einsum('j...,j...->...',psi_evolve.conj(),self.psi_target).reshape(self.norm,)
+        double_overlap=np.einsum('...ji,jk,k...i->...i',phi[...,::-1],self.H.control_hamiltonian.toarray(),psi).reshape(self.norm,-1)
+
+        protocol_gradient = 2.0*np.imag( prefactor.dot(double_overlap) )/self.norm
+
         return protocol_gradient
 
 
@@ -182,25 +175,26 @@ class MODEL:
 
         if psi_evolve is None:
             psi_evolve = self.compute_evolved_state(protocol=protocol)
-        return np.diag((np.dot(psi_evolve.T.conj(), np.dot(self.H_target, psi_evolve))).real) #[0,0]
+        return np.einsum('j...,j...->...',psi_evolve.conj(), np.dot(self.H_target, psi_evolve)).real
 
-    def compute_observables(self, protocol = None, psi_evolve = None):
+    def compute_observables(self, protocol = None, psi_evolve = None, discrete=True):
         # Compute energy of evolved state w.r.t to target Hamiltonian
 
         if psi_evolve is None:
-            psi_evolve = self.compute_evolved_state(protocol=protocol)
+            psi_evolve = self.compute_evolved_state(protocol=protocol,discrete=discrete)
 
-        pri_evolve=psi_evolve.squeeze()
-
-        E = np.diag((np.dot(psi_evolve.T.conj(), np.dot(self.H_target, psi_evolve))).real) #[0,0]
-        deltaE = (np.sqrt( 
-                    np.diag( reduce(np.dot,[psi_evolve.T.conj(),(self.H.hamiltonian_discrete(time=0)*self.H_target),psi_evolve]) )
-                  - np.diag( reduce(np.dot,[psi_evolve.conj().T,self.H_target,psi_evolve]) )**2
+        psi_evolve=psi_evolve.squeeze()
+        
+        E_target = np.einsum('j...,j...->...',psi_evolve.conj(), np.dot(self.H_target, psi_evolve)).real #[0,0]
+        deltaE_target = (np.sqrt(
+                    np.einsum('j...,j...->...',psi_evolve.conj(), np.dot((self.H_target*self.H_target), psi_evolve)) 
+                    - E_target**2
                          ).real/(self.H.basis.L)
                  ).squeeze()
+
         Sent = self.H.basis.ent_entropy(psi_evolve,enforce_pure=True)['Sent_A']
         
-        return E, deltaE, Sent
+        return E_target, deltaE_target, Sent
     
     def compute_magnetization(self, protocol = None):
         if protocol is None:
