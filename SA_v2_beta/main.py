@@ -40,7 +40,8 @@ def main():
     model = MODEL(H, parameters)
     
     #root='data/data_ES/'
-    root='data/data_SD/'
+    #root='data/data_SD/'
+    root='data/data_GRAPE/'
 
     
     # Run simulated annealing
@@ -382,7 +383,7 @@ def GRAPE(param, model:MODEL, init=False):
 
     if init:
         # Random initialization
-        model.update_protocol( np.random.uniform(param['hx_min'],param['hx_max'],size=param['n_step']) )
+        model.update_protocol( np.random.uniform(-1.0,1.0,size=param['n_step']) )
         old_fid=model.compute_fidelity(protocol=model.protocol(),discrete=False)
         best_protocol = np.copy(model.protocol())
 
@@ -397,7 +398,7 @@ def GRAPE(param, model:MODEL, init=False):
 
     n_fid_eval=0
     fid_diff = 1.0
-    while np.abs(fid_diff)>1E-6: # guaranteed to break but after very long time
+    while np.abs(fid_diff)>1E-9 and n_fid_eval<param['n_quench']: # guaranteed to break but after very long time
 
         # compute protocol gradient
         protocol_gradient=model.compute_protocol_gradient()
