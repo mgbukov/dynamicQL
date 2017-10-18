@@ -4,7 +4,7 @@ import sys,os
 from sklearn.neighbors import KernelDensity
 from sklearn import preprocessing as prep
 
-def density_map(X, kde, savefile='test.png', show=True, xlabel=None, ylabel=None, n_mesh = 400):
+def density_map(X, kde, savefile='test.png', show=True, xlabel=None, ylabel=None, n_mesh = 400, vmin = None, vmax= None, compute_zmax = False):
 
     plt.rc('text', usetex=True)
     font = {'family' : 'serif', 'size': 18}
@@ -24,26 +24,33 @@ def density_map(X, kde, savefile='test.png', show=True, xlabel=None, ylabel=None
     extent = (xmin-0.1*dx,xmax+0.1*dx,ymin-0.1*dy,ymax+0.1*dy)
 
     mms=prep.MinMaxScaler()
-    my_map=plt.get_cmap(name='BuGn')
 
     xy=np.array([[xi, yi] for yi in y for xi in x])
     #print("kk")
     z = np.exp(kde.evaluate_density(xy)) # this should be the computationally expensive part 
     #z = np.exp(rho)
     #print("ksdjfk")
-    z=mms.fit_transform(z.reshape(-1,1))
+    zmax = np.max(z)
+    if compute_zmax is True:
+        return zmax
+    
+    if vmax is None:
+        vmax = zmax
+
+    #z=mms.fit_transform(z.reshape(-1,1))
     Z=z.reshape(n_mesh, n_mesh)
-    z=my_map(z)
-    Zrgb = z.reshape(n_mesh, n_mesh, 4)
+    Z[Z < 0.005] = 0
+    
 
-    Zrgb[Z < 0.005] = (1.0,1.0,1.0,1.0)
-
-    plt.imshow(Zrgb, interpolation='bilinear',cmap='BuGn', extent=extent,origin='lower', aspect='auto', zorder=1)
-    cb=plt.colorbar()
+    plt.imshow(Z, interpolation='bilinear',cmap='BuGn',  extent=extent, aspect='auto', origin='lower', zorder=1, vmin=vmin,vmax=vmax)
+    cb = plt.colorbar()
     cb.set_label(label='Density',labelpad=10)
-
+    
     X1, Y1 = np.meshgrid(x,y)
-    plt.contour(X1, Y1, Z, levels=np.linspace(0.03,0.8,6), linewidths=0.3, colors='k', extent=extent, zorder=2)
+    plt.contour(X1, Y1, Z, levels=np.linspace(0.03*(vmax-vmin),vmax,6), linewidths=0.3, colors='k', extent=extent, zorder=2)
+
+    #plt.contour(X1, Y1, Z, levels=[0.001*(vmax-vmin)], linewidths=0.3, colors='blue',ls='dashed', extent=extent, zorder=2)
+
     ax.grid(False)
 
     if xlabel is not None:
