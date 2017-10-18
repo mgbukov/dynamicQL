@@ -1,0 +1,2 @@
+QXcbConnection: Could not connect to display 
+/var/spool/sge/scc-tj4/job_scripts/1801093: line 7: 39667 Aborted                 ~/.conda/envs/py35/bin/python energy_vs_fid.py

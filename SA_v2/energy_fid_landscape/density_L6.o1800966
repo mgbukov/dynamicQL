@@ -1,0 +1,9 @@
+density map for	 0.3
+L	T	dt
+6	0.3	0.015
+Optimal fidelity : 0.03495948
+Initial overlap is 	 0.00909
+
+Precomputing evolution matrices ...
+Done in 0.0028 seconds
+--> density estimate on :  (1048576, 2)

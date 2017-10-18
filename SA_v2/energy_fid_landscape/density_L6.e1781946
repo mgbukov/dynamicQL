@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "energy_vs_fid.py", line 7, in <module>
+    from fdc.plotting import density_map
+ImportError: No module named 'fdc'
