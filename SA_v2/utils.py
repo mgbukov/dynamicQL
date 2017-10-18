@@ -125,13 +125,18 @@ class UTILS:
 		symmetrize,outfile = tuple([parameters[s] for s in ['symmetrize','outfile']])
 
 		print("-------------------- > Parameters < --------------------")
-		print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx_max \t\t\t %.3f "%(L, J, hz, hx_max))
+		print("{0:<20s}{1:<5d}\n".format('L',L)}
+		print("{0:<20s}{1:<5.2f}\n".format('J',J)}
+		print("{0:<20s}{1:<5.2f}\n".format('hz',hz)}
+		print("{0:<20s}{1:<5.2f}\n".format('hx_max',hx_max)}
+		#print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx_max \t\t\t %.3f "%(L, J, hz, hx_max))
 		print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state, hx_final_state))
 		print("n_quench \t\t %i\ndelta_t \t\t %.4f\nn_sample \t\t %i"%(n_quench, dt, n_sample))
 		print("n_step \t\t\t %i"%n_step)
 		print("T \t\t\t %.2f"%(n_step*dt))
 		print("Task \t\t\t %s"%parameters['task'])
 		print("Output file \t\t %s"%('data/'+outfile))
+
 		#print("# of possible actions \t %i"%len(action_set))
 		#print("Action_set \t <- \t %s"%action_set)
 		print("Symmetrizing protocols \t %s"%str(symmetrize))
