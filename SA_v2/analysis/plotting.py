@@ -4,6 +4,7 @@ import sys,os
 from sklearn.neighbors import KernelDensity
 from sklearn import preprocessing as prep
 
+    
 def density_map(X, kde, savefile='test.png', show=True, xlabel=None, ylabel=None, n_mesh = 400, vmin = None, vmax= None, compute_zmax = False):
 
     plt.rc('text', usetex=True)
@@ -19,11 +20,16 @@ def density_map(X, kde, savefile='test.png', show=True, xlabel=None, ylabel=None
     ymin, ymax = np.min(X[:,1]),np.max(X[:,1])
     dy = ymax - ymin
 
+    print('density map')
     x = np.linspace(xmin-0.1*dx,xmax+0.1*dx, n_mesh)
     y = np.linspace(ymin-0.1*dy,ymax+0.1*dy, n_mesh)
     extent = (xmin-0.1*dx, xmax+0.1*dx, ymin-0.1*dy, ymax+0.1*dy)
 
     mms=prep.MinMaxScaler()
+<<<<<<< HEAD
+    my_map=plt.get_cmap(name='BuGn')
+=======
+>>>>>>> 12f652fab3c5e344474bb431ecc0a7e3a8454d01
 
     xy=np.array([[xi, yi] for yi in y for xi in x])
     #print("kk")
@@ -37,6 +43,18 @@ def density_map(X, kde, savefile='test.png', show=True, xlabel=None, ylabel=None
     if vmax is None:
         vmax = zmax
 
+<<<<<<< HEAD
+    print('density map')
+    Zrgb[Z < 0.005] = (1.0,1.0,1.0,1.0)
+
+    plt.imshow(Zrgb, interpolation='bilinear',cmap='BuGn', extent=extent,origin='lower', aspect='auto', zorder=1)
+    cb=plt.colorbar()
+    cb.set_label(label='Density',labelpad=10)
+    print("-----")   
+ 
+    X1, Y1 = np.meshgrid(x,y)
+    plt.contour(X1, Y1, Z, levels=np.linspace(0.03,0.8,6), linewidths=0.3, colors='k', extent=extent, zorder=2)
+=======
     #z=mms.fit_transform(z.reshape(-1,1))
     Z=z.reshape(n_mesh, n_mesh)
     Z[Z < 0.005] = 0
@@ -53,6 +71,7 @@ def density_map(X, kde, savefile='test.png', show=True, xlabel=None, ylabel=None
 
     ax.grid(False)
 
+>>>>>>> 12f652fab3c5e344474bb431ecc0a7e3a8454d01
     if xlabel is not None:
         plt.xlabel(xlabel)
     if ylabel is not None:

@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "energy_vs_fid.py", line 201, in <module>
+    main()
+  File "energy_vs_fid.py", line 128, in main
+    plt2.density_map(X, kde, xlabel='$-\log F/L$',ylabel='$(E-E_0)/L$', n_mesh=400)
+TypeError: density_map() got an unexpected keyword argument 'n_mesh'
