@@ -7,6 +7,8 @@ j_*
 # Text files
 *.txt
 *.pdf
+
+para.dat
 test.py
 bh_tsne
 submit_scc.sh
