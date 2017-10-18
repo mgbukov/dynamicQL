@@ -40,7 +40,7 @@ plots/
 # invisible files
 .*
 # except gitignore
-!.gitignore
+#!.gitignore
 # txt and pkl files
 *.txt
 *.pkl
@@ -55,4 +55,3 @@ submit_scripts/
 =======
 data/
 log/
-
