@@ -6,7 +6,7 @@ hx_i	-2.
 hx_f	2.
 hx_max	4.
 hx_min	-4.
-dh	8.
+dh	8.0
 dt	-1
 n_step	20
 n_sample	1

@@ -19,16 +19,17 @@ class MODEL:
         self.psi_target = H.ground_state(hx=param['hx_f'])
         self.H_target = H.evaluate_H_at_hx(hx=self.param['hx_f']).todense()
         
-        print( "Initial overlap is \t %.5f" % overlap(self.psi_i, self.psi_target))
+        print("{0:<30s}{1:<5.5f}".format("Initial overlap is",overlap(self.psi_i, self.psi_target)[0][0]))
     
         self.param = param
         self.n_h_field = len(self.H.h_set)
         self.precompute_mat = {} # precomputed evolution matrices are indexed by integers 
     
-        print("\nPrecomputing evolution matrices ...")
+        print("\n-----------------> Setting up computation <---------------------")
+        print("Precomputing evolution matrices ...",end='')
         start=time.time()
         self.precompute_expmatrix()
-        print("Done in %.4f seconds"%(time.time()-start))
+        print(" Done in %.4f seconds"%(time.time()-start))
 
     def precompute_expmatrix(self):
         # Precomputes the evolution matrix and stores them in a dictionary

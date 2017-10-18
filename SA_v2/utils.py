@@ -125,22 +125,24 @@ class UTILS:
 		symmetrize,outfile = tuple([parameters[s] for s in ['symmetrize','outfile']])
 
 		print("-------------------- > Parameters < --------------------")
-		print("{0:<20s}{1:<5d}\n".format('L',L))
-		print("{0:<20s}{1:<5.2f}\n".format('J',J))
-		print("{0:<20s}{1:<5.2f}\n".format('hz',hz))
-		print("{0:<20s}{1:<5.2f}\n".format('hx_max',hx_max))
-		#print("L \t\t\t %i\nJ \t\t\t %.3f\nhz \t\t\t %.3f\nhx_max \t\t\t %.3f "%(L, J, hz, hx_max))
-		print("hx_initial_state \t %.2f\nhx_final_state \t\t %.2f"%(hx_initial_state, hx_final_state))
-		print("n_quench \t\t %i\ndelta_t \t\t %.4f\nn_sample \t\t %i"%(n_quench, dt, n_sample))
-		print("n_step \t\t\t %i"%n_step)
-		print("T \t\t\t %.2f"%(n_step*dt))
-		print("Task \t\t\t %s"%parameters['task'])
-		print("Output file \t\t %s"%('data/'+outfile))
+		print("{0:<30s}{1:<5d}".format('L',L))
+		print("{0:<30s}{1:<5.2f}".format('J',J))
+		print("{0:<30s}{1:<5.2f}".format('hz',hz))
+		print("{0:<30s}{1:<5.2f}".format('hx_max',hx_max))
+		print("{0:<30s}{1:<5.2f}".format('hx_initial_state',hx_initial_state))
+		print("{0:<30s}{1:<5.2f}".format('hx_final_state',hx_final_state))
 
-		#print("# of possible actions \t %i"%len(action_set))
-		#print("Action_set \t <- \t %s"%action_set)
-		print("Symmetrizing protocols \t %s"%str(symmetrize))
-		#print("Fidelity MODE \t\t %s"%('fast' if fidelity_fast else 'standard'))
+		print("{0:<30s}{1:<5d}".format('n_quench',n_quench))
+		print("{0:<30s}{1:<5.2f}".format('dt',dt))
+		print("{0:<30s}{1:<5d}".format('n_sample',n_sample))
+		print("{0:<30s}{1:<5d}".format('n_step',n_step))
+		
+		print("{0:<30s}{1:<5.2f}".format('T',n_step*dt))
+		print("{0:<30s}{1:<5s}".format('Task',parameters['task']))
+		print("{0:<30s}{1:<5s}".format("Output file",'data/'+outfile))
+		print("{0:<30s}{1:<5s}".format("Symmetrizing protocols",str(symmetrize)))
+		print("{0:<30s}{1:<5s}".format("Compute fid series ?",str(parameters['fid_series'])))
+		
 
 	def make_file_name(self, parameters, extension = ".pkl", root=""):
 		"""
