@@ -1,4 +1,4 @@
-task	ES
+task	SD
 L	6
 J	1.0
 hz	1.0
@@ -8,9 +8,9 @@ hx_max	4.
 hx_min	-4.
 dh	8.
 dt	-1
-n_step	20
-n_sample	50
-n_quench	1000
+n_step	28
+n_sample	1
+n_quench	1002
 T	2.0
 Ti	-1
 outfile	auto

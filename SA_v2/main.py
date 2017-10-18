@@ -30,7 +30,7 @@ def main():
     
     # Command line specified parameters overide parameter file values
     utils.read_command_line_arg(parameters,sys.argv)
-
+    print(parameters)    
     # Printing parameters for user
     utils.print_parameters(parameters)
 
