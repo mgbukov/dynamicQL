@@ -82,7 +82,15 @@ class UTILS:
 				info[tmp[0]]=tmp[1]
 		param = {}
 		for p in self.param_type.keys(): # cast strings to floats and ints !
-			param[p] = self.param_type[p](info[p])
+			if self.param_type[p] == bool:
+				if info[p] == 'True' or info[p] == '1':
+					param[p] = True
+				elif info[p] == 'False' or info[p] == '0':
+					param[p] = False
+				else:
+					assert False, 'Wrong boolean format'
+			else:
+				param[p] = self.param_type[p](info[p])
 		return param
 
 	def print_parameters(self, parameters):

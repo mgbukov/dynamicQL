@@ -21,7 +21,7 @@ def density_map(X, kde, savefile='test.png', show=True, xlabel=None, ylabel=None
 
     x = np.linspace(xmin-0.1*dx,xmax+0.1*dx, n_mesh)
     y = np.linspace(ymin-0.1*dy,ymax+0.1*dy, n_mesh)
-    extent = (xmin-0.1*dx,xmax+0.1*dx,ymin-0.1*dy,ymax+0.1*dy)
+    extent = (xmin-0.1*dx, xmax+0.1*dx, ymin-0.1*dy, ymax+0.1*dy)
 
     mms=prep.MinMaxScaler()
 
