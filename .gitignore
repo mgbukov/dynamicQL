@@ -1,3 +1,4 @@
+para.dat
 # job files
 job*
 j_*
@@ -40,7 +41,7 @@ plots/
 # invisible files
 .*
 # except gitignore
-#!.gitignore
+!.gitignore
 # txt and pkl files
 *.txt
 *.pkl
@@ -52,6 +53,5 @@ bin/
 dist/
 submit_scripts/
 
-=======
 data/
 log/
