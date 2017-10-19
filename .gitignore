@@ -1,7 +1,8 @@
 #
 *.e*
 *.o*
-job files
+para.dat
+# job files
 job*
 j_*
 # compliled python code #
@@ -11,12 +12,10 @@ j_*
 *.txt
 *.pdf
 
-para.dat
 test.py
 bh_tsne
 submit_scc.sh
-result.dat
-data.dat
+
 tags
 # cpp libraries
 *.so
@@ -31,13 +30,10 @@ landscape/
 # log files
 *.log
 # log directory
-log/
-# data files
-data/
 
 # unitaries pkl files
 *.dat
-!para.dat
+
 
 # plot file
 plots/
@@ -60,6 +56,5 @@ bin/
 dist/
 submit_scripts/
 
-=======
 data/
 log/
