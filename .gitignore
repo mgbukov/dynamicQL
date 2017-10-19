@@ -1,4 +1,7 @@
-# job files
+#
+*.e*
+*.o*
+job files
 job*
 j_*
 # compliled python code #

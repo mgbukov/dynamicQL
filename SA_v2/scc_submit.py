@@ -5,11 +5,11 @@ from utils import UTILS
 
 parameters = {
     'project': 'fheating',
-    'job_name': 'ES_L1_20_%i',
-    'walltime': '6:00:00',
+    'job_name': 'SD2_L6_%i',
+    'walltime': '12:00:00',
     'command' : '~/.conda/envs/py35/bin/python main.py',
     'arguments' : [],# fixed parameters
-    'loop' : [['T',arange(0.1,4.01,0.1)]] # looping parameters
+    'loop' : [['n_step',[20,22,24,26,28]], ['T',arange(0.1,4.01,0.1)]] # looping parameters
 }
 
 ###################################
